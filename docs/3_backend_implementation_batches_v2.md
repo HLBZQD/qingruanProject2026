@@ -133,7 +133,7 @@ PORT=3000
 JWT_SECRET=replace_with_random_secret
 DB_PATH=./data/database.sqlite
 
-DIFY_API_BASE=https://api.dify.ai/v1
+DIFY_API_BASE=http://182.92.74.224/v1
 DIFY_RISK_WORKFLOW_KEY=
 DIFY_PLAN_WORKFLOW_KEY=
 DIFY_ARTICLE_WORKFLOW_KEY=
