@@ -16,7 +16,7 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/life-plan',
     component: () => import('@/views/LifePlan.vue'),
-    meta: { requiresAuth: true },
+    meta: { requiresAuth: true, requiresDisclaimer: true },
   },
   {
     path: '/news',
@@ -31,7 +31,7 @@ const routes: RouteRecordRaw[] = [
       {
         path: 'risk',
         component: () => import('@/views/Risk.vue'),
-        meta: { requiresAuth: true },
+        meta: { requiresAuth: true, requiresDisclaimer: true },
       },
       {
         path: 'punch',
@@ -41,7 +41,7 @@ const routes: RouteRecordRaw[] = [
       {
         path: 'advice',
         component: () => import('@/views/HealthAdvice.vue'),
-        meta: { requiresAuth: true },
+        meta: { requiresAuth: true, requiresDisclaimer: true },
       },
     ],
   },
@@ -71,7 +71,29 @@ export const router = createRouter({
   routes,
 })
 
-router.beforeEach((to, _from, next) => {
+function isValidRedirect(path: string): boolean {
+  return path.startsWith('/') && !path.startsWith('//') && !path.includes('://')
+}
+
+function hasAcceptedDisclaimer(): boolean {
+  return localStorage.getItem('disclaimer_accepted') === 'true'
+}
+
+async function showDisclaimer(): Promise<boolean> {
+  const Swal = (await import('sweetalert2')).default
+  const result = await Swal.fire({
+    title: '医学免责声明',
+    html: '<p style="text-align:left;font-size:14px">本平台的 AI 健康建议、风险预测、方案生成等内容仅供健康参考，<b>不能替代专业医疗诊断、治疗或建议</b>。如有健康问题，请及时就医咨询专业医师。</p>',
+    icon: 'info',
+    showCancelButton: true,
+    confirmButtonText: '我已知晓并同意',
+    cancelButtonText: '不同意',
+    allowOutsideClick: false,
+  })
+  return result.isConfirmed
+}
+
+router.beforeEach(async (to, _from, next) => {
   const authStore = useAuthStore()
 
   if (to.meta.requiresAuth === false) {
@@ -79,7 +101,8 @@ router.beforeEach((to, _from, next) => {
   }
 
   if (!authStore.token) {
-    return next({ path: '/login', query: { redirect: to.fullPath } })
+    const redirect = encodeURIComponent(to.fullPath)
+    return next({ path: '/login', query: { redirect } })
   }
 
   if (to.meta.requiresAdmin && authStore.role !== 'admin') {
@@ -88,6 +111,17 @@ router.beforeEach((to, _from, next) => {
 
   if (authStore.mustChangePassword && to.path !== '/change-password') {
     return next('/change-password')
+  }
+
+  if (to.meta.requiresDisclaimer && !hasAcceptedDisclaimer()) {
+    const agreed = await showDisclaimer()
+    if (agreed) {
+      localStorage.setItem('disclaimer_accepted', 'true')
+      next()
+    } else {
+      next('/home')
+    }
+    return
   }
 
   next()

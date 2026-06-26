@@ -13,17 +13,33 @@ const authStore = useAuthStore()
 const riskFormStore = useRiskFormStore()
 
 const profile = ref<UserProfile | null>(null)
+const profileError = ref(false)
 const avatarInput = ref<HTMLInputElement | null>(null)
 
 const isSubRouteActive = computed(() => route.path !== '/profile')
+const defaultAvatar = '/static/images/default/default-avatar.png'
+
+function isValidAvatarUrl(url: string): boolean {
+  return url.startsWith('/') && !url.startsWith('//')
+}
+
+function formatDate(iso: string): string {
+  const d = new Date(iso)
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
 
 async function loadProfile() {
+  profileError.value = false
   try {
     const res = await api.get<{ success: boolean; data: UserProfile }>('/user/profile')
     profile.value = res.data.data
-    authStore.role = res.data.data.role
+    authStore.setAuth(
+      authStore.token!,
+      res.data.data.role,
+      { id: res.data.data.id, username: res.data.data.username, role: res.data.data.role, avatar: res.data.data.avatar }
+    )
   } catch {
-    // 静默降级，展示 authStore 中的缓存数据
+    profileError.value = true
   }
 }
 
@@ -36,12 +52,16 @@ async function handleAvatarChange(e: Event) {
   const file = target.files?.[0]
   if (!file) return
 
-  if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+  const ext = file.name.split('.').pop()?.toLowerCase()
+  if (!['jpg', 'jpeg', 'png', 'webp'].includes(ext || '') ||
+      !['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
     Swal.fire('格式不支持', '请选择 JPEG / PNG / WebP 格式的图片', 'warning')
+    avatarInput.value!.value = ''
     return
   }
   if (file.size > 2 * 1024 * 1024) {
     Swal.fire('文件过大', '头像图片不能超过 2MB', 'warning')
+    avatarInput.value!.value = ''
     return
   }
 
@@ -52,12 +72,23 @@ async function handleAvatarChange(e: Event) {
       headers: { 'Content-Type': 'multipart/form-data' },
     })
     const url = res.data.data.url
+    if (!isValidAvatarUrl(url)) {
+      Swal.fire('上传异常', '头像地址无效', 'error')
+      return
+    }
     await api.put('/user/profile', { avatar: url })
     if (profile.value) profile.value.avatar = url
+    authStore.setProfile({ avatar: url })
     Swal.fire('上传成功', '', 'success')
   } catch {
     Swal.fire('上传失败', '请稍后重试', 'error')
+  } finally {
+    avatarInput.value!.value = ''
   }
+}
+
+function onEditProfile() {
+  Swal.fire({ toast: true, position: 'top', icon: 'info', title: '编辑资料功能开发中', showConfirmButton: false, timer: 2000 })
 }
 
 async function handleLogout() {
@@ -71,6 +102,14 @@ async function handleLogout() {
   })
   if (!result.isConfirmed) return
 
+  // 按设计顺序清理：先中止 SSE 连接、清除对话、清除表单，最后清除认证
+  try {
+    const { useChatStore } = await import('@/stores/chatStore')
+    const chatStore = useChatStore()
+    chatStore.abortActiveConnection?.()
+    chatStore.clearAllConversations?.()
+  } catch { /* chatStore 尚未创建 */ }
+
   riskFormStore.reset()
   await authStore.logout()
   router.push('/home')
@@ -81,20 +120,15 @@ onMounted(loadProfile)
 
 <template>
   <div class="profile-container min-h-screen bg-[#F5F5F5] pb-20">
-    <!-- 子路由出口 -->
     <router-view v-if="isSubRouteActive" />
 
-    <!-- 个人中心主页 -->
     <div v-else class="profile-main-view">
-      <!-- 头部用户信息 -->
       <header class="profile-header flex flex-col items-center pt-8 pb-6 bg-white shadow-sm">
-        <div
-          class="avatar-wrapper relative cursor-pointer mb-3"
-          @click="triggerAvatarUpload"
-        >
+        <div class="avatar-wrapper relative cursor-pointer mb-3" @click="triggerAvatarUpload">
           <img
-            :src="profile?.avatar || 'https://via.placeholder.com/100'"
+            :src="profile?.avatar && isValidAvatarUrl(profile.avatar) ? profile.avatar : defaultAvatar"
             alt="头像"
+            referrerpolicy="no-referrer"
             class="avatar-img w-[100px] h-[100px] rounded-full object-cover border-2 border-gray-200"
           />
           <div class="avatar-overlay absolute inset-0 rounded-full bg-black/30 flex items-center justify-center opacity-0 hover:opacity-100 transition">
@@ -113,10 +147,13 @@ onMounted(loadProfile)
         </h2>
         <p class="text-sm text-gray-500 mt-1">
           {{ authStore.role === 'admin' ? '管理员' : '普通用户' }}
+          <span v-if="profile?.created_at" class="ml-2">· 注册于 {{ formatDate(profile.created_at) }}</span>
+        </p>
+        <p v-if="profileError" class="text-xs text-[#FF4D4F] mt-2">
+          加载失败，<span class="underline cursor-pointer" @click="loadProfile">点击重试</span>
         </p>
       </header>
 
-      <!-- 功能菜单 -->
       <section class="profile-menu mt-3 bg-white">
         <router-link to="/profile/risk" class="menu-item flex items-center px-4 py-3.5 border-b border-gray-100 hover:bg-gray-50 transition">
           <i class="fas fa-heart-pulse text-[#4A90D9] w-6 text-center"></i>
@@ -136,7 +173,7 @@ onMounted(loadProfile)
           <i class="fas fa-chevron-right text-gray-400 text-xs"></i>
         </router-link>
 
-        <a class="menu-item flex items-center px-4 py-3.5 border-b border-gray-100 hover:bg-gray-50 transition cursor-pointer">
+        <a class="menu-item flex items-center px-4 py-3.5 border-b border-gray-100 hover:bg-gray-50 transition cursor-pointer" @click="onEditProfile">
           <i class="fas fa-user-edit text-[#4A90D9] w-6 text-center"></i>
           <span class="flex-1 ml-3 text-sm">编辑资料</span>
           <i class="fas fa-chevron-right text-gray-400 text-xs"></i>
@@ -152,10 +189,7 @@ onMounted(loadProfile)
           <i class="fas fa-chevron-right text-gray-400 text-xs"></i>
         </router-link>
 
-        <a
-          class="menu-item flex items-center px-4 py-3.5 hover:bg-gray-50 transition cursor-pointer"
-          @click="handleLogout"
-        >
+        <a class="menu-item flex items-center px-4 py-3.5 hover:bg-gray-50 transition cursor-pointer" @click="handleLogout">
           <i class="fas fa-sign-out-alt text-[#FF4D4F] w-6 text-center"></i>
           <span class="flex-1 ml-3 text-sm text-[#FF4D4F]">退出登录</span>
         </a>

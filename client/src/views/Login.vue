@@ -12,6 +12,15 @@ const password = ref('')
 const errorMsg = ref('')
 const loading = ref(false)
 
+function safeRedirect(raw: unknown): string {
+  if (typeof raw !== 'string') return '/home'
+  // 仅允许相对路径，拒绝绝对 URL 和协议地址
+  if (raw.startsWith('/') && !raw.startsWith('//') && !raw.includes('://')) {
+    return raw
+  }
+  return '/home'
+}
+
 async function handleLogin() {
   if (!username.value || !password.value) {
     errorMsg.value = '请输入用户名和密码'
@@ -21,8 +30,7 @@ async function handleLogin() {
   errorMsg.value = ''
   try {
     await authStore.login(username.value, password.value)
-    const redirect = (route.query.redirect as string) || '/home'
-    router.push(redirect)
+    router.replace(safeRedirect(route.query.redirect))
   } catch (err: any) {
     errorMsg.value = err?.response?.data?.error?.message || '登录失败'
   } finally {

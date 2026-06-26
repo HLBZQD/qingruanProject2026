@@ -8,7 +8,6 @@ const api = axios.create({
   headers: { 'Content-Type': 'application/json' },
 })
 
-// 请求拦截器：自动附加 JWT
 api.interceptors.request.use((config) => {
   const authStore = useAuthStore()
   if (authStore.token) {
@@ -17,13 +16,24 @@ api.interceptors.request.use((config) => {
   return config
 })
 
-// 响应拦截器：401 统一处理
 api.interceptors.response.use(
   (res) => res,
   (err) => {
-    if (err.response?.status === 401 && err.response?.data?.error?.code === 'AUTH_REQUIRED') {
+    if (err.response?.status === 401) {
       const authStore = useAuthStore()
       authStore.clearAuth()
+      // 非阻断 Toast 提示
+      import('sweetalert2').then((Swal) => {
+        Swal.default.fire({
+          toast: true,
+          position: 'top',
+          icon: 'info',
+          title: '登录已过期，请重新登录',
+          showConfirmButton: false,
+          timer: 2500,
+          timerProgressBar: true,
+        })
+      })
       router.push('/login')
     }
     return Promise.reject(err)

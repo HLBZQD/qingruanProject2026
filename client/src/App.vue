@@ -1,8 +1,11 @@
 <script setup lang="ts">
-import { computed } from 'vue'
-import { useRoute } from 'vue-router'
+import { computed, onMounted, onUnmounted } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { useAuthStore } from '@/stores/authStore'
 
 const route = useRoute()
+const router = useRouter()
+const authStore = useAuthStore()
 
 const tabs = [
   { path: '/home', label: '首页', icon: 'fa-home' },
@@ -20,6 +23,28 @@ function isActive(tabPath: string): boolean {
 const showTabBar = computed(() => {
   const noTabRoutes = ['/login', '/change-password', '/admin']
   return !noTabRoutes.some((r) => route.path.startsWith(r))
+})
+
+// 跨标签页登录态同步
+function handleStorageChange(e: StorageEvent) {
+  if (e.key === 'token' || e.key === 'role' || e.key === 'user') {
+    const newToken = localStorage.getItem('token')
+    const newRole = localStorage.getItem('role')
+    if (!newToken || (newRole !== 'user' && newRole !== 'admin')) {
+      authStore.clearAuth()
+      router.push('/login')
+    } else {
+      authStore.syncFromStorage()
+    }
+  }
+}
+
+onMounted(() => {
+  window.addEventListener('storage', handleStorageChange)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('storage', handleStorageChange)
 })
 </script>
 

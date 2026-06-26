@@ -1,11 +1,19 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
+import { api } from '@/composables/useApi'
 import type { LoginUser } from '@/types/api'
+
+function parseRole(raw: string | null): 'user' | 'admin' | null {
+  if (raw === 'user' || raw === 'admin') return raw
+  return null
+}
 
 export const useAuthStore = defineStore('auth', () => {
   const token = ref<string | null>(localStorage.getItem('token'))
-  const role = ref<'user' | 'admin' | null>(localStorage.getItem('role') as 'user' | 'admin' | null)
-  const user = ref<LoginUser | null>(null)
+  const role = ref<'user' | 'admin' | null>(parseRole(localStorage.getItem('role')))
+  const user = ref<LoginUser | null>(
+    JSON.parse(localStorage.getItem('user') || 'null')
+  )
   const mustChangePassword = ref(false)
 
   const isLoggedIn = computed(() => !!token.value)
@@ -22,11 +30,21 @@ export const useAuthStore = defineStore('auth', () => {
     user.value = newUser
     localStorage.setItem('token', newToken)
     localStorage.setItem('role', newRole)
+    localStorage.setItem('user', JSON.stringify(newUser))
   }
 
   function syncFromStorage() {
-    token.value = localStorage.getItem('token')
-    role.value = localStorage.getItem('role') as 'user' | 'admin' | null
+    const storedToken = localStorage.getItem('token')
+    const storedRole = parseRole(localStorage.getItem('role'))
+    const storedUser = JSON.parse(localStorage.getItem('user') || 'null')
+
+    if (!storedToken || !storedRole) {
+      clearAuth()
+      return
+    }
+    token.value = storedToken
+    role.value = storedRole
+    user.value = storedUser
   }
 
   function clearAuth() {
@@ -36,11 +54,11 @@ export const useAuthStore = defineStore('auth', () => {
     mustChangePassword.value = false
     localStorage.removeItem('token')
     localStorage.removeItem('role')
+    localStorage.removeItem('user')
   }
 
   async function login(username: string, password: string) {
-    const axios = (await import('axios')).default
-    const res = await axios.post('/api/auth/login', { username, password })
+    const res = await api.post('/auth/login', { username, password })
     const data = res.data.data
     setAuth(data.token, data.role, data.user)
     if (data.must_change_password) {
@@ -50,16 +68,23 @@ export const useAuthStore = defineStore('auth', () => {
 
   async function logout() {
     try {
-      await fetch('/api/auth/logout', { method: 'POST' })
+      await api.post('/auth/logout')
     } catch { /* ignore */ }
     clearAuth()
   }
 
-  async function fetchProfile(): Promise<void> {
-    const axios = (await import('axios')).default
-    const res = await axios.get('/api/user/profile')
-    user.value = res.data.data
-    role.value = res.data.data.role
+  async function fetchProfile() {
+    const res = await api.get('/user/profile')
+    const profile = res.data.data
+    user.value = { id: profile.id, username: profile.username, role: profile.role, avatar: profile.avatar }
+    role.value = profile.role
+  }
+
+  function setProfile(profile: { username?: string; avatar?: string | null }) {
+    if (!user.value) return
+    if (profile.username) user.value.username = profile.username
+    if (profile.avatar !== undefined) user.value.avatar = profile.avatar
+    localStorage.setItem('user', JSON.stringify(user.value))
   }
 
   function clearMustChangePassword() {
@@ -70,6 +95,6 @@ export const useAuthStore = defineStore('auth', () => {
     token, role, user, mustChangePassword,
     isLoggedIn, isAdmin,
     login, logout, setToken, setAuth, syncFromStorage, clearAuth,
-    fetchProfile, clearMustChangePassword,
+    fetchProfile, setProfile, clearMustChangePassword,
   }
 })

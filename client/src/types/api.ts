@@ -43,6 +43,7 @@ export interface RegisterRequest {
 export interface LoginUser {
   id: number;
   username: string;
+  role: 'user' | 'admin';
   avatar: string | null;
 }
 
