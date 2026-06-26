@@ -30,16 +30,23 @@ function formatDate(iso: string): string {
 
 async function loadProfile() {
   profileError.value = false
+  const storedToken = authStore.token
+  if (!storedToken) {
+    router.push('/login')
+    return
+  }
   try {
     const res = await api.get<{ success: boolean; data: UserProfile }>('/user/profile')
     profile.value = res.data.data
     authStore.setAuth(
-      authStore.token!,
+      storedToken,
       res.data.data.role,
       { id: res.data.data.id, username: res.data.data.username, role: res.data.data.role, avatar: res.data.data.avatar }
     )
-  } catch {
+  } catch (err) {
+    console.error('Profile load failed', err)
     profileError.value = true
+    Swal.fire({ toast: true, position: 'top', icon: 'error', title: '加载失败，请重试', showConfirmButton: false, timer: 2500 })
   }
 }
 
@@ -184,7 +191,7 @@ onMounted(loadProfile)
           to="/admin"
           class="menu-item flex items-center px-4 py-3.5 border-b border-gray-100 hover:bg-gray-50 transition"
         >
-          <i class="fas fa-shield-haltered text-[#4A90D9] w-6 text-center"></i>
+          <i class="fas fa-shield-halved text-[#4A90D9] w-6 text-center"></i>
           <span class="flex-1 ml-3 text-sm">智能管理</span>
           <i class="fas fa-chevron-right text-gray-400 text-xs"></i>
         </router-link>

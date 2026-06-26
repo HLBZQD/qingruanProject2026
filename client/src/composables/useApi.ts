@@ -4,7 +4,7 @@ import { router } from '@/router'
 
 const api = axios.create({
   baseURL: '/api',
-  timeout: 30000,
+  timeout: 15000,
   headers: { 'Content-Type': 'application/json' },
 })
 
@@ -42,6 +42,11 @@ api.interceptors.response.use(
 
 export { api }
 
+export function createCancelToken() {
+  const controller = new AbortController()
+  return { signal: controller.signal, cancel: () => controller.abort() }
+}
+
 export function useApi() {
-  return { api }
+  return { api, createCancelToken }
 }

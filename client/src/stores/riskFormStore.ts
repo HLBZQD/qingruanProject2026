@@ -33,6 +33,15 @@ export const useRiskFormStore = defineStore('riskForm', () => {
     sessionStorage.setItem(STORAGE_KEY, JSON.stringify(data))
   }
 
+  function isValidResult(r: unknown): r is RiskPredictResponse {
+    if (!r || typeof r !== 'object') return false
+    const obj = r as Record<string, unknown>
+    return typeof obj.record_id === 'number'
+      && typeof obj.risk_score === 'number'
+      && typeof obj.risk_level === 'string'
+      && ['low', 'medium', 'high'].includes(obj.risk_level as string)
+  }
+
   function loadFromStorage(): boolean {
     const raw = sessionStorage.getItem(STORAGE_KEY)
     if (!raw) return false
@@ -40,9 +49,20 @@ export const useRiskFormStore = defineStore('riskForm', () => {
       const parsed = JSON.parse(raw)
       if (typeof parsed !== 'object' || !parsed) return false
       currentStep.value = validateStep(parsed.currentStep)
-      formData.value = (parsed.formData && typeof parsed.formData === 'object') ? parsed.formData : {}
-      if (parsed.result && typeof parsed.result === 'object') {
-        result.value = parsed.result as RiskPredictResponse
+      if (parsed.formData && typeof parsed.formData === 'object') {
+        const fd: Record<string, unknown> = {}
+        const allowedKeys = ['diabetes_history', 'diabetes_type', 'age', 'gender', 'height', 'weight', 'waist', 'systolic_bp', 'family_history', 'pregnancy']
+        for (const key of allowedKeys) {
+          if (key in parsed.formData) fd[key] = (parsed.formData as Record<string, unknown>)[key]
+        }
+        formData.value = fd as Partial<RiskPredictRequest>
+      } else {
+        formData.value = {}
+      }
+      if (parsed.result && typeof parsed.result === 'object' && isValidResult(parsed.result)) {
+        result.value = parsed.result
+      } else {
+        result.value = null
       }
       return true
     } catch {

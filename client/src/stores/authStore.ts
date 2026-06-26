@@ -12,9 +12,17 @@ export const useAuthStore = defineStore('auth', () => {
   const token = ref<string | null>(localStorage.getItem('token'))
   const role = ref<'user' | 'admin' | null>(parseRole(localStorage.getItem('role')))
   const user = ref<LoginUser | null>(
-    JSON.parse(localStorage.getItem('user') || 'null')
+    (() => {
+      try {
+        const raw = JSON.parse(localStorage.getItem('user') || 'null')
+        if (raw && typeof raw === 'object' && typeof raw.id === 'number' && typeof raw.username === 'string' && (raw.role === 'user' || raw.role === 'admin')) {
+          return raw as LoginUser
+        }
+      } catch { /* corrupted */ }
+      return null
+    })()
   )
-  const mustChangePassword = ref(false)
+  const mustChangePassword = ref(localStorage.getItem('must_change_password') === 'true')
 
   const isLoggedIn = computed(() => !!token.value)
   const isAdmin = computed(() => role.value === 'admin')
@@ -36,7 +44,13 @@ export const useAuthStore = defineStore('auth', () => {
   function syncFromStorage() {
     const storedToken = localStorage.getItem('token')
     const storedRole = parseRole(localStorage.getItem('role'))
-    const storedUser = JSON.parse(localStorage.getItem('user') || 'null')
+    let storedUser: LoginUser | null = null
+    try {
+      const raw = JSON.parse(localStorage.getItem('user') || 'null')
+      if (raw && typeof raw === 'object' && typeof raw.id === 'number' && typeof raw.username === 'string' && (raw.role === 'user' || raw.role === 'admin')) {
+        storedUser = raw as LoginUser
+      }
+    } catch { /* corrupted */ }
 
     if (!storedToken || !storedRole) {
       clearAuth()
@@ -45,6 +59,7 @@ export const useAuthStore = defineStore('auth', () => {
     token.value = storedToken
     role.value = storedRole
     user.value = storedUser
+    mustChangePassword.value = localStorage.getItem('must_change_password') === 'true'
   }
 
   function clearAuth() {
@@ -55,6 +70,7 @@ export const useAuthStore = defineStore('auth', () => {
     localStorage.removeItem('token')
     localStorage.removeItem('role')
     localStorage.removeItem('user')
+    localStorage.removeItem('must_change_password')
   }
 
   async function login(username: string, password: string) {
@@ -63,6 +79,7 @@ export const useAuthStore = defineStore('auth', () => {
     setAuth(data.token, data.role, data.user)
     if (data.must_change_password) {
       mustChangePassword.value = true
+      localStorage.setItem('must_change_password', 'true')
     }
   }
 
@@ -76,8 +93,11 @@ export const useAuthStore = defineStore('auth', () => {
   async function fetchProfile() {
     const res = await api.get('/user/profile')
     const profile = res.data.data
-    user.value = { id: profile.id, username: profile.username, role: profile.role, avatar: profile.avatar }
+    const updatedUser: LoginUser = { id: profile.id, username: profile.username, role: profile.role, avatar: profile.avatar }
+    user.value = updatedUser
     role.value = profile.role
+    localStorage.setItem('user', JSON.stringify(updatedUser))
+    localStorage.setItem('role', profile.role)
   }
 
   function setProfile(profile: { username?: string; avatar?: string | null }) {
@@ -89,6 +109,7 @@ export const useAuthStore = defineStore('auth', () => {
 
   function clearMustChangePassword() {
     mustChangePassword.value = false
+    localStorage.removeItem('must_change_password')
   }
 
   return {

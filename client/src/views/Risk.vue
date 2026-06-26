@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, reactive, computed, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useRiskFormStore } from '@/stores/riskFormStore'
 import { api } from '@/composables/useApi'
@@ -40,11 +40,34 @@ const step2 = reactive({
 
 const fieldError = ref('')
 
+const HISTORY_OPTIONS = [
+  { value: 'healthy', label: '健康 (无糖尿病)' },
+  { value: 'prediabetes', label: '糖尿病前期' },
+  { value: 'diagnosed', label: '已确诊糖尿病' },
+] as const
+
+const GENDER_OPTIONS = [
+  { value: 'male', label: '男' },
+  { value: 'female', label: '女' },
+] as const
+
+const FAMILY_HISTORY_OPTIONS = [
+  { value: 'yes', label: '有' },
+  { value: 'no', label: '无' },
+] as const
+
+const VALID_RISK_LEVELS = ['low', 'medium', 'high'] as const
+
+watch(() => step1.diabetes_history, (val) => {
+  if (val !== 'diagnosed') step1.diabetes_type = ''
+})
+
 const showDiabetesType = computed(() => step1.diabetes_history === 'diagnosed')
 const showPregnancy = computed(() => step2.gender === 'female')
 
 function safeAdviceHtml(markdown: string): string {
-  const html = marked.parse(markdown) as string
+  const html = marked.parse(markdown, { async: false })
+  if (typeof html !== 'string') return ''
   return DOMPurify.sanitize(html)
 }
 
@@ -68,6 +91,19 @@ function restoreForm() {
   // 恢复到了步骤3但缺结果，回退到步骤2
   if (currentStep.value === 3 && !result.value) {
     currentStep.value = 2
+  }
+  // 恢复后重新校验，非法数据则重置
+  if (currentStep.value >= 2 && !validateStep2()) {
+    store.reset()
+    currentStep.value = 1
+    step1.diabetes_history = ''
+    step2.age = null; step2.gender = ''; step2.height = null; step2.weight = null
+    step2.waist = null; step2.systolic_bp = null; step2.family_history = ''; step2.pregnancy = false
+  }
+  if (currentStep.value >= 1 && !validateStep1()) {
+    store.reset()
+    currentStep.value = 1
+    step1.diabetes_history = ''
   }
 }
 
@@ -144,18 +180,41 @@ function goStep2Prev() {
 }
 
 function buildPayload(): RiskPredictRequest {
+  const age = step2.age
+  const height = step2.height
+  const weight = step2.weight
+  if (age == null || height == null || weight == null) {
+    throw new Error('buildPayload: required fields not validated')
+  }
   return {
     diabetes_history: step1.diabetes_history as RiskPredictRequest['diabetes_history'],
     diabetes_type: (step1.diabetes_type || undefined) as RiskPredictRequest['diabetes_type'],
-    age: step2.age!,
+    age,
     gender: step2.gender as RiskPredictRequest['gender'],
-    height: step2.height!,
-    weight: step2.weight!,
+    height,
+    weight,
     waist: (step2.waist != null && step2.waist !== undefined) ? step2.waist : undefined,
     systolic_bp: (step2.systolic_bp != null && step2.systolic_bp !== undefined) ? step2.systolic_bp : undefined,
     family_history: step2.family_history as RiskPredictRequest['family_history'],
     pregnancy: step2.gender === 'female' ? step2.pregnancy : undefined,
   }
+}
+
+function isValidRiskResult(r: unknown): r is RiskPredictResponse {
+  if (!r || typeof r !== 'object') return false
+  const obj = r as Record<string, unknown>
+  return typeof obj.record_id === 'number'
+    && typeof obj.risk_score === 'number'
+    && typeof obj.risk_level === 'string'
+    && VALID_RISK_LEVELS.includes(obj.risk_level as typeof VALID_RISK_LEVELS[number])
+}
+
+function getErrorMessage(err: unknown): string {
+  if (err && typeof err === 'object' && 'response' in err) {
+    const axiosErr = err as { response?: { data?: { error?: { message?: string } } } }
+    if (axiosErr.response?.data?.error?.message) return axiosErr.response.data.error.message
+  }
+  return '预测失败，请稍后重试'
 }
 
 function toFallbackRiskResponse(item: RiskHistoryItem): RiskPredictResponse {
@@ -183,21 +242,33 @@ async function submitPredict() {
 
   try {
     const res = await api.post<{ success: boolean; data: RiskPredictResponse }>('/risk/predict', payload)
-    result.value = res.data.data
-    store.saveResult(res.data.data)
+    const data = res.data.data
+    if (!isValidRiskResult(data)) {
+      throw new Error('后端返回数据格式异常')
+    }
+    result.value = data
+    store.saveResult(data)
     store.clearSession()
-  } catch (err: any) {
-    const msg = err?.response?.data?.error?.message || '预测失败，请稍后重试'
+  } catch (err: unknown) {
+    const msg = getErrorMessage(err)
     error.value = msg
     isHistoryFallback.value = true
+    let historyFailed = false
     try {
-      const historyRes = await api.get<{ success: boolean; data: RiskHistoryItem[]; pagination: any }>('/risk/history', {
+      const historyRes = await api.get<{ success: boolean; data: RiskHistoryItem[]; pagination: unknown }>('/risk/history', {
         params: { page: 1, pageSize: 1 },
       })
       if (historyRes.data.data?.length > 0) {
         result.value = toFallbackRiskResponse(historyRes.data.data[0])
+      } else {
+        historyFailed = true
       }
-    } catch { /* 无历史数据 */ }
+    } catch {
+      historyFailed = true
+    }
+    if (historyFailed && !result.value) {
+      error.value = msg + '。暂无历史预测记录，请稍后重试'
+    }
   } finally {
     loading.value = false
     submitting.value = false
@@ -271,11 +342,7 @@ function goToLifePlan() {
       <h2 class="text-lg font-medium text-[#333] mb-5">您的糖尿病病史状态是？</h2>
       <div class="option-group space-y-3">
         <label
-          v-for="opt in [
-            { value: 'healthy', label: '健康 (无糖尿病)' },
-            { value: 'prediabetes', label: '糖尿病前期' },
-            { value: 'diagnosed', label: '已确诊糖尿病' },
-          ]"
+          v-for="opt in HISTORY_OPTIONS"
           :key="opt.value"
           class="option-card flex items-center px-4 py-3.5 bg-white rounded-xl border-2 cursor-pointer transition"
           :class="step1.diabetes_history === opt.value
@@ -323,7 +390,7 @@ function goToLifePlan() {
         <div class="form-group">
           <label class="text-sm text-[#666] block mb-1.5">性别 <span class="text-[#FF4D4F]">*</span></label>
           <div class="radio-group flex gap-4">
-            <label v-for="g in [{ value: 'male', label: '男' }, { value: 'female', label: '女' }]" :key="g.value" class="flex items-center cursor-pointer">
+            <label v-for="g in GENDER_OPTIONS" :key="g.value" class="flex items-center cursor-pointer">
               <input type="radio" :value="g.value" v-model="step2.gender" class="sr-only" />
               <i class="fas mr-1.5" :class="step2.gender === g.value ? 'fa-dot-circle text-[#4A90D9]' : 'fa-circle text-gray-300'"></i>
               <span class="text-sm">{{ g.label }}</span>
@@ -358,7 +425,7 @@ function goToLifePlan() {
         <div class="form-group">
           <label class="text-sm text-[#666] block mb-1.5">家族糖尿病史 <span class="text-[#FF4D4F]">*</span></label>
           <div class="radio-group flex gap-4">
-            <label v-for="f in [{ value: 'yes', label: '有' }, { value: 'no', label: '无' }]" :key="f.value" class="flex items-center cursor-pointer">
+            <label v-for="f in FAMILY_HISTORY_OPTIONS" :key="f.value" class="flex items-center cursor-pointer">
               <input type="radio" :value="f.value" v-model="step2.family_history" class="sr-only" />
               <i class="fas mr-1.5" :class="step2.family_history === f.value ? 'fa-dot-circle text-[#4A90D9]' : 'fa-circle text-gray-300'"></i>
               <span class="text-sm">{{ f.label }}</span>
@@ -433,12 +500,13 @@ function goToLifePlan() {
               'bg-red-50 text-[#FF4D4F]': result.risk_level === 'high',
               'bg-yellow-50 text-[#FAAD14]': result.risk_level === 'medium',
               'bg-green-50 text-[#52C41A]': result.risk_level === 'low',
+              'bg-gray-50 text-gray-500': !['high', 'medium', 'low'].includes(result.risk_level),
             }"
           >
-            {{ result.risk_level_label }}
+            {{ result.risk_level_label || '未知风险' }}
           </div>
           <div class="risk-score text-4xl font-bold text-[#333]">
-            {{ result.risk_score }}<span class="text-base text-gray-400 font-normal"> / 51 分</span>
+            {{ Number(result.risk_score).toFixed(1) }}<span class="text-base text-gray-400 font-normal"> / 51 分</span>
           </div>
         </div>
 

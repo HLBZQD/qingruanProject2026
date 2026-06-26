@@ -16,8 +16,7 @@ const tabs = [
 ]
 
 function isActive(tabPath: string): boolean {
-  if (tabPath === '/home') return route.path === '/home'
-  return route.path.startsWith(tabPath)
+  return route.path === tabPath || route.path.startsWith(tabPath + '/')
 }
 
 const showTabBar = computed(() => {
