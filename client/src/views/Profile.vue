@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
 import { useRiskFormStore } from '@/stores/riskFormStore'
@@ -15,6 +15,8 @@ const riskFormStore = useRiskFormStore()
 const profile = ref<UserProfile | null>(null)
 const profileError = ref(false)
 const avatarInput = ref<HTMLInputElement | null>(null)
+let loadAbort: AbortController | null = null
+let uploadAbort: AbortController | null = null
 
 const isSubRouteActive = computed(() => route.path !== '/profile')
 const defaultAvatar = '/static/images/default/default-avatar.png'
@@ -35,15 +37,20 @@ async function loadProfile() {
     router.push('/login')
     return
   }
+  loadAbort?.abort()
+  loadAbort = new AbortController()
   try {
-    const res = await api.get<{ success: boolean; data: UserProfile }>('/user/profile')
+    const res = await api.get<{ success: boolean; data: UserProfile }>('/user/profile', {
+      signal: loadAbort.signal,
+    })
     profile.value = res.data.data
     authStore.setAuth(
       storedToken,
       res.data.data.role,
       { id: res.data.data.id, username: res.data.data.username, role: res.data.data.role, avatar: res.data.data.avatar }
     )
-  } catch (err) {
+  } catch (err: unknown) {
+    if (err instanceof DOMException && err.name === 'AbortError') return
     console.error('Profile load failed', err)
     profileError.value = true
     Swal.fire({ toast: true, position: 'top', icon: 'error', title: '加载失败，请重试', showConfirmButton: false, timer: 2500 })
@@ -74,9 +81,12 @@ async function handleAvatarChange(e: Event) {
 
   const formData = new FormData()
   formData.append('avatar', file)
+  uploadAbort?.abort()
+  uploadAbort = new AbortController()
   try {
     const res = await api.post<{ success: boolean; data: { url: string } }>('/upload/avatar', formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
+      signal: uploadAbort.signal,
     })
     const url = res.data.data.url
     if (!isValidAvatarUrl(url)) {
@@ -87,7 +97,8 @@ async function handleAvatarChange(e: Event) {
     if (profile.value) profile.value.avatar = url
     authStore.setProfile({ avatar: url })
     Swal.fire('上传成功', '', 'success')
-  } catch {
+  } catch (err: unknown) {
+    if (err instanceof DOMException && err.name === 'AbortError') return
     Swal.fire('上传失败', '请稍后重试', 'error')
   } finally {
     avatarInput.value!.value = ''
@@ -123,6 +134,10 @@ async function handleLogout() {
 }
 
 onMounted(loadProfile)
+onUnmounted(() => {
+  loadAbort?.abort()
+  uploadAbort?.abort()
+})
 </script>
 
 <template>

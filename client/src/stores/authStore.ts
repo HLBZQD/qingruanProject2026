@@ -74,6 +74,7 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   async function login(username: string, password: string) {
+    clearMustChangePassword()
     const res = await api.post('/auth/login', { username, password })
     const data = res.data.data
     setAuth(data.token, data.role, data.user)

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, reactive, computed, onMounted, watch } from 'vue'
+import { ref, reactive, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useRiskFormStore } from '@/stores/riskFormStore'
 import { api } from '@/composables/useApi'
@@ -19,6 +19,7 @@ const result = ref<RiskPredictResponse | null>(null)
 const isHistoryFallback = ref(false)
 let retryTimer: ReturnType<typeof setTimeout> | null = null
 let retryCooldown = ref(false)
+let predictAbort: AbortController | null = null
 
 // 步骤1 表单
 const step1 = reactive({
@@ -65,7 +66,8 @@ watch(() => step1.diabetes_history, (val) => {
 const showDiabetesType = computed(() => step1.diabetes_history === 'diagnosed')
 const showPregnancy = computed(() => step2.gender === 'female')
 
-function safeAdviceHtml(markdown: string): string {
+function safeAdviceHtml(markdown: unknown): string {
+  if (typeof markdown !== 'string') return ''
   const html = marked.parse(markdown, { async: false })
   if (typeof html !== 'string') return ''
   return DOMPurify.sanitize(html)
@@ -108,6 +110,10 @@ function restoreForm() {
 }
 
 onMounted(restoreForm)
+onUnmounted(() => {
+  predictAbort?.abort()
+  if (retryTimer) clearTimeout(retryTimer)
+})
 
 function isValidNumber(val: unknown, min: number, max: number): boolean {
   if (val === null || val === undefined) return false
@@ -206,6 +212,7 @@ function isValidRiskResult(r: unknown): r is RiskPredictResponse {
   return typeof obj.record_id === 'number'
     && typeof obj.risk_score === 'number'
     && typeof obj.risk_level === 'string'
+    && typeof obj.advice === 'string'
     && VALID_RISK_LEVELS.includes(obj.risk_level as typeof VALID_RISK_LEVELS[number])
 }
 
@@ -233,15 +240,26 @@ async function submitPredict() {
   if (!validateStep2() || submitting.value) return
   submitting.value = true
 
-  const payload = buildPayload()
+  let payload: RiskPredictRequest
+  try {
+    payload = buildPayload()
+  } catch {
+    error.value = '表单数据不完整，请返回重填'
+    submitting.value = false
+    return
+  }
   store.saveStep(3, payload)
   currentStep.value = 3
   loading.value = true
   error.value = null
   isHistoryFallback.value = false
+  predictAbort?.abort()
+  predictAbort = new AbortController()
 
   try {
-    const res = await api.post<{ success: boolean; data: RiskPredictResponse }>('/risk/predict', payload)
+    const res = await api.post<{ success: boolean; data: RiskPredictResponse }>('/risk/predict', payload, {
+      signal: predictAbort.signal,
+    })
     const data = res.data.data
     if (!isValidRiskResult(data)) {
       throw new Error('后端返回数据格式异常')
@@ -250,13 +268,20 @@ async function submitPredict() {
     store.saveResult(data)
     store.clearSession()
   } catch (err: unknown) {
+    if (err instanceof DOMException && err.name === 'AbortError') {
+      loading.value = false
+      submitting.value = false
+      return
+    }
     const msg = getErrorMessage(err)
     error.value = msg
     isHistoryFallback.value = true
+    store.clearSession()
     let historyFailed = false
     try {
       const historyRes = await api.get<{ success: boolean; data: RiskHistoryItem[]; pagination: unknown }>('/risk/history', {
         params: { page: 1, pageSize: 1 },
+        signal: predictAbort!.signal,
       })
       if (historyRes.data.data?.length > 0) {
         result.value = toFallbackRiskResponse(historyRes.data.data[0])
