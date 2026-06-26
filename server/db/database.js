@@ -14,22 +14,24 @@ function initDatabase() {
     fs.mkdirSync(dataDir, { recursive: true });
   }
 
-  db = new Database(dbPath);
-  db.pragma('foreign_keys = ON');
-  db.pragma('journal_mode = WAL');
-  db.pragma('busy_timeout = 5000');
+  const database = new Database(dbPath);
+  database.pragma('foreign_keys = ON');
+  database.pragma('journal_mode = WAL');
+  database.pragma('busy_timeout = 5000');
 
   const initSql = fs.readFileSync(path.join(__dirname, 'init.sql'), 'utf-8');
-  db.exec(initSql);
+  database.exec(initSql);
 
-  const row = db.prepare('SELECT COUNT(*) AS count FROM users').get();
+  const row = database.prepare('SELECT COUNT(*) AS count FROM users').get();
   if (row.count === 0) {
     let seedSql = fs.readFileSync(path.join(__dirname, 'seed.sql'), 'utf-8');
     const hash = bcrypt.hashSync('admin123', 10);
     seedSql = seedSql.replace('$2a$10$PLACEHOLDER_BCRYPT_HASH_GOES_HERE', hash);
-    db.exec(seedSql);
+    database.exec(seedSql);
     console.log('Database seeded with initial data.');
   }
+
+  module.exports.db = database;
 }
 
-module.exports = { db, initDatabase };
+module.exports = { db: null, initDatabase };
