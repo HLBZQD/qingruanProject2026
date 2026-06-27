@@ -77,9 +77,9 @@ function goDoctor(): void {
   // Consultation 页是否接受 ?doc=id query 未确认；本任务仅跳 tab，不带 query，不臆造对话页
   router.push('/consultation')
 }
-function goArticle(_id: number): void {
-  // 文章详情页不在本任务；仅跳资讯 tab
-  router.push('/news')
+function goArticle(id: number): void {
+  if (!id) return
+  router.push({ path: '/news/article/' + id })
 }
 function goNewsList(): void {
   router.push('/news')

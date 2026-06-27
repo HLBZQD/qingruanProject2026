@@ -90,6 +90,38 @@ const riskLevelHint = computed(() => {
   return typeof q === 'string' && q ? q : ''
 })
 
+// ===== S4: riskFormStore.result 派生提示（优先于 query 参数，数据更权威） =====
+const riskResultHint = reactive<{
+  riskLevel: string
+  riskScore: number | null
+  diabetesType: string
+}>({
+  riskLevel: '',
+  riskScore: null,
+  diabetesType: '',
+})
+
+// ===== S11: route.query.diabetesType 派生 =====
+const diabetesTypeHint = computed(() => {
+  const q = route.query.diabetesType
+  return typeof q === 'string' && q ? q : ''
+})
+
+// ===== 合并后的糖尿病类型展示文本（优先级: result > query） =====
+const displayDiabetesType = computed(() => {
+  return riskResultHint.diabetesType || diabetesTypeHint.value
+})
+
+// ===== 合并后的风险等级展示文本（优先级: result > query） =====
+const displayRiskLevel = computed(() => {
+  return riskResultHint.riskLevel || riskLevelHint.value
+})
+
+// ===== 提示条是否可见 =====
+const showPersonalizedHint = computed(() => {
+  return !!(displayRiskLevel.value || displayDiabetesType.value)
+})
+
 // ===== Markdown 渲染（复用 Risk.vue safeAdviceHtml 范式） =====
 function safeContentHtml(markdown: unknown): string {
   if (typeof markdown !== 'string') return ''
@@ -296,6 +328,16 @@ function backToDisplay() {
 // ===== 生命周期 =====
 onMounted(async () => {
   prefillFromRiskForm()
+
+  // [S4] 读取 riskFormStore.result（已在 prefillFromRiskForm 中调用 loadFromStorage 水合）
+  const result = riskForm.result
+  if (result) {
+    riskResultHint.riskLevel = result.risk_level
+    riskResultHint.riskScore = result.risk_score
+    // matched_diabetes_type 为后端返回的原始值（如 "type2"），由 enumLabel 映射中文
+    riskResultHint.diabetesType = result.matched_diabetes_type || ''
+  }
+
   await store.fetchCurrent()
   if (store.error) viewMode.value = 'error'
   else if (store.currentPlan) viewMode.value = 'display'
@@ -320,9 +362,12 @@ onUnmounted(() => {
       </button>
     </header>
 
-    <!-- query 提示条（未决 #4：仅展示，不依赖） -->
-    <div v-if="riskLevelHint" class="lp-query-hint">
-      基于您的「{{ riskLevelHint }}」风险评估为您定制方案
+    <!-- S4+S11: 个性化提示条（合并 result + query，优先级 result > query） -->
+    <div v-if="showPersonalizedHint" class="lp-query-hint">
+      基于您的
+      <template v-if="displayDiabetesType">「{{ enumLabel('diabetes_type', displayDiabetesType) }}」</template>
+      <template v-if="displayRiskLevel">「{{ enumLabel('risk_level', displayRiskLevel) }}」</template>
+      评估为您定制方案
     </div>
 
     <!-- 初始加载态（L5: 防 fetchCurrent 异步期间闪现空态） -->
