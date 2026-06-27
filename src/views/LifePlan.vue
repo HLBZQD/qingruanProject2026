@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { ref, reactive, computed, onMounted, onUnmounted } from 'vue'
 import { useRoute } from 'vue-router'
-import { marked } from 'marked'
-import DOMPurify from 'dompurify'
+import { renderMarkdown } from '@/composables/useMarkdown'
+import { getErrorMessage } from '@/utils/errorMessage'
 import Swal from 'sweetalert2'
 import { useLifePlanStore } from '@/stores/lifePlanStore'
 import { useRiskFormStore } from '@/stores/riskFormStore'
@@ -121,24 +121,6 @@ const displayRiskLevel = computed(() => {
 const showPersonalizedHint = computed(() => {
   return !!(displayRiskLevel.value || displayDiabetesType.value)
 })
-
-// ===== Markdown 渲染（复用 Risk.vue safeAdviceHtml 范式） =====
-function safeContentHtml(markdown: unknown): string {
-  if (typeof markdown !== 'string') return ''
-  const html = marked.parse(markdown, { async: false })
-  if (typeof html !== 'string') return ''
-  return DOMPurify.sanitize(html) // 单次净化（S6：不双重净化）
-}
-
-// ===== 错误消息（复用 Risk.vue getErrorMessage 范式） =====
-function getErrorMessage(err: unknown, fallback = '操作失败，请稍后重试'): string {
-  if (err && typeof err === 'object' && 'response' in err) {
-    const axiosErr = err as { response?: { data?: { error?: { message?: string }; message?: string }; status?: number } }
-    if (axiosErr.response?.data?.error?.message) return axiosErr.response.data.error.message
-    if (axiosErr.response?.data?.message) return axiosErr.response.data.message
-  }
-  return fallback
-}
 
 // ===== 时段映射标签（视图派生，不入类型） =====
 const DIET_SLOT: Record<number, string> = { 1: '早餐', 2: '午餐', 3: '晚餐', 4: '加餐' }
@@ -515,7 +497,7 @@ onUnmounted(() => {
             </button>
           </div>
           <!-- Markdown 净化渲染（S2/S6：marked→DOMPurify 一次→v-html） -->
-          <div class="lp-item-content" v-html="safeContentHtml(item.content)"></div>
+          <div class="lp-item-content" v-html="renderMarkdown(item.content)"></div>
         </div>
       </div>
 
@@ -545,7 +527,7 @@ onUnmounted(() => {
               {{ isCompleted(item.id) ? '已打卡' : '打卡' }}
             </button>
           </div>
-          <div class="lp-item-content" v-html="safeContentHtml(item.content)"></div>
+          <div class="lp-item-content" v-html="renderMarkdown(item.content)"></div>
         </div>
       </div>
 
@@ -570,7 +552,7 @@ onUnmounted(() => {
               </div>
               <!-- other 不渲染打卡按钮（需求/DDL：punch_type 仅 diet/exercise） -->
             </div>
-            <div class="lp-item-content" v-html="safeContentHtml(item.content)"></div>
+            <div class="lp-item-content" v-html="renderMarkdown(item.content)"></div>
           </div>
         </div>
       </template>
