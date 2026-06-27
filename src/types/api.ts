@@ -282,3 +282,34 @@ export interface PunchRecord {
   remarks: string;
   punch_time: string;
 }
+
+// ========== 打卡分析类型（Task 3）==========
+
+/**
+ * 打卡分析响应（GET /api/punch/analysis 的 data）。
+ * 字段严格对齐 docs/2_detailed_design_v3.md §3.2.18。
+ */
+export interface PunchAnalysisResponse {
+  /** 饮食总完成率（0-1 浮点，如 0.75 表示 75%） */
+  diet_completion_rate: number;
+  /** 运动总完成率（0-1 浮点） */
+  exercise_completion_rate: number;
+  /** 查询时段内总打卡次数 */
+  total_punches: number;
+  /** 近 7 天每日完成趋势数组（不足 7 天则后端补 0 或返回实际天数） */
+  last_7_days_trend: Array<{
+    /** 日期 YYYY-MM-DD */
+    date: string;
+    /** 当日饮食完成数 */
+    diet_completed: number;
+    /** 当日运动完成数 */
+    exercise_completed: number;
+  }>;
+  /**
+   * AI 依从性评语（可能含 Markdown）。
+   * 前端必须经 marked.parse → DOMPurify.sanitize → v-html 渲染。
+   */
+  adherence_comment: string;
+  /** AI 改进建议列表（纯文本字符串数组） */
+  improvement_suggestions: string[];
+}
