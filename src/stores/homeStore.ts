@@ -3,8 +3,8 @@ import { ref } from 'vue'
 import type { Doctor, Article, DiabetesType, DiabetesTypeDetail } from '@/types/api'
 import { getDoctors, getArticles, getDiabetesTypes, getDiabetesType } from '@/composables/useHomeApi'
 
-/** 仅 store 内部使用的展示视图类型（不入 api.ts，避免污染对外契约类型） */
-interface DiabetesTypeView extends DiabetesType {
+/** 展示视图类型（不入 api.ts，避免污染对外契约类型） */
+export interface DiabetesTypeView extends DiabetesType {
   /** 归一后的封面（image || '' → 组件判空走渐变） */
   cover: string
   /** 归一后的卡片简介（pathogenesis 截断 28 字兜底，空则 ''） */

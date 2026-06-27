@@ -137,6 +137,12 @@ App.vue (根组件)
 | Nginx | 1.24+ | 高性能HTTP服务器、反向代理 | yum/apt安装 |
 | Keepalived | 2.x | 主备模式高可用，VIP漂移 | yum/apt安装 |
 
+> **Markdown 渲染模式**: 当前 marked v12 同步模式 (`marked.parse(md, { async: false })`)
+> 与未来 v13+ 异步模式 (`marked.parse(md, { async: true })`) 为有意并存的双模式策略。
+> - 同步模式: 用于当前所有 Markdown 渲染场景（LifePlan 方案内容、Punch AI 分析评语）
+> - 异步迁移路径: 已在 `useMarkdown.ts` 中以 G16 注释标注 (`// G16: marked v13+ 异步模式`)
+> - 当前 marked v12 同步模式稳定可用，无迁移紧迫性
+
 ### 1.4 模块划分与依赖关系
 
 ```
@@ -493,6 +499,11 @@ const routes: RouteRecordRaw[] = [
         component: () => import('@/views/Punch.vue'),
         meta: { requiresAuth: true }
       },
+      // v5-S13: Punch 路由免责声明决策 — Punch 页面展示 AI 生成的分析内容（依从性评语、改进建议）。
+      // 当前 Punch 路由仅设置 meta: { requiresAuth: true }，不要求免责声明。
+      // 决策: Punch 不需要免责声明——Punch 页面展示的是统计性分析（基于用户打卡数据计算
+      // 完成率/趋势），而非生成式 AI 内容。AI 依从性评语是对统计结果的文字化陈述，不触发
+      // 免责声明要求。若产品后续将此判定为需要免责声明，需同步修改路由 meta 和 src/router/index.ts。
       {
         path: 'advice',
         component: () => import('@/views/HealthAdvice.vue'),
@@ -3495,6 +3506,12 @@ ChangePassword.vue
 | ChangePassword.vue | Pinia authStore | mustChangePassword 标志 (读取后提交成功时清除) | 跨会话 (persisted) |
 | ChangePassword.vue | 组件内 ref | 提交中防重复标志 (isSubmitting), 表单校验状态 | 组件卸载回收 |
 
+> **设计说明——间接一致性模型**: LifePlan 内打卡与 Punch 列表展示采用间接一致性模型
+> (consistency = eventual, via backend API)。LifePlan 打卡通过 `POST /api/punch` 写入后端，
+> Punch 列表通过 `GET /api/punch/list` 从后端读取，两套独立状态通过后端 API 串联。
+> 后端 `POST /api/punch` 的 HTTP 201 契约保证写入在响应返回前已持久化，
+> 前端从 LifePlan 打卡后立即跳转 Punch 页面时，`GET /api/punch/list` 可读取到最新记录。
+
 ### 4.3 各页面JS逻辑流程图
 
 #### Home.vue 流程图:
@@ -3629,9 +3646,9 @@ flowchart TD
     K2 -->|不存在| K4[展示错误状态 + 重试]
     
     L[打卡操作] --> M[点击方案项旁打卡按钮]
-    M --> N[POST /api/punch]
-    N --> O[SweetAlert2确认弹窗<br/>完成/未完成选择]
-    O --> P[1秒内更新按钮状态<br/>checked图标 + 颜色变化]
+    M --> O[SweetAlert2确认弹窗<br/>收集完成/未完成状态 + 备注]
+    O --> N[POST /api/punch]
+    N --> P[乐观更新 completedMap<br/>打卡按钮状态即时切换]
     
     Q[调整方案] --> R[收集feedback]
     R --> S[PUT /api/plan/adjust]

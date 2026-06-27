@@ -32,7 +32,10 @@ function formatDate(d: Date): string {
 const DATE_FORMAT_RE = /^\d{4}-\d{2}-\d{2}$/
 
 // ===== 打卡类型筛选 chip =====
-const typeFilter = ref<PunchType | undefined>(undefined)
+const typeFilter = computed<PunchType | undefined>({
+  get: () => store.filter.punch_type,
+  set: (val: PunchType | undefined) => store.setFilter({ punch_type: val }),
+})
 const TYPE_OPTIONS: Array<{ label: string; value: PunchType | undefined }> = [
   { label: '全部', value: undefined },
   { label: '饮食', value: 'diet' },
@@ -118,6 +121,10 @@ function typeIcon(punchType: PunchType): string {
 let scrollTicking = false
 function onScroll() {
   if (scrollTicking) return
+  // 仅在当前页面可见时处理滚动逻辑
+  const container = document.querySelector('[data-scroll-container="punch"]')
+  if (!container) return
+
   scrollTicking = true
   requestAnimationFrame(() => {
     const { scrollTop, scrollHeight, clientHeight } = document.documentElement
@@ -127,12 +134,6 @@ function onScroll() {
     }
     scrollTicking = false
   })
-}
-
-// ===== 筛选 chip 点击 =====
-function onTypeFilter(val: PunchType | undefined) {
-  typeFilter.value = val
-  store.setFilter({ punch_type: val })
 }
 
 // ===== 日期范围变更 =====
@@ -236,12 +237,12 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="punch-page page-enter">
+  <div class="punch-page page-enter" data-scroll-container="punch">
     <!-- ===== Header（复刻原型 1249-1253） ===== -->
     <header class="punch-header">
       <button
         class="punch-back press"
-        @click="router.back()"
+        @click="router.push('/profile')"
         aria-label="返回"
       >
         <i class="fa-solid fa-chevron-left"></i>
@@ -385,6 +386,11 @@ onUnmounted(() => {
           </ul>
         </div>
 
+        <!-- 分析范围提示 -->
+        <p class="analysis-range-hint" v-if="store.analysis">
+          分析基于当前筛选范围内的打卡记录
+        </p>
+
         <!-- AI 免责提示条（恒显底部） -->
         <div class="punch-disclaimer">
           AI 分析内容仅供参考，不能替代专业医疗诊断，如有不适请及时就医
@@ -433,7 +439,7 @@ onUnmounted(() => {
             'punch-chip press',
             typeFilter === opt.value ? 'punch-chip-active' : '',
           ]"
-          @click="onTypeFilter(opt.value)"
+          @click="typeFilter = opt.value"
         >
           {{ opt.label }}
         </button>
@@ -776,6 +782,14 @@ onUnmounted(() => {
   font-size: var(--font-size-caption);
   color: var(--color-text-secondary);
   line-height: 1.6;
+}
+
+/* ===== 分析范围提示 ===== */
+.analysis-range-hint {
+  font-size: 12px;
+  color: var(--color-text-secondary, #999);
+  text-align: center;
+  margin: 8px 0;
 }
 
 /* ===== AI 免责提示条（恒显底部，对齐 LifePlan lp-disclaimer 范式） ===== */
@@ -1140,11 +1154,7 @@ onUnmounted(() => {
   }
 }
 
-/* ===== 按压动画 ===== */
-.press:active {
-  transform: scale(0.96);
-  transition: var(--transition-fast);
-}
+/* 按压动画（已迁移至全局 animations.css） */
 
 /* ===== 环形图 (G4) ===== */
 

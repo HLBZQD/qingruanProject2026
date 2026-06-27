@@ -1,9 +1,11 @@
+/**
+ * API 类型定义
+ *
+ * 类型策略: API composable 采用内联类型定义每个接口的请求/响应结构，
+ * 更好地表达每个端点的具体契约。不使用泛型包装器 (ApiResponse<T> 等)。
+ */
+
 // ========== 通用类型 ==========
-export interface ApiResponse<T> {
-  success: boolean;
-  data: T;
-  message?: string;
-}
 
 export interface ApiError {
   error: {
@@ -22,11 +24,6 @@ export interface PaginationInfo {
   pageSize: number;
   total: number;
   totalPages: number;
-}
-
-export interface PaginatedResponse<T> {
-  data: T[];
-  pagination: PaginationInfo;
 }
 
 // ========== 认证类型 ==========
