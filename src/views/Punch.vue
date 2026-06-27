@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { marked } from 'marked'
-import DOMPurify from 'dompurify'
+import { renderMarkdown } from '@/composables/useMarkdown'
+import { getErrorMessage } from '@/utils/errorMessage'
 import { usePunchStore } from '@/stores/punchStore'
 import { enumLabel } from '@/utils/enumLabels'
 import type { PunchType } from '@/types/api'
@@ -60,30 +60,33 @@ const trendData = computed(() => {
   })
 })
 
-// ===== AI 分析 Markdown 净化链（对齐 LifePlan safeContentHtml 范式） =====
-function safeAnalysisHtml(markdown: unknown): string {
-  if (typeof markdown !== 'string') return ''
-  const html = marked.parse(markdown, { async: false })
-  if (typeof html !== 'string') return ''
-  return DOMPurify.sanitize(html) // 单次净化（S6：不双重净化）
-}
+// ===== 环形图计算 (G4) =====
 
-// ===== 错误消息（复用 Risk.vue getErrorMessage 范式） =====
-function getErrorMessage(err: unknown, fallback = '操作失败，请稍后重试'): string {
-  if (err && typeof err === 'object' && 'response' in err) {
-    const axiosErr = err as {
-      response?: {
-        data?: { error?: { message?: string }; message?: string }
-        status?: number
-      }
-    }
-    if (axiosErr.response?.data?.error?.message)
-      return axiosErr.response.data.error.message
-    if (axiosErr.response?.data?.message)
-      return axiosErr.response.data.message
-  }
-  return fallback
-}
+/** 圆环周长（半径 40 在 viewBox 100x100 中） */
+const CIRCLE_LENGTH = 2 * Math.PI * 40
+
+/** 完成率（0-1 数值），无数据时返回 null */
+const completionRate = computed(() => {
+  const analysis = store.analysis
+  // 无分析数据
+  if (!analysis) return null
+  // 综合完成率取饮食+运动平均值
+  const avg = (analysis.diet_completion_rate + analysis.exercise_completion_rate) / 2
+  // 限制最大值为 1（防御异常数据）
+  return Math.min(avg, 1)
+})
+
+/** stroke-dashoffset 取值（控制进度环的可见长度） */
+const dashOffset = computed(() => {
+  if (completionRate.value === null) return CIRCLE_LENGTH // 无数据：全空环
+  return CIRCLE_LENGTH * (1 - completionRate.value)
+})
+
+/** 环形图中心文字 */
+const rateText = computed(() => {
+  if (completionRate.value === null) return '-'
+  return Math.round(completionRate.value * 100) + '%'
+})
 
 // ===== 完成率百分比格式化 =====
 function ratePercent(rate: number | undefined | null): string {
@@ -140,6 +143,49 @@ function onDateChange() {
   })
 }
 
+// ===== 刷新按钮 (G5) =====
+
+/** 刷新动画延迟（ms）— 避免快速刷新时图标闪烁 */
+const REFRESH_ANIM_DELAY = 500
+
+/** 是否展示旋转动画 */
+const isRefreshing = ref(false)
+
+/** 旋转动画的延迟启动 timer */
+let refreshAnimTimer: ReturnType<typeof setTimeout> | null = null
+
+/** 刷新按钮的 title 提示文案 */
+const refreshTitle = computed(() => {
+  if (store.listLoading || store.analysisLoading) return '刷新中...'
+  return '刷新打卡数据'
+})
+
+/** 刷新：并发拉取列表和分析 */
+async function onRefresh(): Promise<void> {
+  // 防双击/防重复刷新：正在加载时直接返回
+  if (store.listLoading || store.analysisLoading) return
+
+  try {
+    // 延迟启动旋转动画（避免快速刷新时闪烁）
+    refreshAnimTimer = setTimeout(() => {
+      isRefreshing.value = true
+    }, REFRESH_ANIM_DELAY)
+
+    // 并发刷新列表和分析（利用 Store 已有的竞态保护）
+    await Promise.all([store.fetchList(), store.fetchAnalysis()])
+  } catch {
+    // 错误由各自 Store 的 error ref 处理，onRefresh 层面不重复提示
+    // fetchList() 和 fetchAnalysis() 内部已有 try/catch 回填 listError/analysisError
+  } finally {
+    // 清理 timer 并恢复视觉状态
+    if (refreshAnimTimer !== null) {
+      clearTimeout(refreshAnimTimer)
+      refreshAnimTimer = null
+    }
+    isRefreshing.value = false
+  }
+}
+
 // ===== 初始化 =====
 onMounted(async () => {
   listViewMode.value = 'listLoading'
@@ -181,6 +227,11 @@ onMounted(async () => {
 
 onUnmounted(() => {
   window.removeEventListener('scroll', onScroll)
+  // 清理刷新按钮旋转定时器（防止组件卸载后 timer 操作已销毁的响应式状态）
+  if (refreshAnimTimer !== null) {
+    clearTimeout(refreshAnimTimer)
+    refreshAnimTimer = null
+  }
 })
 </script>
 
@@ -241,6 +292,47 @@ onUnmounted(() => {
           </div>
         </div>
 
+        <!-- 统计卡 - 完成率环形图 (G4) -->
+        <div class="punch-stat-card punch-donut-card">
+          <h3 class="punch-stat-label">综合完成率</h3>
+          <div class="donut-chart">
+            <svg viewBox="0 0 100 100" class="donut-svg">
+              <!-- 背景环（灰色底环） -->
+              <circle
+                cx="50" cy="50" r="40"
+                fill="none"
+                stroke="var(--color-border, #e0e0e0)"
+                stroke-width="8"
+              />
+              <!-- 进度环（有颜色、带动画） -->
+              <circle
+                cx="50" cy="50" r="40"
+                fill="none"
+                stroke="var(--color-primary, #4A90D9)"
+                stroke-width="8"
+                stroke-linecap="round"
+                :stroke-dasharray="CIRCLE_LENGTH"
+                :stroke-dashoffset="dashOffset"
+                class="donut-progress"
+                transform="rotate(-90 50 50)"
+              />
+              <!-- 中心文字 -->
+              <text
+                x="50" y="50"
+                text-anchor="middle"
+                dominant-baseline="central"
+                class="donut-text"
+                :class="{ 'donut-text--small': rateText.length > 4 }"
+              >
+                {{ rateText }}
+              </text>
+            </svg>
+          </div>
+          <p class="punch-stat-desc">
+            总打卡 {{ store.analysis.total_punches }} 次
+          </p>
+        </div>
+
         <!-- 本周完成趋势柱状图（纯 CSS，7 列） -->
         <div class="punch-trend-card">
           <h2 class="punch-section-title">本周完成趋势</h2>
@@ -276,7 +368,7 @@ onUnmounted(() => {
           </div>
           <div
             class="punch-comment-body"
-            v-html="safeAnalysisHtml(store.analysis.adherence_comment)"
+            v-html="renderMarkdown(store.analysis.adherence_comment)"
           ></div>
           <!-- 改进建议列表 -->
           <ul
@@ -319,6 +411,17 @@ onUnmounted(() => {
           @change="onDateChange"
           aria-label="结束日期"
         />
+        <!-- 刷新按钮 (G5) -->
+        <button
+          class="btn-icon press"
+          id="btn-refresh"
+          @click="onRefresh"
+          :disabled="store.listLoading || store.analysisLoading"
+          :title="refreshTitle"
+          aria-label="刷新打卡数据"
+        >
+          <i class="fa-solid fa-rotate" :class="{ 'fa-spin': isRefreshing }"></i>
+        </button>
       </div>
 
       <!-- 类型筛选 chip -->
@@ -1041,5 +1144,90 @@ onUnmounted(() => {
 .press:active {
   transform: scale(0.96);
   transition: var(--transition-fast);
+}
+
+/* ===== 环形图 (G4) ===== */
+
+.punch-donut-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: var(--spacing-md);
+}
+
+.donut-chart {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 120px;
+  height: 120px;
+  margin: 0 auto;
+}
+
+.donut-svg {
+  width: 100%;
+  height: 100%;
+}
+
+/* 进度环动画：CSS transition 驱动 stroke-dashoffset 变化 */
+.donut-progress {
+  transition: stroke-dashoffset 0.8s ease-out;
+}
+
+/* 中心文字 */
+.donut-text {
+  font-size: 14px;
+  font-weight: 600;
+  fill: var(--color-text, #333);
+}
+
+/* 小字号变体（如 "100%" 4字符以上时缩小字号避免溢出） */
+.donut-text--small {
+  font-size: 12px;
+}
+
+.punch-stat-desc {
+  font-size: var(--font-size-caption);
+  color: var(--color-text-secondary);
+  margin-top: var(--spacing-xs);
+}
+
+/* ===== 刷新按钮 (G5) ===== */
+
+#btn-refresh {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 1px solid var(--color-border, #ddd);
+  background: var(--color-bg, #fff);
+  color: var(--color-text-secondary, #666);
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+#btn-refresh:hover:not(:disabled) {
+  background: var(--color-bg-hover, #f5f5f5);
+  color: var(--color-primary, #4A90D9);
+}
+
+#btn-refresh:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* 旋转动画 class */
+#btn-refresh .fa-spin {
+  animation: refresh-spin 1s linear infinite;
+}
+
+/* FontAwesome 风格旋转关键帧 */
+@keyframes refresh-spin {
+  0%   { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
 </style>

@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
-import DOMPurify from 'dompurify'
 import Swal from 'sweetalert2'
+import { escapeHtml, sanitizeHtml } from '@/utils/sanitize'
 import { useHomeStore } from '@/stores/homeStore'
 import type { Article, DiabetesType, DiabetesTypeDetail } from '@/types/api'
 
@@ -113,7 +113,7 @@ function openTypeSwal(t: DiabetesTypeDetail): void {
       ? `<h4 style="color:#4A90D9;font-size:15px;margin:12px 0 4px;text-align:left">${label}</h4>` +
         `<p style="font-size:13px;line-height:1.6;color:#333;margin:0;text-align:left">${escapeHtml(body)}</p>`
       : ''
-  const html = DOMPurify.sanitize(
+  const html = sanitizeHtml(
     `<div class="dt-modal">
        ${buildSection('病因', t.pathogenesis)}
        ${buildSection('临床表现', t.manifestation)}
@@ -126,14 +126,6 @@ function openTypeSwal(t: DiabetesTypeDetail): void {
     confirmButtonText: '了解了',
     width: 340,
   })
-}
-
-// 纯文本转义（字段为纯文本时防止文本里含 < > & 破坏 HTML 结构；与 DOMPurify 双保险但无双重净化语义）
-function escapeHtml(s: string): string {
-  return s
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
 }
 
 // ===== img onerror 回退（占位资源缺失兜底） =====
