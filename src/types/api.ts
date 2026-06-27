@@ -114,6 +114,11 @@ export interface Doctor {
   avatar: string | null;
 }
 
+/** 医生详情 (含在线状态)，GET /api/doctors/:id */
+export interface DoctorDetail extends Doctor {
+  is_online: boolean
+}
+
 // ========== 健康科普文章类型 ==========
 /**
  * 健康科普文章列表项（GET /api/articles 的 data 数组元素，无完整正文 content）。
