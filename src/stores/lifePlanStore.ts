@@ -33,6 +33,62 @@ export const useLifePlanStore = defineStore('lifePlan', () => {
    */
   const completedMap = ref<Map<number, CompletionStatus>>(new Map())
 
+  // ===== sessionStorage 方案缓存 =====
+  const PLAN_CACHE_KEY = 'qrzl_plan_cache'
+  const PLAN_CACHE_TTL = 1800000 // 30 分钟（毫秒）
+
+  /**
+   * completedMap (Map<number, CompletionStatus>) 不可直接 JSON 序列化。
+   * 序列化时转为 [[k, v], ...] 数组格式；反序列化时 new Map(array) 恢复。
+   */
+  interface PlanCache {
+    currentPlan: PlanCurrentResponse | null
+    /** completedMap 的数组表示: [[itemId, status], ...] */
+    completedMapArray: Array<[number, CompletionStatus]>
+    timestamp: number
+  }
+
+  function readPlanCache(): PlanCache | null {
+    try {
+      const raw = sessionStorage.getItem(PLAN_CACHE_KEY)
+      if (!raw) return null
+      const cache: PlanCache = JSON.parse(raw)
+      if (
+        typeof cache.timestamp !== 'number' ||
+        !Array.isArray(cache.completedMapArray)
+      ) {
+        sessionStorage.removeItem(PLAN_CACHE_KEY)
+        return null
+      }
+      if (Date.now() - cache.timestamp >= PLAN_CACHE_TTL) {
+        sessionStorage.removeItem(PLAN_CACHE_KEY)
+        return null
+      }
+      return cache
+    } catch {
+      sessionStorage.removeItem(PLAN_CACHE_KEY)
+      return null
+    }
+  }
+
+  function writePlanCache(): void {
+    try {
+      sessionStorage.setItem(PLAN_CACHE_KEY, JSON.stringify({
+        currentPlan: currentPlan.value,            // 可为 null（空方案）
+        completedMapArray: [...completedMap.value], // Map → Array
+        timestamp: Date.now(),
+      }))
+    } catch {
+      // QuotaExceededError 静默丢弃
+    }
+  }
+
+  function clearPlanCache(): void {
+    try {
+      sessionStorage.removeItem(PLAN_CACHE_KEY)
+    } catch { /* ignore */ }
+  }
+
   // ===== actions =====
 
   /**
@@ -40,11 +96,21 @@ export const useLifePlanStore = defineStore('lifePlan', () => {
    * 失败回填 error，不抛出（组件按 error 显示重试态）。
    */
   async function fetchCurrent(): Promise<void> {
+    // 检查 sessionStorage 缓存
+    const cache = readPlanCache()
+    if (cache) {
+      currentPlan.value = cache.currentPlan // 可为 null（空方案）
+      completedMap.value = new Map(cache.completedMapArray)
+      // 缓存命中直接返回；loading 保持 false（初始值）
+      return
+    }
+
     loading.value = true
     error.value = null
     try {
       const data = await getCurrentPlan()
       currentPlan.value = data // 可为 null（空方案态）
+      writePlanCache()          // API 成功后覆盖缓存
     } catch (e: unknown) {
       error.value = e instanceof Error ? e : new Error('方案加载失败')
     } finally {
@@ -68,6 +134,7 @@ export const useLifePlanStore = defineStore('lifePlan', () => {
       const data = await generatePlan(req)
       currentPlan.value = { ...data, generated_at: new Date().toISOString() }
       completedMap.value = new Map() // 新方案重置打卡态
+      writePlanCache()  // 成功后写入缓存
       return true
     } catch (e: unknown) {
       // 409 幂等识别：axios error.response.status === 409
@@ -96,6 +163,7 @@ export const useLifePlanStore = defineStore('lifePlan', () => {
       const data = await adjustPlan(req)
       currentPlan.value = { ...data, generated_at: new Date().toISOString() }
       completedMap.value = new Map() // 调整后重置打卡态
+      writePlanCache()  // 成功后写入缓存
       return true
     } catch (e: unknown) {
       adjustError.value = e instanceof Error ? e : new Error('方案调整失败')
@@ -154,5 +222,7 @@ export const useLifePlanStore = defineStore('lifePlan', () => {
     createPunch: createPunchAction,
     retryGenerate,
     retryFetchCurrent,
+    // cache
+    clearPlanCache,
   }
 })

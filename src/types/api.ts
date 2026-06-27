@@ -138,6 +138,16 @@ export interface Article {
   created_at: string;
 }
 
+/** 文章详情（含正文），GET /api/articles/:id
+ *  设计依据: docs/2_detailed_design_v3.md 3.2.20 节 (第2051行)
+ */
+export interface ArticleDetail extends Article {
+  /** Markdown 正文 */
+  content: string
+  /** 当前用户是否已收藏 */
+  is_collected: boolean
+}
+
 // ========== 糖尿病类型科普 ==========
 /**
  * 糖尿病类型（GET /api/diabetes-types 列表元素，与 GET /api/diabetes-types/:id 详情字段一致）。

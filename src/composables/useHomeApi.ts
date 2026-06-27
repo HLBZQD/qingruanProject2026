@@ -2,6 +2,7 @@ import { api } from '@/composables/useApi'
 import type {
   Doctor,
   Article,
+  ArticleDetail,
   DiabetesType,
   DiabetesTypeDetail,
   PaginationParams,
@@ -67,6 +68,22 @@ export async function getDiabetesTypes(): Promise<DiabetesType[]> {
 export async function getDiabetesType(id: number): Promise<DiabetesTypeDetail> {
   const res = await api.get<{ success: boolean; data: DiabetesType; message?: string }>(
     `/diabetes-types/${encodeURIComponent(id)}`,
+  )
+  return res.data.data
+}
+
+/**
+ * 获取单篇文章详情（含 Markdown 正文）
+ * GET /api/articles/:id
+ * 设计依据: docs/2_detailed_design_v3.md 3.2.20 节
+ *
+ * @param id - 文章主键 (number)。注意：使用 String(id) 直接拼接，非 encodeURIComponent
+ *             （id 为 number 主键，不含特殊字符；与 getDiabetesType 保持一致的拼接模式）
+ * @returns ArticleDetail（含 content 和 is_collected）
+ */
+export async function getArticle(id: number): Promise<ArticleDetail> {
+  const res = await api.get<{ success: boolean; data: ArticleDetail; message?: string }>(
+    `/articles/${id}`
   )
   return res.data.data
 }

@@ -29,6 +29,66 @@ export const useHomeStore = defineStore('home', () => {
   const detailLoading = ref<boolean>(false)
   const detailError = ref<Error | null>(null)
 
+  // ===== sessionStorage 缓存 =====
+  const HOME_CACHE_KEY = 'qrzl_home_cache'
+  const HOME_CACHE_TTL = 3600000 // 1 小时（毫秒）
+
+  interface HomeCache {
+    doctors: Doctor[]
+    articles: Article[]
+    diabetesTypes: DiabetesTypeView[]
+    timestamp: number
+  }
+
+  /** 从 sessionStorage 读取并验证缓存 */
+  function readHomeCache(): HomeCache | null {
+    try {
+      const raw = sessionStorage.getItem(HOME_CACHE_KEY)
+      if (!raw) return null
+      const cache: HomeCache = JSON.parse(raw)
+      // 结构完整性校验：必须有 timestamp 且三个 data 字段为数组
+      if (
+        typeof cache.timestamp !== 'number' ||
+        !Array.isArray(cache.doctors) ||
+        !Array.isArray(cache.articles) ||
+        !Array.isArray(cache.diabetesTypes)
+      ) {
+        sessionStorage.removeItem(HOME_CACHE_KEY) // 脏数据清理
+        return null
+      }
+      if (Date.now() - cache.timestamp >= HOME_CACHE_TTL) {
+        sessionStorage.removeItem(HOME_CACHE_KEY) // 过期清理
+        return null
+      }
+      return cache
+    } catch {
+      // JSON.parse 失败（损坏数据），静默降级为 API 请求
+      sessionStorage.removeItem(HOME_CACHE_KEY)
+      return null
+    }
+  }
+
+  /** 写入 sessionStorage 缓存 */
+  function writeHomeCache(): void {
+    try {
+      sessionStorage.setItem(HOME_CACHE_KEY, JSON.stringify({
+        doctors: doctors.value,
+        articles: articles.value,
+        diabetesTypes: diabetesTypes.value,
+        timestamp: Date.now(),
+      }))
+    } catch {
+      // QuotaExceededError 或其他存储异常，静默丢弃——缓存为性能优化，不影响功能
+    }
+  }
+
+  /** 清除缓存（供 clearAuth 等外部调用） */
+  function clearHomeCache(): void {
+    try {
+      sessionStorage.removeItem(HOME_CACHE_KEY)
+    } catch { /* ignore */ }
+  }
+
   // ===== actions =====
 
   /**
@@ -36,6 +96,16 @@ export const useHomeStore = defineStore('home', () => {
    * 用 Promise.allSettled，按 result.status 回填数据/错误。
    */
   async function fetchHomeData(): Promise<void> {
+    // 检查 sessionStorage 缓存
+    const cache = readHomeCache()
+    if (cache) {
+      doctors.value = cache.doctors
+      articles.value = cache.articles
+      diabetesTypes.value = cache.diabetesTypes
+      // 缓存命中直接返回；loading 保持 false（初始值），组件正常渲染
+      return
+    }
+
     loading.value = true
     doctorsError.value = null
     articlesError.value = null
@@ -53,6 +123,11 @@ export const useHomeStore = defineStore('home', () => {
     else articlesError.value = artRes.reason instanceof Error ? artRes.reason : new Error('科普文章加载失败')
     if (typeRes.status === 'fulfilled') diabetesTypes.value = normalizeTypes(typeRes.value)
     else typesError.value = typeRes.reason instanceof Error ? typeRes.reason : new Error('糖尿病类型加载失败')
+
+    // API 成功后写入缓存（部分成功也写入——已有数据即可缓存）
+    if (docRes.status === 'fulfilled' || artRes.status === 'fulfilled' || typeRes.status === 'fulfilled') {
+      writeHomeCache()
+    }
 
     loading.value = false
   }
@@ -92,6 +167,7 @@ export const useHomeStore = defineStore('home', () => {
       doctorsError.value = null
       try {
         doctors.value = await getDoctors({ page: 1, pageSize: 20 })
+        writeHomeCache()
       } catch (e) {
         doctorsError.value = e instanceof Error ? e : new Error('医师列表加载失败')
       }
@@ -101,6 +177,7 @@ export const useHomeStore = defineStore('home', () => {
       articlesError.value = null
       try {
         articles.value = await getArticles({ page: 1, pageSize: 3 })
+        writeHomeCache()
       } catch (e) {
         articlesError.value = e instanceof Error ? e : new Error('科普文章加载失败')
       }
@@ -109,6 +186,7 @@ export const useHomeStore = defineStore('home', () => {
     typesError.value = null
     try {
       diabetesTypes.value = normalizeTypes(await getDiabetesTypes())
+      writeHomeCache()
     } catch (e) {
       typesError.value = e instanceof Error ? e : new Error('糖尿病类型加载失败')
     }
@@ -146,5 +224,7 @@ export const useHomeStore = defineStore('home', () => {
     retryDoctors,
     retryArticles,
     retryTypes,
+    // cache
+    clearHomeCache,
   }
 })

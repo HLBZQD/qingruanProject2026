@@ -51,6 +51,9 @@ export const usePunchStore = defineStore('punch', () => {
   /** 请求序列号（防竞态：快速切换筛选时旧响应不覆盖新响应） */
   const requestId = ref(0)
 
+  /** 防抖 timer：setFilter 中 fetchAnalysis 使用，避免连续改日期导致多次 API 请求 */
+  let analysisDebounceTimer: ReturnType<typeof setTimeout> | null = null
+
   /**
    * 拉取打卡列表（首屏 / 筛选重置）。
    * 全量替换 records + pagination；清空 error。
@@ -125,12 +128,18 @@ export const usePunchStore = defineStore('punch', () => {
   async function fetchAnalysis(): Promise<void> {
     analysisLoading.value = true
     analysisError.value = null
+    requestId.value++
+    const snapshot = requestId.value
     try {
       analysis.value = await getPunchAnalysis()
+      if (snapshot !== requestId.value) return
     } catch (e) {
+      if (snapshot !== requestId.value) return
       analysisError.value = e instanceof Error ? e : new Error('AI 分析暂不可用')
     } finally {
-      analysisLoading.value = false
+      if (snapshot === requestId.value) {
+        analysisLoading.value = false
+      }
     }
   }
 
@@ -139,16 +148,25 @@ export const usePunchStore = defineStore('punch', () => {
    * partial 仅含变化字段；未提供字段保留原值。
    * punch_type 切回 undefined 表示「全部」。
    */
-  function setFilter(partial: {
+  async function setFilter(partial: {
     startDate?: string
     endDate?: string
     punch_type?: PunchType | undefined
-  }): void {
+  }): Promise<void> {
     if ('startDate' in partial) filter.startDate = partial.startDate
     if ('endDate' in partial) filter.endDate = partial.endDate
     if ('punch_type' in partial) filter.punch_type = partial.punch_type
     // 重置到首屏
-    fetchList()
+    await fetchList()
+
+    // 防抖触发分析重拉取（300ms）
+    if (analysisDebounceTimer !== null) {
+      clearTimeout(analysisDebounceTimer)
+    }
+    analysisDebounceTimer = setTimeout(() => {
+      analysisDebounceTimer = null
+      fetchAnalysis()
+    }, 300)
   }
 
   /** 重试列表加载（保持当前筛选） */

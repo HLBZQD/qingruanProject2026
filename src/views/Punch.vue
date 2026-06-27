@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import { marked } from 'marked'
 import DOMPurify from 'dompurify'
 import { usePunchStore } from '@/stores/punchStore'
@@ -8,6 +8,7 @@ import { enumLabel } from '@/utils/enumLabels'
 import type { PunchType } from '@/types/api'
 
 const router = useRouter()
+const route = useRoute()
 const store = usePunchStore()
 
 // ===== 视图态 =====
@@ -21,6 +22,14 @@ const listViewMode = ref<'list' | 'listLoading' | 'listError'>('listLoading')
 // ===== 日期范围筛选 =====
 const dateStart = ref('')
 const dateEnd = ref('')
+
+// ===== 日期格式化工具函数 =====
+function formatDate(d: Date): string {
+  return d.toISOString().slice(0, 10) // "YYYY-MM-DD"
+}
+
+// ===== URL 日期格式校验正则 =====
+const DATE_FORMAT_RE = /^\d{4}-\d{2}-\d{2}$/
 
 // ===== 打卡类型筛选 chip =====
 const typeFilter = ref<PunchType | undefined>(undefined)
@@ -134,14 +143,38 @@ function onDateChange() {
 // ===== 初始化 =====
 onMounted(async () => {
   listViewMode.value = 'listLoading'
-  await store.fetchList()
+
+  // 计算默认日期范围（近30天），优先使用 URL query 参数（带格式校验）
+  const qStart = route.query.startDate
+  const qEnd = route.query.endDate
+  if (
+    typeof qStart === 'string' && DATE_FORMAT_RE.test(qStart) &&
+    typeof qEnd === 'string' && DATE_FORMAT_RE.test(qEnd)
+  ) {
+    // URL 参数有效 → 优先使用（从其他页面跳转携带筛选条件）
+    dateStart.value = qStart
+    dateEnd.value = qEnd
+  } else {
+    // 默认近30天（含：无参数、格式非法、仅一个参数存在）
+    const end = new Date()
+    const start = new Date()
+    start.setDate(start.getDate() - 30)
+    dateEnd.value = formatDate(end)
+    dateStart.value = formatDate(start)
+  }
+
+  // 使用 setFilter 替代 fetchList
+  // setFilter 内部 await fetchList() + 防抖 fetchAnalysis()
+  await store.setFilter({
+    startDate: dateStart.value || undefined,
+    endDate: dateEnd.value || undefined,
+  })
+
   if (store.error) {
     listViewMode.value = 'listError'
   } else {
     listViewMode.value = 'list'
   }
-  // AI 分析独立并行拉取（不阻塞列表）
-  store.fetchAnalysis()
   // 滚动监听（用于触底加载更多）
   window.addEventListener('scroll', onScroll, { passive: true })
 })
