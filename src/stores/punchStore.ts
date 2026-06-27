@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { ref, reactive, computed } from 'vue'
+import { ref, computed } from 'vue'
 import type {
   PunchRecord,
   PunchAnalysisResponse,
@@ -16,7 +16,7 @@ export const usePunchStore = defineStore('punch', () => {
   /** 分页信息（null = 未加载或加载失败） */
   const pagination = ref<PaginationInfo | null>(null)
   /** 当前筛选条件 */
-  const filter = reactive<{
+  const filter = ref<{
     startDate?: string
     endDate?: string
     punch_type?: PunchType
@@ -68,9 +68,9 @@ export const usePunchStore = defineStore('punch', () => {
       const params: PunchListParams = {
         page: 1,
         pageSize: 20,
-        ...(filter.startDate ? { startDate: filter.startDate } : {}),
-        ...(filter.endDate ? { endDate: filter.endDate } : {}),
-        ...(filter.punch_type ? { punch_type: filter.punch_type } : {}),
+        ...(filter.value.startDate ? { startDate: filter.value.startDate } : {}),
+        ...(filter.value.endDate ? { endDate: filter.value.endDate } : {}),
+        ...(filter.value.punch_type ? { punch_type: filter.value.punch_type } : {}),
       }
       const { records: r, pagination: p } = await getPunchList(params)
       if (snapshot !== requestId.value) return // 已被后续请求覆盖，丢弃
@@ -103,9 +103,9 @@ export const usePunchStore = defineStore('punch', () => {
       const params: PunchListParams = {
         page: nextPage,
         pageSize: 20,
-        ...(filter.startDate ? { startDate: filter.startDate } : {}),
-        ...(filter.endDate ? { endDate: filter.endDate } : {}),
-        ...(filter.punch_type ? { punch_type: filter.punch_type } : {}),
+        ...(filter.value.startDate ? { startDate: filter.value.startDate } : {}),
+        ...(filter.value.endDate ? { endDate: filter.value.endDate } : {}),
+        ...(filter.value.punch_type ? { punch_type: filter.value.punch_type } : {}),
       }
       const { records: r, pagination: p } = await getPunchList(params)
       if (snapshot !== requestId.value) return
@@ -153,9 +153,7 @@ export const usePunchStore = defineStore('punch', () => {
     endDate?: string
     punch_type?: PunchType | undefined
   }): Promise<void> {
-    if ('startDate' in partial) filter.startDate = partial.startDate
-    if ('endDate' in partial) filter.endDate = partial.endDate
-    if ('punch_type' in partial) filter.punch_type = partial.punch_type
+    filter.value = { ...filter.value, ...partial }
     // 重置到首屏
     await fetchList()
 

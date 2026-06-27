@@ -4,6 +4,7 @@ import { useRouter } from 'vue-router'
 import Swal from 'sweetalert2'
 import { escapeHtml, sanitizeHtml } from '@/utils/sanitize'
 import { useHomeStore } from '@/stores/homeStore'
+import type { DiabetesTypeView } from '@/stores/homeStore'
 import type { Article, DiabetesType, DiabetesTypeDetail } from '@/types/api'
 
 const router = useRouter()
@@ -12,12 +13,6 @@ const homeStore = useHomeStore()
 // 占位常量（与 store 内同名常量保持一致值；store 不暴露常量，故组件自带）
 const FALLBACK_ARTICLE_COVER = '/static/images/placeholder-article.svg'
 const FALLBACK_DOCTOR_AVATAR = '/static/images/placeholder-doctor.svg'
-
-// 展示视图类型（与 store 内 DiabetesTypeView 结构一致；store 不导出，故组件自带）
-interface DiabetesTypeView extends DiabetesType {
-  cover: string
-  brief: string
-}
 
 // ===== 轮播 Banner（复刻 prototype banners 3 条） =====
 interface Banner {
@@ -165,6 +160,7 @@ onUnmounted(() => {
           <p class="home-subtitle">科学控糖 · 智慧生活</p>
         </div>
       </div>
+      <!-- 搜索图标——功能占位（待后续迭代实现完整搜索），当前弹出 Toast 提示 -->
       <button class="home-search-btn" aria-label="搜索" @click="onSearch">
         <i class="fa-solid fa-magnifying-glass"></i>
       </button>
@@ -282,6 +278,7 @@ onUnmounted(() => {
     <section class="home-section">
       <div class="section-head">
         <h2 class="section-title">糖尿病类型</h2>
+        <!-- 全部链接为预留入口，待后续迭代实现糖尿病类型列表页 -->
         <span class="section-link-static">
           全部 <i class="fa-solid fa-chevron-right"></i>
         </span>
@@ -330,18 +327,20 @@ onUnmounted(() => {
   position: relative;
 }
 
-/* ============ page-enter 入场动画 ============ */
-.page-enter {
-  animation: pageEnter 0.3s ease;
+/* ============ Home 专属入场动画（在全局 fadeIn 基础上追加 translateY 上滑效果） ============ */
+.page-enter.home-page {
+  animation-name: pageEnterHome;
+  animation-duration: 0.4s;
 }
-@keyframes pageEnter {
+
+@keyframes pageEnterHome {
   from {
     opacity: 0;
     transform: translateY(8px);
   }
   to {
     opacity: 1;
-    transform: none;
+    transform: translateY(0);
   }
 }
 

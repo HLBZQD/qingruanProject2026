@@ -169,10 +169,10 @@ function isCompleted(itemId: number): boolean {
 
 // ===== 表单校验 =====
 function validateForm(): boolean {
-  if (form.age == null || form.age < 1 || form.age > 120) return false
+  if (!Number.isFinite(form.age) || form.age < 1 || form.age > 120) return false
   if (form.gender !== 'male' && form.gender !== 'female') return false
-  if (form.height == null || form.height <= 0) return false
-  if (form.weight == null || form.weight <= 0) return false
+  if (!Number.isFinite(form.height) || form.height <= 0) return false
+  if (!Number.isFinite(form.weight) || form.weight <= 0) return false
   return true
 }
 
@@ -361,12 +361,13 @@ onUnmounted(() => {
     </div>
 
     <!-- 无方案引导态 -->
+    <!-- 对应设计文档 4.1.4节 empty-state；项目使用 lp- 前缀作为统一命名空间 -->
     <div v-else-if="viewMode === 'empty'" class="lp-empty">
       <div class="lp-empty-card">
         <div class="lp-empty-icon"><i class="fa-solid fa-clipboard-list"></i></div>
         <h2 class="lp-empty-title">还没有专属方案</h2>
         <p class="lp-empty-desc">基于您的健康信息，AI 将为您生成个性化饮食与运动方案</p>
-        <button class="lp-cta press" @click="showForm">立即定制方案</button>
+        <button class="lp-cta press" @click="showForm">生成我的生活方案</button>
       </div>
     </div>
 
@@ -889,11 +890,7 @@ onUnmounted(() => {
   cursor: not-allowed;
 }
 
-/* 按压动画 */
-.press:active {
-  transform: scale(0.96);
-  transition: var(--transition-fast);
-}
+/* 按压动画（已迁移至全局 animations.css） */
 
 /* 习惯 chip */
 .lp-habit-chip {
@@ -1082,16 +1079,5 @@ onUnmounted(() => {
   color: var(--color-primary);
 }
 
-/* 页面进入动画 */
-.page-enter {
-  animation: fadeIn 0.3s ease;
-}
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
+/* 页面进入动画（已迁移至全局 animations.css） */
 </style>
