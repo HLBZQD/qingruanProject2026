@@ -102,6 +102,5 @@ export function sanitizeHtml(html: string): string {
     // —— 返回类型 ——
     RETURN_DOM: false,          // 返回字符串而非 DOM 树
     RETURN_DOM_FRAGMENT: false,
-    RETURN_DOM_IMPORT: false,
   })
 }

@@ -39,5 +39,6 @@ const LABELS = {
 } as const satisfies Record<string, Record<string, string>>
 
 export function enumLabel(category: string, value: string): string {
-  return LABELS[category]?.[value] ?? value
+  const group = (LABELS as Record<string, Record<string, string>>)[category]
+  return group?.[value] ?? value
 }

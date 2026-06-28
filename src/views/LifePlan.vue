@@ -169,10 +169,10 @@ function isCompleted(itemId: number): boolean {
 
 // ===== 表单校验 =====
 function validateForm(): boolean {
-  if (!Number.isFinite(form.age) || form.age < 1 || form.age > 120) return false
+  if (form.age == null || !Number.isFinite(form.age) || form.age < 1 || form.age > 120) return false
   if (form.gender !== 'male' && form.gender !== 'female') return false
-  if (!Number.isFinite(form.height) || form.height <= 0) return false
-  if (!Number.isFinite(form.weight) || form.weight <= 0) return false
+  if (form.height == null || !Number.isFinite(form.height) || form.height <= 0) return false
+  if (form.weight == null || !Number.isFinite(form.weight) || form.weight <= 0) return false
   return true
 }
 

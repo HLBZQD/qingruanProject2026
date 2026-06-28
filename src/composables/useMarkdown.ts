@@ -39,7 +39,7 @@ const _linkRenderer = {
     return `<a href="${h}"${t}${rel}>${text}</a>`
   },
 }
-marked.use({ renderer: _linkRenderer })
+marked.use({ renderer: _linkRenderer as any })
 
 /**
  * Markdown → 安全 HTML 渲染管道。

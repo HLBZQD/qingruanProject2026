@@ -64,6 +64,22 @@ export interface UpdateProfileRequest {
   avatar?: string;
 }
 
+export interface ChangePasswordRequest {
+  old_password?: string
+  new_password: string
+}
+
+/** 管理员操作日志 */
+export interface AdminLog {
+  id: number
+  operator_id: number
+  operator_username: string
+  operation_type: 'INSERT' | 'UPDATE' | 'DELETE' | 'SELECT' | string
+  operation_content: string
+  operation_result: string
+  operation_time: string
+}
+
 // ========== 风险预测类型 ==========
 export interface RiskPredictRequest {
   diabetes_history: 'healthy' | 'prediabetes' | 'diagnosed';
@@ -148,6 +164,27 @@ export interface ArticleDetail extends Article {
   content: string
   /** 当前用户是否已收藏 */
   is_collected: boolean
+}
+
+/** 文章生成两阶段响应 */
+export interface ArticleGenerateCategorySelection {
+  stage: 'category_selection'
+  categories: Array<{
+    label: string
+    recommended?: boolean
+    reason?: string
+  }>
+}
+
+export type ArticleGenerateResponse = ArticleGenerateCategorySelection | ArticleDetail
+
+/** 健康建议 */
+export interface HealthAdvice {
+  id: number
+  title: string
+  tags: string[]
+  content: string
+  created_at: string
 }
 
 // ========== 糖尿病类型科普 ==========

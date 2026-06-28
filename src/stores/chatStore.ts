@@ -1,7 +1,7 @@
 // src/stores/chatStore.ts
 import { ref } from 'vue'
 import { defineStore } from 'pinia'
-import { sendChatMessage } from '@/composables/useChatApi'
+import { sendChatMessage, sendAssistantChatMessage, sendAdminChatMessage } from '@/composables/useChatApi'
 import type { ChatMessage } from '@/types/sse'
 import type { SSEEvent } from '@/types/sse'
 
@@ -36,11 +36,14 @@ export const useChatStore = defineStore('chat', () => {
   /** 当前活跃的医生 ID (由 DoctorChatView.vue 在 switchDoctor 中设置) */
   const currentDoctorId = ref<number | null>(null)
 
-  /** 助手对话 ID (预留，后续轮次使用) */
+  /** 助手对话 ID */
   const assistantConversationId = ref<string | null>(null)
 
-  /** 管理员对话 ID (预留，后续轮次使用) */
+  /** 管理员对话 ID */
   const adminConversationId = ref<string | null>(null)
+
+  /** 当前流式对话模式，用于 message_end 时保存 conversation_id */
+  const activeChatMode = ref<'doctor' | 'assistant' | 'admin'>('doctor')
 
   // ===== SSE 连接控制 =====
 
@@ -78,6 +81,16 @@ export const useChatStore = defineStore('chat', () => {
       activeAbortController.value = null
     }
     isStreaming.value = false
+  }
+
+  /**
+   * 释放指定控制器引用（仅当该控制器仍是当前活跃控制器时）。
+   * 用于外部组件在 SSE 流自然结束后安全释放控制器，避免误删新连接。
+   */
+  function releaseActiveController(controller: AbortController): void {
+    if (activeAbortController.value === controller) {
+      activeAbortController.value = null
+    }
   }
 
   // ===== conversation_id 读写 =====
@@ -279,8 +292,14 @@ export const useChatStore = defineStore('chat', () => {
       case 'message_end': {
         // AI 完整回复结束
         // 保存 conversation_id
-        if (event.conversation_id && currentDoctorId.value != null) {
-          setDoctorConversation(currentDoctorId.value, event.conversation_id)
+        if (event.conversation_id) {
+          if (activeChatMode.value === 'doctor' && currentDoctorId.value != null) {
+            setDoctorConversation(currentDoctorId.value, event.conversation_id)
+          } else if (activeChatMode.value === 'assistant') {
+            setAssistantConversation(event.conversation_id)
+          } else if (activeChatMode.value === 'admin') {
+            setAdminConversation(event.conversation_id)
+          }
         }
         // 更新最后一条 assistant 消息的元数据
         const lastMsg = conversations.value[conversations.value.length - 1]
@@ -356,6 +375,54 @@ export const useChatStore = defineStore('chat', () => {
     }
   }
 
+  // ===== 通用 SSE 发送辅助 =====
+
+  /**
+   * 统一的 SSE 请求发送与流式消费。
+   * 由 sendMessage / sendAssistantMessage / sendAdminMessage 调用。
+   */
+  async function sendStreamRequest(
+    mode: 'doctor' | 'assistant' | 'admin',
+    fetchResponse: () => Promise<Response>,
+  ): Promise<void> {
+    activeChatMode.value = mode
+    isStreaming.value = true
+
+    try {
+      const response = await fetchResponse()
+
+      if (response.status === 401) {
+        const { useAuthStore } = await import('@/stores/authStore')
+        useAuthStore().clearAuth()
+        const Swal = await import('sweetalert2')
+        Swal.default.fire({
+          toast: true,
+          position: 'top',
+          icon: 'info',
+          title: '登录已过期，请重新登录',
+          showConfirmButton: false,
+          timer: 2500,
+          timerProgressBar: true,
+        })
+        isStreaming.value = false
+        return
+      }
+
+      if (!response.ok) {
+        throw new Error(`SSE 请求失败: HTTP ${response.status}`)
+      }
+
+      const reader = response.body?.getReader()
+      if (!reader) {
+        throw new Error('浏览器不支持 ReadableStream')
+      }
+
+      await readSSEStream(reader)
+    } finally {
+      isStreaming.value = false
+    }
+  }
+
   // ===== 消息发送 =====
 
   /**
@@ -398,61 +465,24 @@ export const useChatStore = defineStore('chat', () => {
     const controller = new AbortController()
     registerAbortController(controller)
 
-    isStreaming.value = true
-
     try {
-      // 4. 发起 SSE 请求
-      const response = await sendChatMessage({
-        doctorId,
-        message: text,
-        token,
-        conversationId,
-        signal: controller.signal,
-      })
-
-      // 5. 检查响应状态码
-      if (response.status === 401) {
-        // 401 Token 过期 — 触发 clearAuth + Toast，保持对话窗口打开
-        const { useAuthStore } = await import('@/stores/authStore')
-        useAuthStore().clearAuth()
-        const Swal = await import('sweetalert2')
-        Swal.default.fire({
-          toast: true,
-          position: 'top',
-          icon: 'info',
-          title: '登录已过期，请重新登录',
-          showConfirmButton: false,
-          timer: 2500,
-          timerProgressBar: true,
+      await sendStreamRequest('doctor', () =>
+        sendChatMessage({
+          doctorId,
+          message: text,
+          token,
+          conversationId,
+          signal: controller.signal,
         })
-        isStreaming.value = false
-        return
-      }
-
-      if (!response.ok) {
-        throw new Error(`SSE 请求失败: HTTP ${response.status}`)
-      }
-
-      // 6. 获取 ReadableStream reader
-      const reader = response.body?.getReader()
-      if (!reader) {
-        throw new Error('浏览器不支持 ReadableStream')
-      }
-
-      // 7. 流式读取循环
-      await readSSEStream(reader)
+      )
     } catch (err: unknown) {
       if (err instanceof DOMException && err.name === 'AbortError') {
-        // 用户主动取消或切换医生 — 静默处理，不展示错误
         return
       }
-      // 其他异常由 sendMessageWithRetry (G4) 处理
       throw err
     } finally {
       // [F1 fix] 仅在当前 controller 仍为活跃 controller 时才重置
-      // 避免 TOCTOU 竞争：旧连接的 finally 覆盖新连接的 controller
       if (activeAbortController.value === controller) {
-        isStreaming.value = false
         activeAbortController.value = null
       }
     }
@@ -515,6 +545,94 @@ export const useChatStore = defineStore('chat', () => {
     }
     conversations.value.push(failMsg)
     isStreaming.value = false
+  }
+
+  /**
+   * 发送 AI 助手消息并建立 SSE 流式连接。
+   */
+  async function sendAssistantMessage(text: string, token: string): Promise<void> {
+    const userMessage: ChatMessage = {
+      id: `user_${Date.now()}`,
+      role: 'user',
+      content: text,
+      timestamp: Date.now(),
+    }
+    conversations.value.push(userMessage)
+
+    const conversationId = getAssistantConversation() ?? undefined
+    const controller = new AbortController()
+    registerAbortController(controller)
+
+    try {
+      await sendStreamRequest('assistant', () =>
+        sendAssistantChatMessage({
+          message: text,
+          token,
+          conversationId,
+          signal: controller.signal,
+        })
+      )
+    } catch (err: unknown) {
+      if (err instanceof DOMException && err.name === 'AbortError') {
+        return
+      }
+      const failMsg: ChatMessage = {
+        id: `fail_${Date.now()}`,
+        role: 'assistant',
+        content: `[连接失败] 无法连接到 AI 助手，请检查网络后重试。${err instanceof Error ? err.message : ''}`,
+        timestamp: Date.now(),
+      }
+      conversations.value.push(failMsg)
+      isStreaming.value = false
+    } finally {
+      if (activeAbortController.value === controller) {
+        activeAbortController.value = null
+      }
+    }
+  }
+
+  /**
+   * 发送管理员自然语言指令并建立 SSE 流式连接。
+   */
+  async function sendAdminMessage(text: string, token: string): Promise<void> {
+    const userMessage: ChatMessage = {
+      id: `user_${Date.now()}`,
+      role: 'user',
+      content: text,
+      timestamp: Date.now(),
+    }
+    conversations.value.push(userMessage)
+
+    const conversationId = getAdminConversation() ?? undefined
+    const controller = new AbortController()
+    registerAbortController(controller)
+
+    try {
+      await sendStreamRequest('admin', () =>
+        sendAdminChatMessage({
+          message: text,
+          token,
+          conversationId,
+          signal: controller.signal,
+        })
+      )
+    } catch (err: unknown) {
+      if (err instanceof DOMException && err.name === 'AbortError') {
+        return
+      }
+      const failMsg: ChatMessage = {
+        id: `fail_${Date.now()}`,
+        role: 'assistant',
+        content: `[连接失败] 无法连接到管理服务，请检查网络后重试。${err instanceof Error ? err.message : ''}`,
+        timestamp: Date.now(),
+      }
+      conversations.value.push(failMsg)
+      isStreaming.value = false
+    } finally {
+      if (activeAbortController.value === controller) {
+        activeAbortController.value = null
+      }
+    }
   }
 
   // ===== [G4] 多医生路由 =====
@@ -614,10 +732,13 @@ export const useChatStore = defineStore('chat', () => {
     // actions — 消息
     sendMessage,
     sendMessageWithRetry,
+    sendAssistantMessage,
+    sendAdminMessage,
 
     // actions — SSE 连接控制
     registerAbortController,
     abortActiveConnection,
+    releaseActiveController,
 
     // actions — conversation_id 管理
     getDoctorConversation,

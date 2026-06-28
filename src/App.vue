@@ -2,10 +2,15 @@
 import { computed, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
+import { useChatStore } from '@/stores/chatStore'
+import TabBar from '@/components/TabBar.vue'
+import FabButton from '@/components/FabButton.vue'
+import AiChatDialog from '@/components/AiChatDialog.vue'
 
 const route = useRoute()
 const router = useRouter()
 const authStore = useAuthStore()
+const chatStore = useChatStore()
 
 const tabs = [
   { path: '/home', label: '首页', icon: 'fa-home' },
@@ -15,16 +20,15 @@ const tabs = [
   { path: '/profile', label: '我的', icon: 'fa-user' },
 ]
 
-function isActive(tabPath: string): boolean {
-  return route.path === tabPath || route.path.startsWith(tabPath + '/')
-}
-
 const showTabBar = computed(() => {
   const noTabRoutes = ['/login', '/change-password', '/admin']
   return !noTabRoutes.some((r) => route.path.startsWith(r))
 })
 
-// 跨标签页登录态同步
+const showFab = computed(() => {
+  return route.path !== '/login' && route.path !== '/change-password'
+})
+
 function handleStorageChange(e: StorageEvent) {
   if (e.key === 'token' || e.key === 'role' || e.key === 'user') {
     const newToken = localStorage.getItem('token')
@@ -36,6 +40,10 @@ function handleStorageChange(e: StorageEvent) {
       authStore.syncFromStorage()
     }
   }
+}
+
+function toggleFab() {
+  chatStore.toggleFab()
 }
 
 onMounted(() => {
@@ -51,26 +59,15 @@ onUnmounted(() => {
   <div class="app-root">
     <router-view />
 
-    <nav
-      v-if="showTabBar"
-      class="tab-bar fixed bottom-0 left-0 right-0 h-16 bg-white border-t border-gray-200 z-50 flex items-center justify-around"
-      style="padding-bottom: env(safe-area-inset-bottom)"
-    >
-      <router-link
-        v-for="tab in tabs"
-        :key="tab.path"
-        :to="tab.path"
-        class="tab-item flex flex-col items-center justify-center flex-1 h-full transition"
-      >
-        <i
-          :class="['fas', tab.icon, 'text-lg mb-0.5']"
-          :style="{ color: isActive(tab.path) ? '#4A90D9' : '#9CA3AF' }"
-        ></i>
-        <span
-          class="text-[10px]"
-          :style="{ color: isActive(tab.path) ? '#4A90D9' : '#9CA3AF' }"
-        >{{ tab.label }}</span>
-      </router-link>
-    </nav>
+    <TabBar v-if="showTabBar" :tabs="tabs" />
+    <FabButton v-if="showFab" :open="chatStore.fabOpen" @click="toggleFab" />
+    <AiChatDialog />
   </div>
 </template>
+
+<style scoped>
+.app-root {
+  min-height: 100vh;
+  background: var(--color-bg);
+}
+</style>

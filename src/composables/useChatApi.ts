@@ -62,3 +62,57 @@ export async function getDoctorInfo(id: number): Promise<Doctor> {
   )
   return res.data.data
 }
+
+/**
+ * 发起 AI 助手对话 SSE 请求
+ * POST /api/assistant/chat
+ */
+export async function sendAssistantChatMessage(params: {
+  message: string
+  token: string
+  conversationId?: string
+  signal?: AbortSignal
+}): Promise<Response> {
+  const { message, token, conversationId, signal } = params
+  const body: Record<string, string> = { message }
+  if (conversationId) {
+    body.conversation_id = conversationId
+  }
+
+  return fetch('/api/assistant/chat', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`,
+    },
+    body: JSON.stringify(body),
+    signal,
+  })
+}
+
+/**
+ * 发起管理员自然语言对话 SSE 请求
+ * POST /api/admin/chat
+ */
+export async function sendAdminChatMessage(params: {
+  message: string
+  token: string
+  conversationId?: string
+  signal?: AbortSignal
+}): Promise<Response> {
+  const { message, token, conversationId, signal } = params
+  const body: Record<string, string> = { message }
+  if (conversationId) {
+    body.conversation_id = conversationId
+  }
+
+  return fetch('/api/admin/chat', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`,
+    },
+    body: JSON.stringify(body),
+    signal,
+  })
+}
