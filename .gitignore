@@ -26,4 +26,6 @@ lerna-debug.log*
 *.sln
 *.sw?
 
-./claude
+.claude/
+
+.atomcode/
