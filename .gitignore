@@ -30,3 +30,5 @@ lerna-debug.log*
 .atomcode/
 
 sqlite3.exe
+
+static/uploads/avatars/
