@@ -14,9 +14,24 @@ const routes: RouteRecordRaw[] = [
     meta: { requiresAuth: false },
   },
   {
+    path: '/consultation/doctor/:id',
+    name: 'DoctorChat',
+    component: () => import('@/views/DoctorChatView.vue'),
+    meta: {
+      requiresAuth: true,
+      requiresDisclaimer: true,
+    },
+  },
+  {
     path: '/life-plan',
     component: () => import('@/views/LifePlan.vue'),
     meta: { requiresAuth: true, requiresDisclaimer: true },
+  },
+  {
+    path: '/news/article/:id',
+    name: 'ArticleDetail',
+    component: () => import('@/views/ArticleDetailView.vue'),
+    meta: { requiresAuth: false },
   },
   {
     path: '/news',

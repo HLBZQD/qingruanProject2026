@@ -8,6 +8,7 @@
 
   --color-text-primary: #333333;
   --color-text-secondary: #666666;
+  --color-text-tertiary: #999999;
   --color-text-disabled: #BFBFBF;
   --color-bg: #F5F5F5;
   --color-divider: #E8E8E8;
@@ -17,6 +18,7 @@
   --font-size-h1: 20px;
   --font-size-h2: 18px;
   --font-size-h3: 16px;
+  --font-size-h4: 15px;
   --font-size-body: 14px;
   --font-size-caption: 12px;
 
@@ -26,6 +28,7 @@
   --spacing-lg: 16px;
   --spacing-xl: 20px;
   --spacing-2xl: 24px;
+  --spacing-3xl: 32px;
 
   --radius-sm: 4px;
   --radius-md: 8px;

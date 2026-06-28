@@ -2,6 +2,8 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { api } from '@/composables/useApi'
 import type { LoginUser } from '@/types/api'
+import { useHomeStore } from '@/stores/homeStore'
+import { useLifePlanStore } from '@/stores/lifePlanStore'
 
 function parseRole(raw: string | null): 'user' | 'admin' | null {
   if (raw === 'user' || raw === 'admin') return raw
@@ -9,12 +11,37 @@ function parseRole(raw: string | null): 'user' | 'admin' | null {
 }
 
 export const useAuthStore = defineStore('auth', () => {
-  const token = ref<string | null>(localStorage.getItem('token'))
-  const role = ref<'user' | 'admin' | null>(parseRole(localStorage.getItem('role')))
+  // ===== BroadcastChannel 跨标签页认证同步 =====
+  // sessionStorage 隔离导致新标签页/外部链接/右键打开均无 token。
+  // BroadcastChannel 在 setAuth/clearAuth 时广播，其他标签页收到后同步认证状态。
+  let bcChannel: BroadcastChannel | null = null
+  function getBcChannel(): BroadcastChannel | null {
+    if (bcChannel) return bcChannel
+    try {
+      bcChannel = new BroadcastChannel('qrzl_auth_sync')
+      bcChannel.onmessage = (e: MessageEvent) => {
+        const d = e.data
+        if (d?.type === 'AUTH_CHANGED') {
+          if (d.token) {
+            setAuth(d.token, d.role, d.user)
+          } else {
+            clearAuth()
+          }
+        }
+      }
+      return bcChannel
+    } catch {
+      // 浏览器不支持 BroadcastChannel（如 IE），静默降级
+      return null
+    }
+  }
+
+  const token = ref<string | null>(sessionStorage.getItem('token'))
+  const role = ref<'user' | 'admin' | null>(parseRole(sessionStorage.getItem('role')))
   const user = ref<LoginUser | null>(
     (() => {
       try {
-        const raw = JSON.parse(localStorage.getItem('user') || 'null')
+        const raw = JSON.parse(sessionStorage.getItem('user') || 'null')
         if (raw && typeof raw === 'object' && typeof raw.id === 'number' && typeof raw.username === 'string' && (raw.role === 'user' || raw.role === 'admin')) {
           return raw as LoginUser
         }
@@ -29,24 +56,38 @@ export const useAuthStore = defineStore('auth', () => {
 
   function setToken(newToken: string) {
     token.value = newToken
-    localStorage.setItem('token', newToken)
+    sessionStorage.setItem('token', newToken)
+    getBcChannel()?.postMessage({
+      type: 'AUTH_CHANGED',
+      token: token.value,
+      role: role.value,
+      user: user.value,
+      timestamp: Date.now(),
+    })
   }
 
   function setAuth(newToken: string, newRole: 'user' | 'admin', newUser: LoginUser) {
     token.value = newToken
     role.value = newRole
     user.value = newUser
-    localStorage.setItem('token', newToken)
-    localStorage.setItem('role', newRole)
-    localStorage.setItem('user', JSON.stringify(newUser))
+    sessionStorage.setItem('token', newToken)
+    sessionStorage.setItem('role', newRole)
+    sessionStorage.setItem('user', JSON.stringify(newUser))
+    getBcChannel()?.postMessage({
+      type: 'AUTH_CHANGED',
+      token: newToken,
+      role: newRole,
+      user: newUser,
+      timestamp: Date.now(),
+    })
   }
 
   function syncFromStorage() {
-    const storedToken = localStorage.getItem('token')
-    const storedRole = parseRole(localStorage.getItem('role'))
+    const storedToken = sessionStorage.getItem('token')
+    const storedRole = parseRole(sessionStorage.getItem('role'))
     let storedUser: LoginUser | null = null
     try {
-      const raw = JSON.parse(localStorage.getItem('user') || 'null')
+      const raw = JSON.parse(sessionStorage.getItem('user') || 'null')
       if (raw && typeof raw === 'object' && typeof raw.id === 'number' && typeof raw.username === 'string' && (raw.role === 'user' || raw.role === 'admin')) {
         storedUser = raw as LoginUser
       }
@@ -67,10 +108,24 @@ export const useAuthStore = defineStore('auth', () => {
     role.value = null
     user.value = null
     mustChangePassword.value = false
-    localStorage.removeItem('token')
-    localStorage.removeItem('role')
-    localStorage.removeItem('user')
+    sessionStorage.removeItem('token')
+    sessionStorage.removeItem('role')
+    sessionStorage.removeItem('user')
     localStorage.removeItem('must_change_password')
+
+    // [S8] 联动清理：清除 sessionStorage 中的业务缓存（旧用户数据隔离）
+    // 注意：在 action 内部通过 useXxxStore() 获取实例，避免模块顶层 import 导致 Pinia 循环依赖
+    try { useHomeStore().clearHomeCache() } catch { /* Store 未初始化时静默 */ }
+    try { useLifePlanStore().clearPlanCache() } catch { /* Store 未初始化时静默 */ }
+
+    // [S8] BC 广播：通知其他标签页清除认证状态
+    getBcChannel()?.postMessage({
+      type: 'AUTH_CHANGED',
+      token: null,
+      role: null,
+      user: null,
+      timestamp: Date.now(),
+    })
   }
 
   async function login(username: string, password: string) {
@@ -97,15 +152,15 @@ export const useAuthStore = defineStore('auth', () => {
     const updatedUser: LoginUser = { id: profile.id, username: profile.username, role: profile.role, avatar: profile.avatar }
     user.value = updatedUser
     role.value = profile.role
-    localStorage.setItem('user', JSON.stringify(updatedUser))
-    localStorage.setItem('role', profile.role)
+    sessionStorage.setItem('user', JSON.stringify(updatedUser))
+    sessionStorage.setItem('role', profile.role)
   }
 
   function setProfile(profile: { username?: string; avatar?: string | null }) {
     if (!user.value) return
     if (profile.username) user.value.username = profile.username
     if (profile.avatar !== undefined) user.value.avatar = profile.avatar
-    localStorage.setItem('user', JSON.stringify(user.value))
+    sessionStorage.setItem('user', JSON.stringify(user.value))
   }
 
   function clearMustChangePassword() {

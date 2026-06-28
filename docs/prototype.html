@@ -1,0 +1,1481 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>糖尿病预治智能助手 - 交互原型</title>
+  <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+  <script src="https://unpkg.com/vue-router@4/dist/vue-router.global.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css">
+  <script>
+    // ============ 设计系统：医疗蓝白主色（参照任务文档 #2563EB / #3261FF）============
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: { DEFAULT: '#2563EB', dark: '#1D4ED8', light: '#DBEAFE', 50: '#EFF6FF' },
+            accent: '#0EA5E9',
+            danger: '#EF4444',
+            success: '#10B981',
+            warning: '#F59E0B',
+            ink: { DEFAULT: '#0F172A', soft: '#334155', muted: '#64748B', light: '#94A3B8' },
+            surface: { DEFAULT: '#FFFFFF', subtle: '#F8FAFC', card: '#FFFFFF' }
+          },
+          fontFamily: {
+            sans: ['-apple-system', 'BlinkMacSystemFont', '"PingFang SC"', '"Segoe UI"', 'Roboto', 'sans-serif']
+          },
+          boxShadow: {
+            card: '0 1px 3px rgba(15,23,42,0.06), 0 1px 2px rgba(15,23,42,0.04)',
+            'card-hover': '0 8px 24px rgba(37,99,235,0.10)',
+            nav: '0 -1px 8px rgba(15,23,42,0.04)',
+            btn: '0 4px 12px rgba(37,99,235,0.25)'
+          },
+          borderRadius: { '2xl': '16px', '3xl': '20px' }
+        }
+      }
+    }
+  </script>
+  <style>
+    * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
+    html, body { background: #F1F5F9; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Segoe UI', Roboto, sans-serif; color: #0F172A; }
+
+    /* 页面切换动画 */
+    .page-enter { animation: pageEnter .28s cubic-bezier(0.22, 0.61, 0.36, 1); }
+    @keyframes pageEnter { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* 按压缩放反馈 */
+    .press { transition: transform .15s ease, box-shadow .2s ease; }
+    .press:active { transform: scale(0.96); }
+    .press-card { transition: transform .2s ease, box-shadow .2s ease; }
+    .press-card:active { transform: scale(0.98); box-shadow: 0 1px 3px rgba(15,23,42,0.06); }
+
+    /* 滚动条隐藏 */
+    .hide-scrollbar::-webkit-scrollbar { display: none; }
+    .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+    /* 文本截断 */
+    .line-clamp-1, .line-clamp-2, .line-clamp-3 { display: -webkit-box; -webkit-box-orient: vertical; overflow: hidden; }
+    .line-clamp-1 { -webkit-line-clamp: 1; }
+    .line-clamp-2 { -webkit-line-clamp: 2; }
+    .line-clamp-3 { -webkit-line-clamp: 3; }
+
+    /* 输入框 focus 样式 */
+    .input-field { transition: border-color .2s, box-shadow .2s; }
+    .input-field:focus { outline: none; border-color: #2563EB; box-shadow: 0 0 0 3px rgba(37,99,235,0.12); }
+
+    /* 渐变文字 */
+    .gradient-text { background: linear-gradient(135deg, #2563EB, #0EA5E9); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+
+    /* Banner 渐变光晕 */
+    .banner-glow::before { content: ''; position: absolute; right: -40px; top: -40px; width: 180px; height: 180px; background: radial-gradient(circle, rgba(255,255,255,0.25) 0%, transparent 70%); border-radius: 50%; pointer-events: none; }
+    .banner-glow::after { content: ''; position: absolute; left: -30px; bottom: -30px; width: 120px; height: 120px; background: radial-gradient(circle, rgba(14,165,233,0.30) 0%, transparent 70%); border-radius: 50%; pointer-events: none; }
+
+    /* 轮播指示器 */
+    .swiper-dot { transition: width .3s, background .3s; }
+    .swiper-dot.active { width: 20px; background: #fff; }
+
+    /* 打字指示器 */
+    .typing span { display: inline-block; width: 6px; height: 6px; background: #94A3B8; border-radius: 50%; margin: 0 1px; animation: typing 1.2s infinite; }
+    .typing span:nth-child(2) { animation-delay: .2s; }
+    .typing span:nth-child(3) { animation-delay: .4s; }
+    @keyframes typing { 0%,60%,100% { transform: translateY(0); opacity: .5; } 30% { transform: translateY(-4px); opacity: 1; } }
+
+    /* Toast 入场 */
+    .toast-enter { animation: toastIn .3s cubic-bezier(0.22, 0.61, 0.36, 1); }
+    @keyframes toastIn { from { opacity: 0; transform: translate(-50%, -20px); } to { opacity: 1; transform: translate(-50%, 0); } }
+
+    /* 安全区域 */
+    .safe-bottom { padding-bottom: env(safe-area-inset-bottom, 0); }
+
+    /* prefers-reduced-motion */
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
+    }
+
+    /* 头像渐变边框 */
+    .avatar-ring { background: linear-gradient(135deg, #2563EB, #0EA5E9); padding: 2px; border-radius: 50%; }
+  </style>
+</head>
+<body>
+  <noscript>
+  <div style="max-width: 400px; margin: 60px auto; text-align: center; font-family: system-ui, sans-serif; color: #334155;">
+    <div style="font-size: 48px; margin-bottom: 16px;">⚠️</div>
+    <h1 style="font-size: 20px; font-weight: bold; margin-bottom: 8px; color: #0F172A;">需要启用 JavaScript</h1>
+    <p style="font-size: 14px; line-height: 1.6;">本原型依赖 JavaScript 才能运行。请在浏览器设置中启用 JavaScript 后刷新页面。</p>
+  </div>
+</noscript>
+<div id="app">
+  <div id="app-loading" style="max-width: 400px; margin: 60px auto; text-align: center; font-family: system-ui, sans-serif; color: #334155; padding: 0 20px;">
+    <div style="width: 48px; height: 48px; border: 4px solid #DBEAFE; border-top-color: #2563EB; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 16px;"></div>
+    <h1 style="font-size: 18px; font-weight: bold; margin-bottom: 8px; color: #0F172A;">糖尿病预治智能助手</h1>
+    <p style="font-size: 14px; line-height: 1.6;">正在加载应用，请稍候…</p>
+  </div>
+  <div id="app-error" style="display: none; max-width: 400px; margin: 60px auto; text-align: center; font-family: system-ui, sans-serif; color: #334155; padding: 0 20px;">
+    <div style="font-size: 48px; margin-bottom: 16px;">😕</div>
+    <h1 style="font-size: 20px; font-weight: bold; margin-bottom: 8px; color: #0F172A;">加载失败</h1>
+    <p style="font-size: 14px; line-height: 1.6; margin-bottom: 16px;">应用加载时间过长，可能是本地资源缺失或浏览器拦截了脚本。请检查网络连接，或使用现代浏览器（Chrome / Edge / Safari）打开。</p>
+    <button onclick="location.reload()" style="background: #2563EB; color: white; border: none; padding: 10px 24px; border-radius: 8px; font-size: 14px; cursor: pointer;">重新加载</button>
+  </div>
+</div>
+<style>
+  @keyframes spin { to { transform: rotate(360deg); } }
+</style>
+<script>
+  (function() {
+    setTimeout(function() {
+      var app = document.getElementById('app');
+      // If Vue hasn't mounted after 5s, show error
+      if (app && !app.querySelector('[data-v-app]')) {
+        var loading = document.getElementById('app-loading');
+        var error = document.getElementById('app-error');
+        if (loading) loading.style.display = 'none';
+        if (error) error.style.display = 'block';
+      }
+    }, 5000);
+  })();
+</script>
+
+  <script>
+    const { createApp, ref, computed, reactive, onMounted, watch, nextTick, provide, inject } = Vue;
+    const { createRouter, createWebHashHistory } = VueRouter;
+
+    // ============ Mock 数据 ============
+    const banners = [
+      { id: 1, title: '科学控糖 · 智慧生活', subtitle: '个性化方案，从今天开始', gradient: 'from-blue-600 via-blue-500 to-sky-500', icon: 'fa-heart-pulse' },
+      { id: 2, title: 'AI 医师 7×24 在线', subtitle: '专业咨询，触手可及', gradient: 'from-indigo-600 via-blue-500 to-cyan-500', icon: 'fa-user-doctor' },
+      { id: 3, title: '每日打卡 · 健康相伴', subtitle: '记录每一份坚持', gradient: 'from-cyan-500 via-sky-500 to-blue-500', icon: 'fa-calendar-check' }
+    ];
+
+    const doctors = [
+      { id: 1, name: '张明远', department: '内分泌科', title: '主任医师', hospital: '协和医院', desc: '20年糖尿病综合管理经验', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=doc1&backgroundColor=b6e3f4', online: true, specialty: ['1型糖尿病', '胰岛素治疗'] },
+      { id: 2, name: '李静怡', department: '糖尿病专科', title: '副主任医师', hospital: '华西医院', desc: '擅长个性化饮食与运动方案', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=doc2&backgroundColor=c0aede', online: true, specialty: ['饮食干预', '血糖管理'] },
+      { id: 3, name: '王建国', department: '营养科', title: '主治医师', hospital: '瑞金医院', desc: '医学营养治疗与体重管理', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=doc3&backgroundColor=d1d4f9', online: false, specialty: ['营养评估', '减重'] }
+    ];
+
+    const diabetesTypes = [
+      { id: 'type1', name: '1型糖尿病', cover: 'https://images.unsplash.com/photo-1576091160550-2173dba999ef?w=400&h=200&fit=crop', color: 'from-blue-500 to-indigo-500', brief: '胰岛素依赖型，多发于青少年', pathogenesis: '自身免疫系统错误攻击胰岛β细胞，导致胰岛素绝对缺乏。多与遗传因素相关，环境因素（如病毒感染）可能诱发。', manifestation: '起病较急，典型"三多一少"症状：多饮、多食、多尿、体重减轻。血糖水平较高，易发生酮症酸中毒等急性并发症。', treatment: '需终身依赖胰岛素治疗，定期监测血糖并调整剂量。配合饮食控制、适量运动和血糖自我监测，预防并发症。' },
+      { id: 'type2', name: '2型糖尿病', cover: 'https://images.unsplash.com/photo-1559757148-5c350d0d3c56?w=400&h=200&fit=crop', color: 'from-sky-500 to-cyan-500', brief: '非胰岛素依赖型，与生活方式相关', pathogenesis: '胰岛素抵抗伴胰岛素分泌相对不足。与遗传、肥胖、缺乏运动、高龄等密切相关，是最常见的类型。', manifestation: '起病隐匿，早期可无明显症状。常见乏力、视力模糊、伤口愈合慢、皮肤瘙痒。长期可致心脑血管、肾脏、眼底并发症。', treatment: '生活方式干预为先（饮食+运动），辅以口服降糖药（二甲双胍等），病情进展时联合胰岛素治疗。' },
+      { id: 'gestational', name: '妊娠期糖尿病', cover: 'https://images.unsplash.com/photo-1631815588090-d4bfec5b1ccb?w=400&h=200&fit=crop', color: 'from-pink-500 to-rose-500', brief: '孕期特有的糖代谢异常', pathogenesis: '妊娠期胎盘激素对抗胰岛素作用增强，导致胰岛素敏感性下降。多见于高龄、肥胖、家族史的孕妇。', manifestation: '孕期发现血糖升高，多数无明显症状。可通过24-28周糖耐量试验筛查发现。', treatment: '以医学营养治疗和适量运动为主，血糖控制不佳时启用胰岛素。产后需随访，评估血糖恢复情况。' },
+      { id: 'other', name: '特殊类型糖尿病', cover: 'https://images.unsplash.com/photo-1530026405186-ed1f139313f8?w=400&h=200&fit=crop', color: 'from-violet-500 to-purple-500', brief: '由其他疾病或药物引起', pathogenesis: '由胰腺疾病、内分泌疾病、药物（如糖皮质激素）、遗传综合征等明确病因引起。占糖尿病的少数。', manifestation: '依原发病不同表现各异，常伴随原发病症状。需详细排查病因。', treatment: '针对原发病治疗为主，必要时使用降糖药物或胰岛素。' }
+    ];
+
+    const articles = [
+      { id: 1, title: '糖尿病患者一日三餐怎么吃？', category: '饮食指导', cover: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=500&h=300&fit=crop', summary: '合理搭配碳水、蛋白质和膳食纤维，平稳餐后血糖。', content: '## 糖尿病患者一日三餐怎么吃？\n\n### 早餐（7:00-8:00）\n- 全麦面包 1 片 或 燕麦片 50g\n- 水煮蛋 1 个\n- 无糖豆浆 250ml 或 低脂牛奶 200ml\n\n### 午餐（12:00）\n- 杂粮饭 100g（糙米、黑米、燕麦）\n- 清蒸鱼 150g 或 鸡胸肉 100g\n- 绿叶蔬菜 200g（少油快炒）\n\n### 晚餐（18:00-19:00）\n- 杂粮饭 80g 或 蒸红薯 100g\n- 豆腐 100g 或 瘦肉 80g\n- 凉拌蔬菜 150g\n\n### 加餐（15:30）\n低糖水果一份：草莓 100g 或 柚子 2 瓣 或 小番茄 10 颗\n\n> 建议：定时定量、细嚼慢咽、避免暴饮暴食。', collected: false, views: 1234, likes: 89, comments: 12, author: '营养科 李医师', date: '2026-06-20' },
+      { id: 2, title: '适合糖尿病患者的运动指南', category: '运动指南', cover: 'https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b?w=500&h=300&fit=crop', summary: '每周150分钟中等强度运动，改善胰岛素敏感性。', content: '## 适合糖尿病患者的运动指南\n\n### 推荐运动方式\n1. **快走**：每天 30 分钟，餐后 1 小时进行\n2. **游泳**：每周 2-3 次，对关节友好\n3. **太极拳**：改善平衡和柔韧性\n4. **抗阻训练**：每周 2 次，增强肌肉\n\n### 运动注意事项\n- ❌ 避免空腹运动，防止低血糖\n- ✅ 运动前后监测血糖\n- ✅ 随身携带糖果或葡萄糖片\n- ✅ 穿合适的运动鞋袜\n\n### 运动强度判断\n谈话测试：运动时能正常交谈但不能唱歌，即为中等强度。', collected: false, views: 892, likes: 56, comments: 8, author: '运动医学科 陈医师', date: '2026-06-18' },
+      { id: 3, title: '低血糖急救处理方法', category: '糖尿病科普', cover: 'https://images.unsplash.com/photo-1505576399275-7696c7a9d90e?w=500&h=300&fit=crop', summary: '识别低血糖症状，掌握15-15法则，及时补糖。', content: '## 低血糖急救处理\n\n### 识别症状\n- 心慌、手抖、出冷汗\n- 头晕、乏力、饥饿感\n- 严重时意识模糊、抽搐\n\n### 15-15 法则\n1. 立即摄入 **15g** 快速碳水化合物\n   - 葡萄糖片 3-4 片\n   - 含糖饮料 150ml\n   - 糖果 5-6 颗\n   - 蜂蜜 1 汤匙\n2. 等待 **15 分钟** 后复测血糖\n3. 若仍低于 3.9mmol/L，重复上述步骤\n4. 血糖恢复后，进食少量含碳水化合物的食物巩固\n\n### 何时就医\n若出现意识丧失、无法进食，或低血糖反复发作，应立即就医。', collected: false, views: 2156, likes: 134, comments: 23, author: '内分泌科 张医师', date: '2026-06-15' },
+      { id: 4, title: '睡眠与血糖控制的关系', category: '日常习惯', cover: 'https://images.unsplash.com/photo-1541781774459-bb2af2f05b55?w=500&h=300&fit=crop', summary: '规律作息和充足睡眠有助于维持血糖稳定。', content: '## 睡眠与血糖控制\n\n### 睡眠不足的危害\n- 降低胰岛素敏感性\n- 增加食欲和饥饿激素分泌\n- 导致体重增加\n- 升高皮质醇和炎症水平\n\n### 改善建议\n- 每晚保持 **7-8 小时** 睡眠\n- 固定就寝和起床时间\n- 睡前 1 小时避免使用电子设备\n- 晚餐不宜过晚过饱\n- 卧室保持安静、黑暗、凉爽\n\n### 睡眠呼吸暂停\n打鼾严重、白天嗜睡的糖尿病患者，应筛查睡眠呼吸暂停综合征，该病会加重胰岛素抵抗。', collected: false, views: 567, likes: 34, comments: 5, author: '内分泌科 张医师', date: '2026-06-12' }
+    ];
+
+    const newsCategories = [
+      { id: 'diet', name: '饮食指导', icon: 'fa-utensils', color: 'bg-blue-50 text-blue-600', desc: '合理搭配饮食，控制血糖水平', tags: ['减少精米面', '增加膳食纤维', '低GI食物', '定时定量'] },
+      { id: 'sport', name: '运动指南', icon: 'fa-person-running', color: 'bg-emerald-50 text-emerald-600', desc: '科学运动，改善胰岛素敏感性', tags: ['餐后运动', '有氧运动', '抗阻训练', '运动强度'] },
+      { id: 'habit', name: '日常习惯', icon: 'fa-mug-saucer', color: 'bg-amber-50 text-amber-600', desc: '健康生活方式，远离糖尿病', tags: ['规律作息', '戒烟限酒', '压力管理', '足部护理'] },
+      { id: 'science', name: '糖尿病科普', icon: 'fa-book-medical', color: 'bg-rose-50 text-rose-600', desc: '了解糖尿病，科学防治', tags: ['病因机制', '并发症', '血糖监测', '用药知识'] }
+    ];
+
+    const lifePlanDiet = [
+      { id: 1, time: '07:30', title: '早餐', icon: 'fa-sun', content: '燕麦粥一碗（干燕麦50g）+ 水煮蛋1个 + 无糖豆浆250ml', kcal: 320, completed: true },
+      { id: 2, time: '12:00', title: '午餐', icon: 'fa-bowl-food', content: '杂粮饭100g + 清蒸鲈鱼150g + 蒜蓉西兰花200g', kcal: 480, completed: false },
+      { id: 3, time: '15:30', title: '加餐', icon: 'fa-apple-whole', content: '低糖水果一份（草莓100g 或 柚子2瓣）', kcal: 80, completed: false },
+      { id: 4, time: '18:30', title: '晚餐', icon: 'fa-moon', content: '杂粮饭80g + 番茄炒蛋 + 凉拌黄瓜 + 紫菜豆腐汤', kcal: 380, completed: false }
+    ];
+    const lifePlanSport = [
+      { id: 5, time: '07:00', title: '晨间运动', icon: 'fa-person-walking', content: '快走30分钟，心率控制在110-130次/分', min: 30, completed: true },
+      { id: 6, time: '19:30', title: '晚间运动', icon: 'fa-dumbbell', content: '抗阻训练15分钟（深蹲、弹力带）+ 拉伸10分钟', min: 25, completed: false },
+      { id: 7, time: '周六', title: '周末运动', icon: 'fa-person-swimming', content: '游泳45分钟 或 骑行60分钟', min: 45, completed: false }
+    ];
+
+    const adviceList = [
+      { id: 1, title: '本周控糖建议', tags: ['饮食', '运动'], icon: 'fa-lightbulb', content: '根据您的打卡数据，本周早餐主食量偏高，建议将粥类替换为杂粮饭或全麦面包；晚间运动完成率仅40%，建议固定运动时间并设置提醒。' },
+      { id: 2, title: '个性化饮食提醒', tags: ['饮食'], icon: 'fa-utensils', content: '您的BMI为24.5，属于超重范围，建议每餐减少主食约20g，增加绿叶蔬菜比例，烹调方式以蒸、煮、炖为主。' },
+      { id: 3, title: '运动强度调整', tags: ['运动'], icon: 'fa-person-running', content: '近期空腹血糖波动较大，建议避免晨起空腹运动，改为餐后1小时运动，并随身携带糖果。' }
+    ];
+
+    const punchRecords = [
+      { id: 1, date: '2026-06-24', type: 'diet', item: '早餐', status: true, time: '07:35' },
+      { id: 2, date: '2026-06-24', type: 'sport', item: '晨间运动', status: true, time: '07:05' },
+      { id: 3, date: '2026-06-23', type: 'diet', item: '午餐', status: true, time: '12:10' },
+      { id: 4, date: '2026-06-23', type: 'sport', item: '晚间运动', status: false, time: '-' },
+      { id: 5, date: '2026-06-22', type: 'diet', item: '晚餐', status: true, time: '18:40' },
+      { id: 6, date: '2026-06-22', type: 'diet', item: '加餐', status: true, time: '15:50' }
+    ];
+
+    // ============ 全局状态 ============
+    const store = reactive({
+      token: localStorage.getItem('proto_token') || null,
+      user: JSON.parse(localStorage.getItem('proto_user') || 'null'),
+      role: localStorage.getItem('proto_role') || null,
+      activeTab: 'home',
+      fabOpen: false,
+      hasPlan: localStorage.getItem('proto_has_plan') === '1' || true, // 默认已有方案，便于演示
+      aiMessages: [{ role: 'ai', text: '您好！我是糖尿病智能助手 🤖\n我可以帮您进行风险预测、生成生活方案、解答健康问题。请问有什么可以帮您？' }],
+      riskForm: { step: 1, history: 'healthy', diabetesType: '', age: '', gender: 'male', height: '', weight: '', waist: '', systolic: '', familyHistory: 'no', result: null },
+      planDiet: JSON.parse(JSON.stringify(lifePlanDiet)),
+      planSport: JSON.parse(JSON.stringify(lifePlanSport)),
+      articles: JSON.parse(JSON.stringify(articles)),
+      doctorChats: {},
+      adminView: 'chat',
+      adminLogs: [
+        { id: 1, type: '查询', content: 'SELECT * FROM users WHERE role = "admin"', time: '2026-06-24 10:23', result: '成功 · 返回 2 条' },
+        { id: 2, type: '修改', content: "UPDATE articles SET views = views + 1 WHERE id = 1", time: '2026-06-24 09:15', result: '成功 · 影响 1 行' }
+      ],
+      toast: null
+    });
+
+    const isAdmin = computed(() => store.role === 'admin');
+
+    function login(username, password) {
+      const isAdminUser = (username || '').toLowerCase() === 'admin';
+      const role = isAdminUser ? 'admin' : 'user';
+      const user = isAdminUser
+        ? { id: 0, username: 'admin', nickname: '系统管理员', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=admin&backgroundColor=fbbf24' }
+        : { id: 1, username: username || 'demo_user', nickname: '赵晓峰', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=user1&backgroundColor=b6e3f4' };
+      store.token = 'mock-jwt-token';
+      store.user = user;
+      store.role = role;
+      localStorage.setItem('proto_token', store.token);
+      localStorage.setItem('proto_user', JSON.stringify(user));
+      localStorage.setItem('proto_role', role);
+      showToast(isAdminUser ? '管理员登录成功' : '登录成功，欢迎回来！', 'success');
+    }
+
+    function logout() {
+      store.token = null; store.user = null; store.role = null;
+      localStorage.removeItem('proto_token');
+      localStorage.removeItem('proto_user');
+      localStorage.removeItem('proto_role');
+      showToast('已退出登录', 'info');
+    }
+
+    function showToast(message, type = 'info') {
+      store.toast = { message, type, id: Date.now() };
+      setTimeout(() => { store.toast = null; }, 2500);
+    }
+
+    // ============ 通用组件 ============
+    const Toast = {
+      template: `
+        <transition name="toast">
+          <div v-if="store.toast" :class="['fixed top-20 left-1/2 -translate-x-1/2 z-[9999] px-5 py-2.5 rounded-full text-sm font-medium shadow-lg flex items-center gap-2 toast-enter', toastClass]">
+            <i :class="icon"></i>
+            <span>{{store.toast.message}}</span>
+          </div>
+        </transition>
+      `,
+      setup() {
+        const toastClass = computed(() => ({
+          success: 'bg-emerald-500 text-white',
+          info: 'bg-slate-800 text-white',
+          error: 'bg-red-500 text-white'
+        }[store.toast?.type] || 'bg-slate-800 text-white'));
+        const icon = computed(() => ({
+          success: 'fa-solid fa-circle-check',
+          info: 'fa-solid fa-circle-info',
+          error: 'fa-solid fa-circle-exclamation'
+        }[store.toast?.type] || 'fa-solid fa-circle-info'));
+        return { store, toastClass, icon };
+      }
+    };
+
+    const TabBar = {
+      template: `
+        <nav class="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md bg-white border-t border-slate-100 flex justify-around items-center py-2 safe-bottom z-40 shadow-nav" aria-label="主导航">
+          <button v-for="item in tabs" :key="item.name" @click="go(item)"
+            :class="['flex flex-col items-center px-3 py-1 press transition-colors', active === item.name ? 'text-primary' : 'text-slate-400']"
+            :aria-label="item.label" :aria-current="active === item.name ? 'page' : false">
+            <i :class="['fa-solid', item.icon, 'text-[20px]']"></i>
+            <span class="text-[11px] mt-1 font-medium">{{item.label}}</span>
+          </button>
+        </nav>
+      `,
+      setup() {
+        const tabs = [
+          { name: 'home', label: '首页', icon: 'fa-house', path: '/home' },
+          { name: 'consultation', label: '咨询', icon: 'fa-user-doctor', path: '/consultation' },
+          { name: 'life-plan', label: '方案定制', icon: 'fa-clipboard-list', path: '/life-plan' },
+          { name: 'news', label: '生活建议', icon: 'fa-heartbeat', path: '/news' },
+          { name: 'profile', label: '个人中心', icon: 'fa-user', path: '/profile' }
+        ];
+        const router = VueRouter.useRouter();
+        const active = computed(() => store.activeTab);
+        function go(item) { store.activeTab = item.name; router.push(item.path); }
+        return { tabs, active, go };
+      }
+    };
+
+    const FabButton = {
+      template: `
+        <div>
+          <button @click="toggle" class="fixed bottom-24 right-4 w-14 h-14 bg-gradient-to-br from-blue-500 to-sky-500 rounded-2xl shadow-btn flex items-center justify-center text-white text-2xl z-50 press" aria-label="AI智能助手">
+            <i :class="store.fabOpen ? 'fa-solid fa-xmark' : 'fa-solid fa-robot'"></i>
+          </button>
+          <transition name="toast">
+            <div v-if="store.fabOpen" class="fixed inset-0 bg-slate-900/50 z-40 flex items-end justify-center" @click.self="toggle">
+              <div class="bg-white w-full max-w-md rounded-t-3xl shadow-2xl p-4 h-[75vh] flex flex-col" style="animation: pageEnter .3s ease">
+                <div class="flex items-center justify-between mb-3">
+                  <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-sky-500 rounded-2xl flex items-center justify-center text-white"><i class="fa-solid fa-robot"></i></div>
+                    <div>
+                      <h3 class="font-bold text-slate-800">AI 智能助手</h3>
+                      <p class="text-xs text-emerald-600 flex items-center gap-1"><span class="w-1.5 h-1.5 bg-emerald-500 rounded-full"></span>在线</p>
+                    </div>
+                  </div>
+                  <button @click="toggle" class="w-8 h-8 flex items-center justify-center text-slate-400 press" aria-label="关闭"><i class="fa-solid fa-xmark text-xl"></i></button>
+                </div>
+                <div ref="msgBox" class="flex-1 overflow-y-auto bg-slate-50 rounded-2xl p-3 mb-3 space-y-3">
+                  <div v-for="(msg, idx) in store.aiMessages" :key="idx" class="flex" :class="msg.role === 'user' ? 'justify-end' : 'justify-start'">
+                    <div v-if="msg.role === 'ai'" class="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-sky-500 text-white flex items-center justify-center text-xs mr-2 flex-shrink-0"><i class="fa-solid fa-robot"></i></div>
+                    <div :class="['max-w-[80%] px-3.5 py-2.5 rounded-2xl text-sm leading-relaxed', msg.role === 'user' ? 'bg-gradient-to-br from-blue-500 to-sky-500 text-white rounded-br-md' : 'bg-white border border-slate-100 text-slate-800 rounded-bl-md shadow-sm']">
+                      <div v-if="msg.loading" class="typing"><span></span><span></span><span></span></div>
+                      <div v-else v-html="formatText(msg.text)"></div>
+                    </div>
+                  </div>
+                </div>
+                <div class="flex gap-2">
+                  <input v-model="input" @keyup.enter="send" placeholder="输入您的问题..." class="input-field flex-1 bg-slate-100 rounded-full px-4 py-2.5 text-sm" aria-label="消息输入">
+                  <button @click="send" class="bg-gradient-to-br from-blue-500 to-sky-500 text-white w-11 h-11 rounded-full flex items-center justify-center press" aria-label="发送"><i class="fa-solid fa-paper-plane"></i></button>
+                </div>
+                <div class="flex gap-2 mt-2 overflow-x-auto hide-scrollbar">
+                  <button v-for="q in quickQuestions" :key="q" @click="quickSend(q)" class="whitespace-nowrap px-3 py-1.5 bg-blue-50 text-blue-600 text-xs rounded-full press">{{q}}</button>
+                </div>
+              </div>
+            </div>
+          </transition>
+        </div>
+      `,
+      setup() {
+        const input = ref('');
+        const msgBox = ref(null);
+        const quickQuestions = ['帮我预测糖尿病风险', '生成今日饮食方案', '推荐一篇运动文章', '我最近血糖有点高'];
+        const router = VueRouter.useRouter();
+        function toggle() { store.fabOpen = !store.fabOpen; }
+        function formatText(t) { return (t || '').replace(/\n/g, '<br>'); }
+        function scroll() { nextTick(() => { if (msgBox.value) msgBox.value.scrollTop = msgBox.value.scrollHeight; }); }
+        function quickSend(q) { input.value = q; send(); }
+        function send() {
+          const text = input.value.trim();
+          if (!text) return;
+          store.aiMessages.push({ role: 'user', text });
+          input.value = '';
+          scroll();
+          const loadingIdx = store.aiMessages.length;
+          store.aiMessages.push({ role: 'ai', loading: true });
+          setTimeout(() => {
+            store.aiMessages.splice(loadingIdx, 1);
+            let reply = '这是一个快速原型演示，完整的 AI 回复将由 DeepSeek 大模型通过 Dify 工作流生成。';
+            if (text.includes('风险')) {
+              reply = '好的，我为您跳转至风险预测页面。您可以在那里填写健康信息，系统将根据《中国2型糖尿病防治指南》评估您的风险等级。';
+              setTimeout(() => { store.fabOpen = false; router.push('/risk'); }, 800);
+            } else if (text.includes('饮食') || text.includes('方案')) {
+              reply = '已为您生成一份低GI饮食方案，包含早/中/晚/加餐及运动建议。可在「方案定制」页面查看完整内容。';
+              setTimeout(() => { store.fabOpen = false; router.push('/life-plan'); }, 800);
+            } else if (text.includes('运动') || text.includes('文章')) {
+              reply = '为您推荐《适合糖尿病患者的运动指南》，已收藏至您的文章列表。';
+              setTimeout(() => { store.fabOpen = false; router.push('/news'); }, 800);
+            } else if (text.includes('血糖')) {
+              reply = '建议您持续监测空腹和餐后血糖，记录于打卡模块，系统会基于您的数据给出个性化建议。';
+            }
+            store.aiMessages.push({ role: 'ai', text: reply });
+            scroll();
+          }, 1200);
+        }
+        return { input, msgBox, quickQuestions, store, toggle, send, quickSend, formatText };
+      }
+    };
+
+    const AppShell = {
+      template: `
+        <div class="max-w-md mx-auto bg-slate-50 min-h-screen relative shadow-2xl">
+          <router-view v-slot="{ Component }">
+            <component :is="Component" />
+          </router-view>
+          <tab-bar v-if="showTab"></tab-bar>
+          <fab-button></fab-button>
+          <toast></toast>
+        </div>
+      `,
+      components: { Toast, TabBar, FabButton },
+      computed: {
+        showTab() {
+          const hide = ['/login', '/doctor-chat', '/article', '/risk', '/punch', '/advice', '/admin', '/change-password', '/diabetes-type', '/ai-start', '/plan-create', '/news-favorites'];
+          return !hide.some(t => this.$route.path.startsWith(t));
+        }
+      }
+    };
+
+    // ============ 首页 ============
+    const Home = {
+      template: `
+        <div class="page-enter pb-24">
+          <!-- 顶部 Logo + 搜索 -->
+          <header class="bg-white px-4 pt-12 pb-3 flex items-center justify-between sticky top-0 z-30 shadow-sm">
+            <div class="flex items-center gap-2">
+              <div class="w-9 h-9 bg-gradient-to-br from-blue-600 to-sky-500 rounded-xl flex items-center justify-center text-white"><i class="fa-solid fa-heart-pulse"></i></div>
+              <div>
+                <h1 class="font-bold text-slate-800 text-base leading-tight">糖尿病预治智能助手</h1>
+                <p class="text-[10px] text-slate-400">科学控糖 · 智慧生活</p>
+              </div>
+            </div>
+            <button class="w-9 h-9 flex items-center justify-center text-slate-500 press" aria-label="搜索"><i class="fa-solid fa-magnifying-glass text-lg"></i></button>
+          </header>
+
+          <!-- 轮播 Banner -->
+          <div class="px-4 mt-3">
+            <div class="relative rounded-2xl overflow-hidden h-36 shadow-card" @click="nextBanner">
+              <div v-for="(b, i) in banners" :key="b.id" v-show="current === i"
+                :class="['banner-glow absolute inset-0 bg-gradient-to-br flex items-center px-6 text-white transition-opacity duration-500', b.gradient]">
+                <div class="relative z-10 flex-1">
+                  <h2 class="text-xl font-bold mb-1">{{b.title}}</h2>
+                  <p class="text-sm text-white/80 mb-3">{{b.subtitle}}</p>
+                  <button class="bg-white/20 backdrop-blur-sm text-white text-xs font-medium px-4 py-1.5 rounded-full press">立即了解 →</button>
+                </div>
+                <i :class="['fa-solid', b.icon, 'relative z-10 text-6xl text-white/20']"></i>
+              </div>
+              <div class="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5 z-20">
+                <span v-for="(b, i) in banners" :key="b.id" @click.stop="current = i"
+                  :class="['swiper-dot h-1.5 rounded-full cursor-pointer', current === i ? 'active' : 'w-1.5 bg-white/50']"></span>
+              </div>
+            </div>
+          </div>
+
+          <!-- 专业医师团队 -->
+          <section class="px-4 mt-5">
+            <div class="flex items-center justify-between mb-3">
+              <h2 class="font-bold text-slate-800">专业医师团队</h2>
+              <button @click="$router.push('/consultation')" class="text-xs text-primary flex items-center press">查看全部 <i class="fa-solid fa-chevron-right ml-1 text-[10px]"></i></button>
+            </div>
+            <div class="flex gap-3 overflow-x-auto hide-scrollbar pb-2 -mx-4 px-4">
+              <div v-for="doc in doctors" :key="doc.id" @click="goDoctor(doc.id)"
+                class="bg-white rounded-2xl p-3 min-w-[140px] shadow-card press-card flex-shrink-0">
+                <div class="relative w-16 h-16 mx-auto mb-2">
+                  <div class="avatar-ring w-full h-full">
+                    <img :src="doc.avatar" class="w-full h-full rounded-full bg-slate-100" :alt="doc.name">
+                  </div>
+                  <span class="absolute bottom-0 right-0 w-3.5 h-3.5 rounded-full border-2 border-white" :class="doc.online ? 'bg-emerald-500' : 'bg-slate-300'"></span>
+                </div>
+                <p class="text-center font-bold text-sm text-slate-800">{{doc.name}}</p>
+                <p class="text-center text-[11px] text-slate-500 mt-0.5">{{doc.department}}</p>
+                <span class="block text-center text-[10px] text-primary bg-blue-50 px-2 py-0.5 rounded-full mt-1.5">{{doc.title}}</span>
+              </div>
+            </div>
+          </section>
+
+          <!-- 健康科普 -->
+          <section class="px-4 mt-5">
+            <div class="flex items-center justify-between mb-3">
+              <h2 class="font-bold text-slate-800">健康科普</h2>
+              <button @click="$router.push('/news')" class="text-xs text-primary flex items-center press">更多 <i class="fa-solid fa-chevron-right ml-1 text-[10px]"></i></button>
+            </div>
+            <div class="space-y-3">
+              <article v-for="article in store.articles.slice(0,3)" :key="article.id" @click="$router.push('/article/' + article.id)"
+                class="bg-white rounded-2xl p-3 shadow-card press-card flex gap-3">
+                <img :src="article.cover" class="w-20 h-20 rounded-xl object-cover flex-shrink-0" :alt="article.title">
+                <div class="flex-1 min-w-0 flex flex-col justify-between">
+                  <div>
+                    <span class="text-[10px] text-primary bg-blue-50 px-2 py-0.5 rounded-full">{{article.category}}</span>
+                    <h3 class="text-sm font-bold text-slate-800 mt-1 line-clamp-2 leading-snug">{{article.title}}</h3>
+                  </div>
+                  <div class="flex items-center text-[11px] text-slate-400 gap-3">
+                    <span><i class="fa-regular fa-eye mr-0.5"></i>{{article.views}}</span>
+                    <span><i class="fa-regular fa-thumbs-up mr-0.5"></i>{{article.likes}}</span>
+                  </div>
+                </div>
+              </article>
+            </div>
+          </section>
+
+          <!-- 糖尿病类型 -->
+          <section class="px-4 mt-5">
+            <div class="flex items-center justify-between mb-3">
+              <h2 class="font-bold text-slate-800">糖尿病类型</h2>
+              <span class="text-xs text-primary flex items-center">全部 <i class="fa-solid fa-chevron-right ml-1 text-[10px]"></i></span>
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+              <article v-for="type in diabetesTypes" :key="type.id" @click="$router.push('/diabetes-type/' + type.id)"
+                class="bg-white rounded-2xl overflow-hidden shadow-card press-card">
+                <div class="h-20 overflow-hidden relative">
+                  <img :src="type.cover" class="w-full h-full object-cover" :alt="type.name">
+                  <div :class="['absolute inset-0 bg-gradient-to-t opacity-90', type.color]"></div>
+                  <h3 class="absolute bottom-2 left-3 text-white font-bold text-sm">{{type.name}}</h3>
+                </div>
+                <div class="p-2.5">
+                  <p class="text-[11px] text-slate-500 line-clamp-2 leading-relaxed">{{type.brief}}</p>
+                </div>
+              </article>
+            </div>
+          </section>
+        </div>
+      `,
+      setup() {
+        const router = VueRouter.useRouter();
+        const current = ref(0);
+        const typeModal = ref(null);
+        let timer = null;
+        function nextBanner() { current.value = (current.value + 1) % banners.length; }
+        function startAuto() { timer = setInterval(() => { current.value = (current.value + 1) % banners.length; }, 4000); }
+        function stopAuto() { if (timer) clearInterval(timer); }
+        function goDoctor(id) { router.push('/doctor-chat/' + id); store.activeTab = 'consultation'; }
+        onMounted(startAuto);
+        return { banners, current, nextBanner, doctors, diabetesTypes, store, goDoctor };
+      }
+    };
+
+    // ============ 医师咨询 ============
+    const Consultation = {
+      template: `
+        <div class="page-enter pb-24">
+          <header class="bg-white px-4 pt-12 pb-4 border-b border-slate-100 sticky top-0 z-30">
+            <h1 class="text-lg font-bold text-slate-800">医师咨询</h1>
+            <p class="text-sm text-slate-500 mt-0.5">选择专科医生，获取 AI 驱动的健康建议</p>
+          </header>
+          <div class="px-4 mt-4 space-y-3">
+            <article v-for="doc in doctors" :key="doc.id" @click="$router.push('/doctor-chat/' + doc.id)"
+              class="bg-white rounded-2xl p-4 shadow-card press-card flex items-center gap-4">
+              <div class="relative flex-shrink-0">
+                <div class="avatar-ring w-16 h-16"><img :src="doc.avatar" class="w-full h-full rounded-full bg-slate-100" :alt="doc.name"></div>
+                <span class="absolute bottom-0 right-0 w-4 h-4 rounded-full border-2 border-white" :class="doc.online ? 'bg-emerald-500' : 'bg-slate-300'"></span>
+              </div>
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center gap-2">
+                  <h3 class="font-bold text-slate-800">{{doc.name}}</h3>
+                  <span class="text-[10px] text-primary bg-blue-50 px-2 py-0.5 rounded-full">{{doc.title}}</span>
+                </div>
+                <p class="text-sm text-slate-600 mt-0.5">{{doc.department}} · {{doc.hospital}}</p>
+                <p class="text-xs text-slate-400 mt-1 line-clamp-1">{{doc.desc}}</p>
+                <div class="flex gap-1 mt-1.5">
+                  <span v-for="s in doc.specialty" :key="s" class="text-[10px] text-slate-500 bg-slate-50 px-1.5 py-0.5 rounded">{{s}}</span>
+                </div>
+              </div>
+              <button class="text-xs text-primary border border-primary px-3 py-1.5 rounded-full press flex-shrink-0">立即咨询</button>
+            </article>
+          </div>
+        </div>
+      `,
+      setup() { return { doctors }; }
+    };
+
+    const DoctorChat = {
+      template: `
+        <div class="page-enter h-screen flex flex-col bg-slate-50">
+          <header class="bg-white px-4 py-3 flex items-center gap-3 border-b border-slate-100">
+            <button @click="$router.back()" class="text-slate-600 press w-8 h-8 flex items-center justify-center" aria-label="返回"><i class="fa-solid fa-chevron-left"></i></button>
+            <div class="avatar-ring w-10 h-10"><img :src="doctor.avatar" class="w-full h-full rounded-full bg-slate-100" :alt="doctor.name"></div>
+            <div class="flex-1">
+              <h1 class="font-bold text-slate-800">{{doctor.name}}</h1>
+              <p class="text-xs text-slate-500">{{doctor.department}} · <span :class="doctor.online ? 'text-emerald-600' : 'text-slate-400'">{{doctor.online ? '在线' : '离线'}}</span></p>
+            </div>
+          </header>
+          <div ref="msgBox" class="flex-1 overflow-y-auto p-4 space-y-4">
+            <div v-for="(msg, idx) in messages" :key="idx" class="flex" :class="msg.role === 'user' ? 'justify-end' : 'justify-start'">
+              <div v-if="msg.role === 'ai'" class="avatar-ring w-8 h-8 mr-2 flex-shrink-0"><div class="w-full h-full rounded-full bg-gradient-to-br from-blue-500 to-sky-500 text-white flex items-center justify-center text-xs"><i class="fa-solid fa-user-doctor"></i></div></div>
+              <div :class="['max-w-[75%] px-4 py-2.5 rounded-2xl text-sm leading-relaxed', msg.role === 'user' ? 'bg-gradient-to-br from-blue-500 to-sky-500 text-white rounded-br-md' : 'bg-white border border-slate-100 text-slate-800 rounded-bl-md shadow-sm']">
+                <div v-if="msg.loading" class="typing"><span></span><span></span><span></span></div>
+                <div v-else>{{msg.text}}</div>
+              </div>
+            </div>
+          </div>
+          <div class="bg-white p-3 border-t border-slate-100 flex gap-2 safe-bottom">
+            <input v-model="input" @keyup.enter="send" placeholder="描述您的症状或提问..." class="input-field flex-1 bg-slate-100 rounded-full px-4 py-2.5 text-sm" aria-label="消息输入">
+            <button @click="send" class="bg-gradient-to-br from-blue-500 to-sky-500 text-white w-11 h-11 rounded-full flex items-center justify-center press" aria-label="发送"><i class="fa-solid fa-paper-plane"></i></button>
+          </div>
+        </div>
+      `,
+      props: ['id'],
+      setup(props) {
+        const doctor = doctors.find(d => d.id == props.id) || doctors[0];
+        const input = ref('');
+        const msgBox = ref(null);
+        const key = 'doc_' + props.id;
+        if (!store.doctorChats[key]) store.doctorChats[key] = [{ role: 'ai', text: '您好，我是' + doctor.name + '医生，请问有什么可以帮您？可以描述您的症状、用药情况或血糖数据。' }];
+        const messages = computed({ get: () => store.doctorChats[key], set: v => store.doctorChats[key] = v });
+        function scroll() { nextTick(() => { if (msgBox.value) msgBox.value.scrollTop = msgBox.value.scrollHeight; }); }
+        function send() {
+          const text = input.value.trim();
+          if (!text) return;
+          messages.value.push({ role: 'user', text });
+          input.value = '';
+          scroll();
+          const loadingIdx = messages.value.length;
+          messages.value.push({ role: 'ai', loading: true });
+          setTimeout(() => {
+            messages.value.splice(loadingIdx, 1);
+            const replies = [
+              '根据您描述的情况，建议先监测空腹和餐后2小时血糖，并记录下来。如果空腹血糖持续高于7.0mmol/L，建议尽快来门诊。',
+              '饮食方面建议控制主食总量，增加蔬菜比例，少油少盐，定时定量进餐。',
+              '可以每天进行30分钟中等强度运动，如快走或游泳，餐后1小时进行效果最佳。',
+              '关于用药，请不要自行调整剂量。建议带上近期血糖记录来门诊，我会根据您的具体情况调整方案。'
+            ];
+            messages.value.push({ role: 'ai', text: replies[Math.floor(Math.random() * replies.length)] });
+            scroll();
+          }, 1500);
+        }
+        onMounted(scroll);
+        return { doctor, input, msgBox, messages, send };
+      }
+    };
+
+    // ============ 生活方案：无方案态 + 定制 + 展示 ============
+    const LifePlan = {
+      template: `
+        <div class="page-enter pb-24">
+          <header class="bg-gradient-to-br from-blue-600 to-sky-500 text-white px-5 pt-12 pb-6 rounded-b-3xl">
+            <div class="flex justify-between items-center">
+              <div>
+                <h1 class="text-xl font-bold">生活方案</h1>
+                <p class="text-blue-100 text-sm mt-0.5">个性化饮食与运动建议</p>
+              </div>
+              <button @click="showCustomize = !showCustomize" class="bg-white/20 backdrop-blur-sm text-white text-xs font-medium px-3 py-1.5 rounded-full press">
+                <i class="fa-solid fa-arrows-rotate mr-1"></i>{{showCustomize ? '收起' : '重新定制'}}
+              </button>
+            </div>
+          </header>
+
+          <!-- 无方案引导态 -->
+          <div v-if="!store.hasPlan && !showCustomize" class="px-4 mt-6">
+            <div class="bg-white rounded-2xl p-8 text-center shadow-card">
+              <div class="w-20 h-20 bg-blue-50 rounded-2xl flex items-center justify-center mx-auto mb-4 text-primary text-3xl"><i class="fa-solid fa-clipboard-list"></i></div>
+              <h2 class="font-bold text-slate-800 text-lg">还没有专属方案</h2>
+              <p class="text-sm text-slate-500 mt-2 mb-5">基于您的健康信息，AI 将为您生成个性化饮食与运动方案</p>
+              <button @click="showCustomize = true" class="bg-gradient-to-br from-blue-500 to-sky-500 text-white py-3 px-8 rounded-full font-bold shadow-btn press">立即定制方案</button>
+            </div>
+          </div>
+
+          <!-- 方案定制表单 -->
+          <div v-else-if="showCustomize" class="px-4 mt-4">
+            <div class="bg-white rounded-2xl p-5 shadow-card">
+              <h2 class="font-bold text-slate-800 mb-4">方案定制</h2>
+              <div class="bg-slate-50 rounded-xl p-3 mb-4 flex items-center gap-3">
+                <img :src="store.user?.avatar || 'https://api.dicebear.com/7.x/avataaars/svg?seed=guest'" class="w-12 h-12 rounded-full bg-slate-200">
+                <div>
+                  <p class="font-bold text-slate-800 text-sm">{{store.user?.nickname || '游客'}}</p>
+                  <p class="text-xs text-slate-500">BMI 24.5 · 健康状态</p>
+                </div>
+              </div>
+              <div class="mb-4">
+                <label class="text-sm text-slate-600 font-medium">当前生活习惯</label>
+                <div class="flex flex-wrap gap-2 mt-2">
+                  <button v-for="h in habits" :key="h" @click="toggleHabit(h)"
+                    :class="['px-3 py-1.5 rounded-full text-xs press transition', selectedHabits.includes(h) ? 'bg-primary text-white' : 'bg-slate-100 text-slate-600']">{{h}}</button>
+                </div>
+              </div>
+              <div class="mb-4">
+                <label class="text-sm text-slate-600 font-medium">对方案的建议</label>
+                <textarea v-model="advice" placeholder="例如：希望以低GI食物为主，运动以有氧为主..." class="input-field w-full mt-1 border border-slate-200 rounded-xl px-3 py-2 text-sm min-h-[80px] resize-none"></textarea>
+              </div>
+              <button @click="generatePlan" :disabled="generating" class="w-full bg-gradient-to-br from-blue-500 to-sky-500 text-white py-3 rounded-xl font-bold shadow-btn press disabled:opacity-60">
+                <i class="fa-solid fa-wand-magic-sparkles mr-1"></i>{{generating ? 'AI 生成中...' : '生成生活方案'}}
+              </button>
+            </div>
+          </div>
+
+          <!-- 方案展示 -->
+          <div v-else class="px-4 mt-4">
+            <div class="bg-white rounded-2xl p-4 shadow-card flex justify-around text-center mb-4">
+              <div><p class="text-2xl font-bold gradient-text">{{dietDone}}/{{dietTotal}}</p><p class="text-xs text-slate-500 mt-0.5">饮食打卡</p></div>
+              <div class="w-px bg-slate-100"></div>
+              <div><p class="text-2xl font-bold gradient-text">{{sportDone}}/{{sportTotal}}</p><p class="text-xs text-slate-500 mt-0.5">运动打卡</p></div>
+              <div class="w-px bg-slate-100"></div>
+              <div><p class="text-2xl font-bold gradient-text">{{progress}}%</p><p class="text-xs text-slate-500 mt-0.5">今日进度</p></div>
+            </div>
+
+            <h2 class="font-bold text-slate-800 mb-3 flex items-center"><i class="fa-solid fa-utensils text-primary mr-2"></i>饮食管理</h2>
+            <div class="space-y-3 mb-5">
+              <div v-for="item in store.planDiet" :key="item.id" class="bg-white rounded-2xl p-4 shadow-card">
+                <div class="flex justify-between items-start mb-2">
+                  <div class="flex items-center gap-2">
+                    <div class="w-9 h-9 bg-blue-50 rounded-xl flex items-center justify-center text-primary"><i :class="['fa-solid', item.icon]"></i></div>
+                    <div>
+                      <div class="flex items-center gap-2">
+                        <span class="text-[11px] text-slate-400">{{item.time}}</span>
+                        <span class="text-[10px] text-slate-400 bg-slate-50 px-1.5 py-0.5 rounded">{{item.kcal}} kcal</span>
+                      </div>
+                      <h3 class="font-bold text-slate-800 text-sm">{{item.title}}</h3>
+                    </div>
+                  </div>
+                  <button @click="toggleDiet(item)" :class="['px-3 py-1.5 rounded-full text-xs font-bold press transition', item.completed ? 'bg-emerald-500 text-white' : 'bg-slate-100 text-slate-500']">
+                    <i :class="item.completed ? 'fa-solid fa-check' : 'fa-regular fa-circle'"></i> {{item.completed ? '已打卡' : '打卡'}}
+                  </button>
+                </div>
+                <p class="text-sm text-slate-600 leading-relaxed">{{item.content}}</p>
+              </div>
+            </div>
+
+            <h2 class="font-bold text-slate-800 mb-3 flex items-center"><i class="fa-solid fa-person-running text-primary mr-2"></i>运动建议</h2>
+            <div class="space-y-3">
+              <div v-for="item in store.planSport" :key="item.id" class="bg-white rounded-2xl p-4 shadow-card">
+                <div class="flex justify-between items-start mb-2">
+                  <div class="flex items-center gap-2">
+                    <div class="w-9 h-9 bg-emerald-50 rounded-xl flex items-center justify-center text-emerald-600"><i :class="['fa-solid', item.icon]"></i></div>
+                    <div>
+                      <div class="flex items-center gap-2">
+                        <span class="text-[11px] text-slate-400">{{item.time}}</span>
+                        <span class="text-[10px] text-slate-400 bg-slate-50 px-1.5 py-0.5 rounded">{{item.min}} 分钟</span>
+                      </div>
+                      <h3 class="font-bold text-slate-800 text-sm">{{item.title}}</h3>
+                    </div>
+                  </div>
+                  <button @click="toggleSport(item)" :class="['px-3 py-1.5 rounded-full text-xs font-bold press transition', item.completed ? 'bg-emerald-500 text-white' : 'bg-slate-100 text-slate-500']">
+                    <i :class="item.completed ? 'fa-solid fa-check' : 'fa-regular fa-circle'"></i> {{item.completed ? '已打卡' : '打卡'}}
+                  </button>
+                </div>
+                <p class="text-sm text-slate-600 leading-relaxed">{{item.content}}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      `,
+      setup() {
+        const showCustomize = ref(false);
+        const generating = ref(false);
+        const advice = ref('');
+        const habits = ['久坐少动', '经常熬夜', '饮食不规律', '爱喝甜饮', '有吸烟习惯', '有饮酒习惯'];
+        const selectedHabits = ref(['久坐少动', '饮食不规律']);
+        function toggleHabit(h) {
+          const i = selectedHabits.value.indexOf(h);
+          if (i >= 0) selectedHabits.value.splice(i, 1); else selectedHabits.value.push(h);
+        }
+        function generatePlan() {
+          generating.value = true;
+          setTimeout(() => {
+            generating.value = false;
+            showCustomize.value = false;
+            store.hasPlan = true;
+            localStorage.setItem('proto_has_plan', '1');
+            // 重置打卡状态
+            store.planDiet.forEach(i => i.completed = false);
+            store.planSport.forEach(i => i.completed = false);
+            showToast('方案已生成，请按计划执行', 'success');
+          }, 1800);
+        }
+        const dietDone = computed(() => store.planDiet.filter(i => i.completed).length);
+        const sportDone = computed(() => store.planSport.filter(i => i.completed).length);
+        const dietTotal = computed(() => store.planDiet.length);
+        const sportTotal = computed(() => store.planSport.length);
+        const progress = computed(() => Math.round(((dietDone.value + sportDone.value) / (dietTotal.value + sportTotal.value)) * 100));
+        function toggleDiet(item) { item.completed = !item.completed; showToast(item.completed ? '打卡成功，继续加油！' : '已取消打卡', item.completed ? 'success' : 'info'); }
+        function toggleSport(item) { item.completed = !item.completed; showToast(item.completed ? '运动打卡成功！' : '已取消打卡', item.completed ? 'success' : 'info'); }
+        return { store, showCustomize, generating, advice, habits, selectedHabits, toggleHabit, generatePlan, dietDone, sportDone, dietTotal, sportTotal, progress, toggleDiet, toggleSport };
+      }
+    };
+
+    // ============ 健康资讯 ============
+    const News = {
+      template: `
+        <div class="page-enter pb-24">
+          <header class="bg-white px-4 pt-12 pb-3 border-b border-slate-100 sticky top-0 z-30">
+            <div class="flex items-center justify-between">
+              <h1 class="text-lg font-bold text-slate-800">健康资讯</h1>
+              <button @click="$router.push('/news-favorites')" class="text-sm text-primary flex items-center press">
+                <i class="fa-regular fa-heart mr-1"></i>我的收藏
+              </button>
+            </div>
+            <div class="flex gap-2 mt-3 overflow-x-auto hide-scrollbar">
+              <button v-for="c in categories" :key="c.id" @click="category = c.id"
+                :class="['px-3 py-1.5 rounded-full text-xs whitespace-nowrap press transition', category === c.id ? 'bg-primary text-white' : 'bg-slate-100 text-slate-600']">{{c.name}}</button>
+            </div>
+          </header>
+          <div class="px-4 mt-3 space-y-3">
+            <article v-for="article in filteredArticles" :key="article.id" @click="$router.push('/article/' + article.id)"
+              class="bg-white rounded-2xl overflow-hidden shadow-card press-card">
+              <img :src="article.cover" class="w-full h-40 object-cover" :alt="article.title">
+              <div class="p-4">
+                <span class="text-[10px] text-primary bg-blue-50 px-2 py-0.5 rounded-full">{{article.category}}</span>
+                <h3 class="font-bold text-slate-800 mt-2">{{article.title}}</h3>
+                <p class="text-sm text-slate-500 mt-1 line-clamp-2">{{article.summary}}</p>
+                <div class="flex justify-between items-center mt-3 text-xs text-slate-400">
+                  <span><i class="fa-regular fa-user mr-1"></i>{{article.author}}</span>
+                  <div class="flex gap-3">
+                    <span><i class="fa-regular fa-eye mr-0.5"></i>{{article.views}}</span>
+                    <span :class="article.collected ? 'text-red-500' : ''"><i :class="article.collected ? 'fa-solid fa-heart' : 'fa-regular fa-heart'"></i></span>
+                  </div>
+                </div>
+              </div>
+            </article>
+          </div>
+        </div>
+      `,
+      setup() {
+        const categories = [{ id: 'all', name: '全部' }, ...newsCategories.map(c => ({ id: c.id, name: c.name }))];
+        const category = ref('all');
+        const filteredArticles = computed(() => category.value === 'all' ? store.articles : store.articles.filter(a => {
+          const map = { diet: '饮食指导', sport: '运动指南', habit: '日常习惯', science: '糖尿病科普' };
+          return a.category === map[category.value];
+        }));
+        return { categories, category, filteredArticles, store };
+      }
+    };
+
+    const ArticleDetail = {
+      template: `
+        <div class="page-enter">
+          <div class="relative">
+            <img :src="article.cover" class="w-full h-56 object-cover" :alt="article.title">
+            <div class="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"></div>
+            <button @click="$router.back()" class="absolute top-12 left-4 w-9 h-9 bg-white/90 rounded-full flex items-center justify-center text-slate-700 press backdrop-blur-sm" aria-label="返回"><i class="fa-solid fa-chevron-left"></i></button>
+          </div>
+          <div class="px-5 -mt-8 relative bg-white rounded-t-3xl pt-6 pb-32 min-h-screen">
+            <span class="text-xs text-primary bg-blue-50 px-2 py-0.5 rounded-full">{{article.category}}</span>
+            <h1 class="text-xl font-bold text-slate-800 mt-2 leading-snug">{{article.title}}</h1>
+            <div class="flex items-center gap-3 mt-3 text-xs text-slate-400 pb-4 border-b border-dashed border-slate-200">
+              <span class="flex items-center gap-1"><img :src="'https://api.dicebear.com/7.x/avataaars/svg?seed=' + article.author" class="w-5 h-5 rounded-full bg-slate-100">{{article.author}}</span>
+              <span>{{article.date}}</span>
+            </div>
+            <div class="prose prose-sm mt-4 text-slate-700 leading-relaxed" v-html="renderContent(article.content)"></div>
+            <div class="flex items-center justify-end gap-4 mt-6 pb-4 border-t border-slate-100 pt-4">
+              <button class="flex items-center gap-1 text-slate-500 text-sm press"><i class="fa-regular fa-thumbs-up"></i>{{article.likes}}</button>
+              <button class="flex items-center gap-1 text-slate-500 text-sm press"><i class="fa-regular fa-comment"></i>{{article.comments}}</button>
+              <button class="flex items-center gap-1 text-slate-500 text-sm press"><i class="fa-regular fa-eye"></i>{{article.views}}</button>
+            </div>
+          </div>
+          <div class="fixed bottom-6 left-1/2 -translate-x-1/2 w-full max-w-md px-5">
+            <button @click="toggleCollect" :class="['w-full py-3 rounded-full font-bold shadow-btn press transition', article.collected ? 'bg-red-500 text-white' : 'bg-gradient-to-br from-blue-500 to-sky-500 text-white']">
+              <i :class="article.collected ? 'fa-solid fa-heart' : 'fa-regular fa-heart'"></i> {{article.collected ? '已收藏' : '收藏文章'}}
+            </button>
+          </div>
+        </div>
+      `,
+      props: ['id'],
+      setup(props) {
+        const article = computed(() => store.articles.find(a => a.id == props.id) || store.articles[0]);
+        function renderContent(md) {
+          return (md || '')
+            .replace(/^## (.*$)/gim, '<h2 class="text-base font-bold text-slate-800 mt-5 mb-2">$1</h2>')
+            .replace(/^### (.*$)/gim, '<h3 class="font-bold text-slate-800 mt-4 mb-1.5">$1</h3>')
+            .replace(/^\- (.*$)/gim, '<li class="ml-5 list-disc text-sm">$1</li>')
+            .replace(/^\d+\. (.*$)/gim, '<li class="ml-5 list-decimal text-sm">$1</li>')
+            .replace(/^> (.*$)/gim, '<blockquote class="border-l-4 border-primary pl-3 italic text-slate-500 my-3 text-sm bg-blue-50 py-2 rounded-r">$1</blockquote>')
+            .replace(/\n/g, '<br>');
+        }
+        function toggleCollect() {
+          article.value.collected = !article.value.collected;
+          showToast(article.value.collected ? '已加入收藏' : '已取消收藏', article.value.collected ? 'success' : 'info');
+        }
+        return { article, renderContent, toggleCollect };
+      }
+    };
+
+    const NewsFavorites = {
+      template: `
+        <div class="page-enter pb-24">
+          <header class="bg-white px-4 pt-12 pb-4 flex items-center gap-3 border-b border-slate-100 sticky top-0 z-30">
+            <button @click="$router.back()" class="text-slate-600 press w-8 h-8 flex items-center justify-center" aria-label="返回"><i class="fa-solid fa-chevron-left"></i></button>
+            <h1 class="font-bold text-slate-800">我的收藏</h1>
+          </header>
+          <div class="px-4 mt-4 space-y-3">
+            <article v-for="article in collectedArticles" :key="article.id" @click="$router.push('/article/' + article.id)"
+              class="bg-white rounded-2xl p-3 shadow-card press-card flex gap-3">
+              <img :src="article.cover" class="w-20 h-20 rounded-xl object-cover flex-shrink-0" :alt="article.title">
+              <div class="flex-1 min-w-0">
+                <span class="text-[10px] text-primary bg-blue-50 px-2 py-0.5 rounded-full">{{article.category}}</span>
+                <h3 class="text-sm font-bold text-slate-800 mt-1 line-clamp-2">{{article.title}}</h3>
+                <p class="text-xs text-red-500 mt-1"><i class="fa-solid fa-heart"></i> 已收藏</p>
+              </div>
+            </article>
+            <div v-if="collectedArticles.length === 0" class="text-center py-20 text-slate-400">
+              <i class="fa-regular fa-heart text-5xl mb-3"></i>
+              <p>还没有收藏任何文章</p>
+              <button @click="$router.push('/news')" class="mt-4 text-primary text-sm">去逛逛 →</button>
+            </div>
+          </div>
+        </div>
+      `,
+      setup() {
+        const collectedArticles = computed(() => store.articles.filter(a => a.collected));
+        return { collectedArticles };
+      }
+    };
+
+    // ============ 糖尿病类型详情 ============
+    const DiabetesTypeDetail = {
+      template: `
+        <div class="page-enter pb-8">
+          <header class="bg-white px-4 pt-12 pb-4 flex items-center gap-3 border-b border-slate-100 sticky top-0 z-30">
+            <button @click="$router.back()" class="text-slate-600 press w-8 h-8 flex items-center justify-center" aria-label="返回"><i class="fa-solid fa-chevron-left"></i></button>
+            <h1 class="font-bold text-slate-800">{{type.name}}</h1>
+          </header>
+          <div class="px-4 mt-4">
+            <div class="relative rounded-2xl overflow-hidden shadow-card">
+              <img :src="type.cover" class="w-full h-40 object-cover" :alt="type.name">
+              <div :class="['absolute inset-0 bg-gradient-to-t opacity-90', type.color]"></div>
+              <div class="absolute bottom-3 left-4 text-white">
+                <h2 class="text-xl font-bold">{{type.name}}</h2>
+                <p class="text-sm text-white/80">{{type.brief}}</p>
+              </div>
+            </div>
+            <div class="space-y-4 mt-4">
+              <section class="bg-white rounded-2xl p-4 shadow-card">
+                <h3 class="font-bold text-slate-800 pb-2 mb-2 border-b border-dashed border-slate-200"><i class="fa-solid fa-dna text-primary mr-2"></i>发病机制</h3>
+                <p class="text-sm text-slate-600 leading-relaxed">{{type.pathogenesis}}</p>
+              </section>
+              <section class="bg-white rounded-2xl p-4 shadow-card">
+                <h3 class="font-bold text-slate-800 pb-2 mb-2 border-b border-dashed border-slate-200"><i class="fa-solid fa-notes-medical text-primary mr-2"></i>临床表现</h3>
+                <p class="text-sm text-slate-600 leading-relaxed">{{type.manifestation}}</p>
+              </section>
+              <section class="bg-white rounded-2xl p-4 shadow-card">
+                <h3 class="font-bold text-slate-800 pb-2 mb-2 border-b border-dashed border-slate-200"><i class="fa-solid fa-stethoscope text-primary mr-2"></i>治疗方法</h3>
+                <p class="text-sm text-slate-600 leading-relaxed">{{type.treatment}}</p>
+              </section>
+            </div>
+            <p class="text-xs text-slate-400 text-center mt-6">⚠️ 以上信息仅供参考，具体诊疗请遵医嘱</p>
+          </div>
+        </div>
+      `,
+      props: ['id'],
+      setup(props) {
+        const type = diabetesTypes.find(t => t.id === props.id) || diabetesTypes[0];
+        return { type };
+      }
+    };
+
+    // ============ AI 助手功能说明页 ============
+    const AiStart = {
+      template: `
+        <div class="page-enter pb-24 min-h-screen bg-gradient-to-br from-blue-50 via-white to-sky-50">
+          <header class="px-4 pt-12 pb-3 flex items-center gap-3">
+            <button @click="$router.push('/home')" class="text-slate-600 press w-8 h-8 flex items-center justify-center" aria-label="返回"><i class="fa-solid fa-chevron-left"></i></button>
+            <h1 class="font-bold text-slate-800">AI 智能助手</h1>
+          </header>
+          <div class="flex flex-col items-center px-6 pt-6">
+            <div class="w-24 h-24 bg-gradient-to-br from-blue-500 to-sky-500 rounded-3xl flex items-center justify-center text-white text-4xl shadow-btn mb-4">
+              <i class="fa-solid fa-robot"></i>
+            </div>
+            <h2 class="text-xl font-bold text-slate-800">AI 智能助手</h2>
+            <p class="text-center text-sm text-slate-500 mt-2">您的智能健康伴侣，随时随地为您提供帮助</p>
+          </div>
+          <div class="px-4 mt-8">
+            <h3 class="font-bold text-slate-800 mb-3 px-2">核心功能</h3>
+            <div class="space-y-3">
+              <div v-for="f in features" :key="f.title" class="bg-white rounded-2xl p-4 shadow-card flex items-start gap-3">
+                <div :class="['w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0', f.bg]"><i :class="['fa-solid', f.icon, f.color]"></i></div>
+                <div class="flex-1">
+                  <h4 class="font-bold text-slate-800 text-sm">{{f.title}}</h4>
+                  <p class="text-xs text-slate-500 mt-1 leading-relaxed">{{f.desc}}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="px-4 mt-8">
+            <button @click="openChat" class="w-full bg-gradient-to-br from-blue-500 to-sky-500 text-white py-3.5 rounded-2xl font-bold shadow-btn press">
+              <i class="fa-solid fa-comments mr-2"></i>开始对话
+            </button>
+            <p class="text-center text-xs text-slate-400 mt-3">基于 DeepSeek 大模型 · Dify 工作流驱动</p>
+          </div>
+        </div>
+      `,
+      setup() {
+        const features = [
+          { title: '糖尿病信息问答', desc: '通过 DeepSeek 模型了解糖尿病相关信息，专业准确', icon: 'fa-circle-question', bg: 'bg-blue-50', color: 'text-blue-600' },
+          { title: '风险预测导航', desc: '自然语言即可发起糖尿病风险评估，一键跳转表单', icon: 'fa-chart-pie', bg: 'bg-emerald-50', color: 'text-emerald-600' },
+          { title: '方案生成', desc: '根据您的健康状态生成个性化饮食与运动方案', icon: 'fa-clipboard-list', bg: 'bg-amber-50', color: 'text-amber-600' },
+          { title: '健康资讯推荐', desc: '根据您的兴趣推荐相关科普文章', icon: 'fa-newspaper', bg: 'bg-rose-50', color: 'text-rose-600' }
+        ];
+        function openChat() { store.fabOpen = true; }
+        return { features, openChat };
+      }
+    };
+
+    // ============ 个人中心 ============
+    const Profile = {
+      template: `
+        <div class="page-enter pb-24">
+          <div class="bg-gradient-to-br from-blue-600 to-sky-500 px-5 pt-12 pb-8 rounded-b-3xl text-white">
+            <div v-if="store.token" class="flex items-center gap-4">
+              <div class="avatar-ring w-16 h-16"><img :src="store.user?.avatar" class="w-full h-full rounded-full bg-white" :alt="store.user?.nickname"></div>
+              <div>
+                <h1 class="text-lg font-bold">{{store.user?.nickname}}</h1>
+                <p class="text-blue-100 text-sm">{{store.user?.username}}</p>
+                <span v-if="isAdmin" class="inline-block mt-1 text-[10px] bg-white/20 backdrop-blur-sm px-2 py-0.5 rounded-full">管理员</span>
+              </div>
+            </div>
+            <div v-else>
+              <h1 class="text-xl font-bold">欢迎来到智能助手</h1>
+              <p class="text-blue-100 text-sm mt-1">登录后体验完整功能</p>
+              <button @click="$router.push('/login')" class="mt-4 bg-white text-primary px-5 py-2 rounded-full text-sm font-bold press">立即登录</button>
+            </div>
+          </div>
+
+          <div class="px-4 -mt-4">
+            <div class="bg-white rounded-2xl shadow-card overflow-hidden">
+              <div v-for="item in menuItems" :key="item.path" @click="go(item.path)"
+                class="flex items-center justify-between p-4 border-b border-slate-50 press-card active:bg-slate-50">
+                <div class="flex items-center gap-3">
+                  <div :class="['w-9 h-9 rounded-xl flex items-center justify-center', item.bg]"><i :class="['fa-solid', item.icon, item.color]"></i></div>
+                  <span class="text-slate-800 text-sm">{{item.label}}</span>
+                </div>
+                <i class="fa-solid fa-chevron-right text-slate-300 text-xs"></i>
+              </div>
+            </div>
+          </div>
+
+          <div v-if="isAdmin" class="px-4 mt-4">
+            <div class="bg-white rounded-2xl shadow-card overflow-hidden">
+              <div @click="go('/admin')" class="flex items-center justify-between p-4 press-card active:bg-slate-50">
+                <div class="flex items-center gap-3">
+                  <div class="w-9 h-9 rounded-xl bg-amber-50 flex items-center justify-center text-amber-600"><i class="fa-solid fa-screwdriver-wrench"></i></div>
+                  <span class="text-slate-800 text-sm">AI 智能管理平台</span>
+                </div>
+                <i class="fa-solid fa-chevron-right text-slate-300 text-xs"></i>
+              </div>
+            </div>
+          </div>
+
+          <div v-if="store.token" class="px-4 mt-4">
+            <button @click="logout(); $router.push('/home')" class="w-full bg-white text-danger py-3 rounded-2xl font-bold shadow-card press">退出登录</button>
+          </div>
+
+          <div class="px-4 mt-6 text-center text-xs text-slate-400">
+            <p>本原型用于产品概念验证与用户体验测试</p>
+            <p class="mt-1">AI 能力由 DeepSeek + Dify 驱动（演示版使用模拟数据）</p>
+          </div>
+        </div>
+      `,
+      setup() {
+        const router = VueRouter.useRouter();
+        const menuItems = [
+          { label: '个人信息', path: '/profile', icon: 'fa-user', bg: 'bg-blue-50', color: 'text-blue-600' },
+          { label: '我的方案', path: '/life-plan', icon: 'fa-clipboard-list', bg: 'bg-emerald-50', color: 'text-emerald-600' },
+          { label: '我的资讯', path: '/news', icon: 'fa-newspaper', bg: 'bg-amber-50', color: 'text-amber-600' },
+          { label: '打卡记录', path: '/punch', icon: 'fa-calendar-check', bg: 'bg-rose-50', color: 'text-rose-600' },
+          { label: '健康建议', path: '/advice', icon: 'fa-lightbulb', bg: 'bg-violet-50', color: 'text-violet-600' },
+          { label: '帮助中心', path: '/profile', icon: 'fa-circle-question', bg: 'bg-slate-50', color: 'text-slate-600' }
+        ];
+        function go(path) {
+          if (!store.token) { showToast('请先登录', 'info'); router.push('/login'); return; }
+          if (path === '/profile') { showToast('个人信息编辑功能开发中', 'info'); return; }
+          router.push(path);
+        }
+        return { store, isAdmin, logout, menuItems, go };
+      }
+    };
+
+    const Login = {
+      template: `
+        <div class="page-enter min-h-screen bg-white flex flex-col">
+          <div class="bg-gradient-to-br from-blue-600 to-sky-500 px-5 pt-16 pb-10 rounded-b-3xl text-white">
+            <button @click="$router.back()" class="mb-4 w-8 h-8 flex items-center justify-center press" aria-label="返回"><i class="fa-solid fa-chevron-left text-xl"></i></button>
+            <h1 class="text-2xl font-bold">{{isRegister ? '注册账号' : '欢迎登录'}}</h1>
+            <p class="text-blue-100 text-sm mt-1">糖尿病预治智能助手</p>
+          </div>
+          <div class="px-6 mt-8 flex-1">
+            <div class="space-y-4">
+              <div>
+                <label for="username" class="text-sm text-slate-600 font-medium">用户名</label>
+                <input id="username" v-model="form.username" placeholder="请输入用户名（admin 可体验管理员）" class="input-field w-full mt-1 border border-slate-200 rounded-xl px-4 py-3 text-sm">
+              </div>
+              <div>
+                <label for="password" class="text-sm text-slate-600 font-medium">密码</label>
+                <input id="password" v-model="form.password" type="password" placeholder="不少于8位，含字母和数字" class="input-field w-full mt-1 border border-slate-200 rounded-xl px-4 py-3 text-sm">
+              </div>
+              <div v-if="isRegister">
+                <label for="confirm" class="text-sm text-slate-600 font-medium">确认密码</label>
+                <input id="confirm" v-model="form.confirm" type="password" placeholder="请再次输入密码" class="input-field w-full mt-1 border border-slate-200 rounded-xl px-4 py-3 text-sm">
+              </div>
+            </div>
+            <p v-if="error" class="text-danger text-sm mt-3 flex items-center gap-1"><i class="fa-solid fa-circle-exclamation"></i>{{error}}</p>
+            <button @click="submit" class="w-full bg-gradient-to-br from-blue-500 to-sky-500 text-white py-3 rounded-xl font-bold mt-6 shadow-btn press">{{isRegister ? '注册' : '登录'}}</button>
+            <p class="text-center text-sm text-slate-500 mt-4">
+              {{isRegister ? '已有账号？' : '还没有账号？'}}
+              <button @click="isRegister = !isRegister; error = ''" class="text-primary font-bold press">{{isRegister ? '去登录' : '去注册'}}</button>
+            </p>
+            <p class="text-center text-xs text-slate-400 mt-6">提示：输入 admin 进入管理员视图；其他用户名进入普通用户视图</p>
+          </div>
+        </div>
+      `,
+      setup() {
+        const router = VueRouter.useRouter();
+        const isRegister = ref(false);
+        const error = ref('');
+        const form = reactive({ username: '', password: '', confirm: '' });
+        function submit() {
+          error.value = '';
+          if (!form.username || !form.password) { error.value = '请填写用户名和密码'; return; }
+          if (isRegister.value && form.password !== form.confirm) { error.value = '两次密码不一致'; return; }
+          if (form.password.length < 8) { error.value = '密码长度不少于8位'; return; }
+          login(form.username, form.password);
+          router.push('/profile');
+          store.activeTab = 'profile';
+        }
+        return { isRegister, form, error, submit };
+      }
+    };
+
+    // ============ 风险预测 ============
+    const Risk = {
+      template: `
+        <div class="page-enter min-h-screen bg-slate-50 flex flex-col">
+          <header class="bg-white px-5 py-4 flex items-center gap-3 border-b border-slate-100 sticky top-0 z-30">
+            <button @click="$router.back()" class="text-slate-600 press w-8 h-8 flex items-center justify-center" aria-label="返回"><i class="fa-solid fa-chevron-left"></i></button>
+            <h1 class="font-bold text-slate-800">糖尿病风险预测</h1>
+          </header>
+
+          <div v-if="!result" class="flex-1 p-4">
+            <div class="relative flex justify-between mb-6 px-2">
+              <div class="absolute left-4 right-4 top-4 h-0.5 bg-slate-200 -z-0"></div>
+              <div class="absolute left-4 top-4 h-0.5 bg-primary -z-0 transition-all" :style="{width: step > 1 ? 'calc(100% - 2rem)' : '0%'}"></div>
+              <div v-for="s in 3" :key="s" class="relative z-10 flex flex-col items-center">
+                <div :class="['w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition', step >= s ? 'bg-primary text-white' : 'bg-white border-2 border-slate-200 text-slate-400']">{{s}}</div>
+                <span class="text-xs mt-1" :class="step >= s ? 'text-primary font-medium' : 'text-slate-400'">{{['病史','信息','结果'][s-1]}}</span>
+              </div>
+            </div>
+
+            <div v-if="step === 1" class="bg-white rounded-2xl p-5 shadow-card">
+              <h2 class="font-bold text-slate-800 mb-4">请选择您的病史状态</h2>
+              <div class="space-y-3">
+                <label v-for="opt in historyOptions" :key="opt.value" :class="['flex items-center p-3 border-2 rounded-xl cursor-pointer press transition', form.history === opt.value ? 'border-primary bg-blue-50' : 'border-slate-200']">
+                  <input type="radio" v-model="form.history" :value="opt.value" class="w-4 h-4 text-primary">
+                  <span class="ml-3 text-sm font-medium text-slate-800">{{opt.label}}</span>
+                </label>
+              </div>
+              <div v-if="form.history === 'diagnosed'" class="mt-4">
+                <label class="text-sm text-slate-600 mb-2 block">请选择糖尿病类型</label>
+                <select v-model="form.diabetesType" class="input-field w-full border border-slate-200 rounded-xl px-3 py-2 text-sm bg-white">
+                  <option value="">请选择</option>
+                  <option v-for="t in diabetesTypes" :key="t.id" :value="t.id">{{t.name}}</option>
+                </select>
+              </div>
+            </div>
+
+            <div v-if="step === 2" class="bg-white rounded-2xl p-5 shadow-card">
+              <h2 class="font-bold text-slate-800 mb-4">填写健康信息</h2>
+              <div class="grid grid-cols-2 gap-3">
+                <div class="col-span-2">
+                  <label class="text-xs text-slate-500">年龄</label>
+                  <input v-model="form.age" type="number" placeholder="岁" class="input-field w-full border border-slate-200 rounded-xl px-3 py-2 text-sm mt-1">
+                </div>
+                <div class="col-span-2">
+                  <label class="text-xs text-slate-500">性别</label>
+                  <div class="flex gap-3 mt-1">
+                    <label v-for="g in genderOptions" :key="g.value" :class="['flex-1 flex items-center justify-center p-2 border-2 rounded-xl cursor-pointer press text-sm', form.gender === g.value ? 'border-primary bg-blue-50 text-primary' : 'border-slate-200 text-slate-600']">
+                      <input type="radio" v-model="form.gender" :value="g.value" class="hidden">{{g.label}}
+                    </label>
+                  </div>
+                </div>
+                <div>
+                  <label class="text-xs text-slate-500">身高(cm)</label>
+                  <input v-model="form.height" type="number" placeholder="cm" class="input-field w-full border border-slate-200 rounded-xl px-3 py-2 text-sm mt-1">
+                </div>
+                <div>
+                  <label class="text-xs text-slate-500">体重(kg)</label>
+                  <input v-model="form.weight" type="number" placeholder="kg" class="input-field w-full border border-slate-200 rounded-xl px-3 py-2 text-sm mt-1">
+                </div>
+                <div>
+                  <label class="text-xs text-slate-500">腰围(cm)</label>
+                  <input v-model="form.waist" type="number" placeholder="选填" class="input-field w-full border border-slate-200 rounded-xl px-3 py-2 text-sm mt-1">
+                </div>
+                <div>
+                  <label class="text-xs text-slate-500">收缩压(mmHg)</label>
+                  <input v-model="form.systolic" type="number" placeholder="选填" class="input-field w-full border border-slate-200 rounded-xl px-3 py-2 text-sm mt-1">
+                </div>
+                <div class="col-span-2">
+                  <label class="text-xs text-slate-500">家族糖尿病史</label>
+                  <select v-model="form.familyHistory" class="input-field w-full border border-slate-200 rounded-xl px-3 py-2 text-sm mt-1 bg-white">
+                    <option value="no">无</option>
+                    <option value="yes">有</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <div v-if="step === 3" class="text-center py-10">
+              <div class="w-16 h-16 bg-blue-50 rounded-2xl flex items-center justify-center mx-auto mb-4 text-primary text-2xl"><i class="fa-solid fa-wand-magic-sparkles"></i></div>
+              <h2 class="font-bold text-slate-800">准备生成风险报告</h2>
+              <p class="text-sm text-slate-500 mt-2 px-6">系统将基于《中国2型糖尿病防治指南》评分体系评估您的糖尿病风险</p>
+            </div>
+
+            <div class="flex gap-3 mt-6">
+              <button v-if="step > 1" @click="step--" class="flex-1 py-3 rounded-xl border border-slate-200 text-slate-600 font-bold press">上一步</button>
+              <button v-if="step < 3" @click="next" class="flex-1 py-3 rounded-xl bg-gradient-to-br from-blue-500 to-sky-500 text-white font-bold shadow-btn press">下一步</button>
+              <button v-if="step === 3" @click="submit" :disabled="loading" class="flex-1 py-3 rounded-xl bg-gradient-to-br from-blue-500 to-sky-500 text-white font-bold shadow-btn press disabled:opacity-60">
+                {{loading ? '评估中...' : '提交评估'}}
+              </button>
+            </div>
+          </div>
+
+          <div v-else class="flex-1 p-4">
+            <div class="bg-white rounded-2xl p-6 shadow-card text-center">
+              <div :class="['w-20 h-20 rounded-2xl mx-auto flex items-center justify-center text-3xl mb-4', result.level === 'high' ? 'bg-red-50 text-red-500' : 'bg-emerald-50 text-emerald-500']">
+                <i :class="result.level === 'high' ? 'fa-solid fa-triangle-exclamation' : 'fa-solid fa-shield-heart'"></i>
+              </div>
+              <h2 class="text-2xl font-bold text-slate-800">{{result.title}}</h2>
+              <p class="text-sm text-slate-500 mt-2">评分：<span class="font-bold gradient-text">{{result.score}}</span> 分</p>
+              <div class="mt-5 text-left bg-slate-50 rounded-xl p-4 text-sm text-slate-600 leading-relaxed">
+                <p class="font-bold text-slate-800 mb-2"><i class="fa-solid fa-lightbulb text-amber-500 mr-1"></i>建议：</p>
+                <p>{{result.advice}}</p>
+              </div>
+              <div class="flex gap-3 mt-6">
+                <button @click="reset" class="flex-1 py-3 rounded-xl border border-slate-200 text-slate-600 font-bold press">重新填写</button>
+                <button @click="$router.push('/life-plan')" class="flex-1 py-3 rounded-xl bg-gradient-to-br from-blue-500 to-sky-500 text-white font-bold shadow-btn press">生成方案</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      `,
+      setup() {
+        const step = ref(1);
+        const loading = ref(false);
+        const result = ref(null);
+        const form = store.riskForm;
+        const historyOptions = [
+          { value: 'healthy', label: '健康（未确诊）' },
+          { value: 'prediabetes', label: '糖尿病前期' },
+          { value: 'diagnosed', label: '已确诊糖尿病' }
+        ];
+        const genderOptions = [{ value: 'male', label: '男' }, { value: 'female', label: '女' }];
+        function next() { if (step.value < 3) step.value++; }
+        function submit() {
+          loading.value = true;
+          setTimeout(() => {
+            const score = Math.min(51, Math.floor((parseInt(form.age || 45) / 10) + (form.familyHistory === 'yes' ? 10 : 0) + (form.gender === 'male' ? 3 : 0) + (parseInt(form.weight || 70) / 10)));
+            const high = score >= 25;
+            result.value = {
+              score,
+              level: high ? 'high' : 'low',
+              title: high ? '糖尿病高风险' : '糖尿病低风险',
+              advice: high ? '您的风险评分较高，建议尽快到内分泌科就诊，并严格执行饮食控制、规律运动和体重管理。' : '您的风险较低，请保持健康生活方式，定期体检监测血糖变化。'
+            };
+            loading.value = false;
+          }, 1500);
+        }
+        function reset() { step.value = 1; result.value = null; Object.assign(form, { step: 1, history: 'healthy', diabetesType: '', age: '', gender: 'male', height: '', weight: '', waist: '', systolic: '', familyHistory: 'no', result: null }); }
+        return { step, form, historyOptions, genderOptions, result, loading, next, submit, reset };
+      }
+    };
+
+    // ============ 打卡记录 ============
+    const Punch = {
+      template: `
+        <div class="page-enter pb-24">
+          <header class="bg-white px-5 py-4 flex items-center gap-3 border-b border-slate-100 sticky top-0 z-30">
+            <button @click="$router.back()" class="text-slate-600 press w-8 h-8 flex items-center justify-center" aria-label="返回"><i class="fa-solid fa-chevron-left"></i></button>
+            <h1 class="font-bold text-slate-800">打卡记录与分析</h1>
+          </header>
+          <div class="px-4 mt-4">
+            <div class="bg-white rounded-2xl p-4 shadow-card">
+              <h2 class="font-bold text-slate-800 mb-3">本周完成趋势</h2>
+              <div class="flex items-end justify-between h-32 gap-2">
+                <div v-for="(d, i) in weekly" :key="i" class="flex-1 flex flex-col items-center">
+                  <span class="text-[10px] text-slate-400 mb-1">{{d}}%</span>
+                  <div class="w-full bg-slate-100 rounded-t-lg relative overflow-hidden" style="height: 100px">
+                    <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-blue-500 to-sky-400 rounded-t-lg transition-all" :style="{height: d + '%'}"></div>
+                  </div>
+                  <span class="text-xs text-slate-500 mt-1">{{weekLabels[i]}}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="px-4 mt-5">
+            <h2 class="font-bold text-slate-800 mb-3">打卡记录</h2>
+            <div class="space-y-3">
+              <div v-for="record in records" :key="record.id" class="bg-white rounded-2xl p-4 shadow-card flex justify-between items-center">
+                <div class="flex items-center gap-3">
+                  <div :class="['w-10 h-10 rounded-xl flex items-center justify-center', record.type === 'diet' ? 'bg-blue-50 text-blue-600' : 'bg-emerald-50 text-emerald-600']">
+                    <i :class="['fa-solid', record.type === 'diet' ? 'fa-utensils' : 'fa-person-running']"></i>
+                  </div>
+                  <div>
+                    <div class="flex items-center gap-2">
+                      <span class="text-[10px] text-slate-400 bg-slate-50 px-1.5 py-0.5 rounded">{{record.type === 'diet' ? '饮食' : '运动'}}</span>
+                      <h3 class="font-bold text-slate-800 text-sm">{{record.item}}</h3>
+                    </div>
+                    <p class="text-xs text-slate-400 mt-1">{{record.date}} · {{record.time}}</p>
+                  </div>
+                </div>
+                <span :class="['text-xs font-bold px-2.5 py-1 rounded-full', record.status ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-100 text-slate-400']">{{record.status ? '已完成' : '未完成'}}</span>
+              </div>
+            </div>
+          </div>
+          <div class="px-4 mt-4">
+            <div class="bg-gradient-to-br from-blue-50 to-sky-50 rounded-2xl p-4 border border-blue-100">
+              <div class="flex items-start gap-2">
+                <i class="fa-solid fa-lightbulb text-amber-500 mt-0.5"></i>
+                <div class="flex-1">
+                  <p class="font-bold text-slate-800 text-sm mb-1">AI 分析</p>
+                  <p class="text-sm text-slate-600 leading-relaxed">本周饮食打卡完成率较好，但晚间运动完成率偏低。建议将运动时间固定为晚餐后1小时，并设置手机提醒。</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      `,
+      setup() {
+        const weekly = [60, 80, 70, 90, 65, 85, 75];
+        const weekLabels = ['一', '二', '三', '四', '五', '六', '日'];
+        return { weekly, weekLabels, records: punchRecords };
+      }
+    };
+
+    // ============ 健康建议 ============
+    const HealthAdvice = {
+      template: `
+        <div class="page-enter pb-24">
+          <header class="bg-white px-5 py-4 flex items-center gap-3 border-b border-slate-100 sticky top-0 z-30">
+            <button @click="$router.back()" class="text-slate-600 press w-8 h-8 flex items-center justify-center" aria-label="返回"><i class="fa-solid fa-chevron-left"></i></button>
+            <h1 class="font-bold text-slate-800">健康建议</h1>
+          </header>
+          <div class="px-4 mt-4 space-y-3">
+            <article v-for="item in adviceList" :key="item.id" class="bg-white rounded-2xl p-4 shadow-card">
+              <div class="flex items-center gap-2 mb-2">
+                <div class="w-8 h-8 bg-amber-50 rounded-xl flex items-center justify-center text-amber-600"><i :class="['fa-solid', item.icon]"></i></div>
+                <h3 class="font-bold text-slate-800">{{item.title}}</h3>
+              </div>
+              <div class="flex gap-2 mb-3">
+                <span v-for="tag in item.tags" :key="tag" class="text-[10px] text-primary bg-blue-50 px-2 py-0.5 rounded-full">{{tag}}</span>
+              </div>
+              <p class="text-sm text-slate-600 leading-relaxed">{{item.content}}</p>
+            </article>
+          </div>
+        </div>
+      `,
+      setup() { return { adviceList }; }
+    };
+
+    // ============ 智能管理 ============
+    const Admin = {
+      template: `
+        <div class="page-enter pb-6 min-h-screen bg-slate-100">
+          <header class="bg-slate-800 px-5 py-4 flex items-center justify-between text-white sticky top-0 z-30">
+            <div class="flex items-center gap-3">
+              <button @click="$router.back()" class="text-white press w-8 h-8 flex items-center justify-center" aria-label="返回"><i class="fa-solid fa-chevron-left"></i></button>
+              <h1 class="font-bold">AI 智能管理平台</h1>
+            </div>
+            <span class="text-xs bg-white/10 px-2 py-1 rounded">{{store.user?.nickname}}</span>
+          </header>
+          <div class="flex border-b border-slate-200 bg-white sticky top-[57px] z-20">
+            <button @click="store.adminView = 'chat'" :class="['flex-1 py-3 text-sm font-bold transition', store.adminView === 'chat' ? 'text-primary border-b-2 border-primary' : 'text-slate-500']">自然语言操作</button>
+            <button @click="store.adminView = 'logs'" :class="['flex-1 py-3 text-sm font-bold transition', store.adminView === 'logs' ? 'text-primary border-b-2 border-primary' : 'text-slate-500']">操作日志</button>
+          </div>
+
+          <div v-if="store.adminView === 'chat'" class="p-4">
+            <div class="bg-white rounded-2xl p-4 shadow-card h-[45vh] overflow-y-auto mb-3 space-y-3">
+              <div v-for="(msg, idx) in adminMessages" :key="idx" class="flex" :class="msg.role === 'admin' ? 'justify-end' : 'justify-start'">
+                <div :class="['max-w-[80%] px-3.5 py-2.5 rounded-2xl text-sm leading-relaxed', msg.role === 'admin' ? 'bg-slate-800 text-white rounded-br-md' : 'bg-blue-50 text-slate-800 rounded-bl-md']">{{msg.text}}</div>
+              </div>
+            </div>
+            <div class="flex gap-2">
+              <input v-model="adminInput" @keyup.enter="sendAdmin" placeholder="用自然语言描述操作，如：查询所有用户" class="input-field flex-1 bg-white border border-slate-200 rounded-full px-4 py-2.5 text-sm">
+              <button @click="sendAdmin" class="bg-slate-800 text-white px-5 py-2.5 rounded-full text-sm font-bold press">执行</button>
+            </div>
+            <div class="flex gap-2 mt-3 overflow-x-auto hide-scrollbar">
+              <button v-for="q in quickCmds" :key="q" @click="adminInput = q; sendAdmin()" class="whitespace-nowrap px-3 py-1.5 bg-slate-200 text-slate-700 text-xs rounded-full press">{{q}}</button>
+            </div>
+            <div class="mt-4 bg-amber-50 border border-amber-200 rounded-xl p-3 text-xs text-amber-800 flex items-start gap-2">
+              <i class="fa-solid fa-triangle-exclamation mt-0.5"></i>
+              <p>演示模式：管理员操作将先由 AI 转换为 SQL 模拟执行，真实环境需连接数据库并校验权限。</p>
+            </div>
+          </div>
+
+          <div v-else class="p-4">
+            <div class="space-y-3">
+              <div v-for="log in store.adminLogs" :key="log.id" class="bg-white rounded-2xl p-4 shadow-card">
+                <div class="flex justify-between items-center mb-2">
+                  <span :class="['text-[10px] font-bold px-2 py-0.5 rounded-full', log.type === '查询' ? 'bg-blue-50 text-blue-600' : 'bg-amber-50 text-amber-600']">{{log.type}}</span>
+                  <span class="text-xs text-slate-400">{{log.time}}</span>
+                </div>
+                <p class="text-sm text-slate-700 font-mono bg-slate-50 p-2.5 rounded-lg">{{log.content}}</p>
+                <p class="text-xs text-emerald-600 mt-2 flex items-center gap-1"><i class="fa-solid fa-check-circle"></i>{{log.result}}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      `,
+      setup() {
+        const adminInput = ref('');
+        const adminMessages = ref([{ role: 'ai', text: '您好管理员，请用自然语言描述您要执行的数据库操作。\n\n例如：\n• 查询所有注册用户\n• 统计本月新增文章数\n• 删除未激活用户' }]);
+        const quickCmds = ['查询所有用户', '统计文章数量', '查询在线医生', '查看今日打卡数据'];
+        function sendAdmin() {
+          const text = adminInput.value.trim();
+          if (!text) return;
+          adminMessages.value.push({ role: 'admin', text });
+          adminInput.value = '';
+          setTimeout(() => {
+            const sql = 'SELECT COUNT(*) FROM users; -- 模拟生成的 SQL';
+            adminMessages.value.push({ role: 'ai', text: '✅ 已理解您的需求\n\n生成的 SQL：\n' + sql + '\n\n执行结果：当前共有 128 位注册用户。' });
+            store.adminLogs.unshift({ id: Date.now(), type: '查询', content: sql, time: new Date().toLocaleString('zh-CN'), result: '成功 · 返回 1 条' });
+          }, 1000);
+        }
+        return { adminInput, adminMessages, sendAdmin, quickCmds, store };
+      }
+    };
+
+    const ChangePassword = {
+      template: `
+        <div class="page-enter p-6 min-h-screen bg-white">
+          <div class="flex items-center gap-3 mb-6">
+            <button @click="$router.back()" class="text-slate-600 press w-8 h-8 flex items-center justify-center" aria-label="返回"><i class="fa-solid fa-chevron-left text-xl"></i></button>
+            <h1 class="font-bold text-slate-800 text-xl">修改密码</h1>
+          </div>
+          <div class="space-y-4">
+            <div>
+              <label for="new" class="text-sm text-slate-600 font-medium">新密码</label>
+              <input id="new" v-model="form.new" type="password" placeholder="不少于8位，含字母和数字" class="input-field w-full mt-1 border border-slate-200 rounded-xl px-4 py-3 text-sm">
+            </div>
+            <div>
+              <label for="confirm" class="text-sm text-slate-600 font-medium">确认新密码</label>
+              <input id="confirm" v-model="form.confirm" type="password" placeholder="请再次输入新密码" class="input-field w-full mt-1 border border-slate-200 rounded-xl px-4 py-3 text-sm">
+            </div>
+          </div>
+          <p v-if="error" class="text-danger text-sm mt-3">{{error}}</p>
+          <button @click="submit" class="w-full bg-gradient-to-br from-blue-500 to-sky-500 text-white py-3 rounded-xl font-bold mt-6 shadow-btn press">确认修改</button>
+        </div>
+      `,
+      setup() {
+        const router = VueRouter.useRouter();
+        const form = reactive({ new: '', confirm: '' });
+        const error = ref('');
+        function submit() {
+          error.value = '';
+          if (form.new.length < 8) { error.value = '密码长度不少于8位'; return; }
+          if (form.new !== form.confirm) { error.value = '两次密码不一致'; return; }
+          showToast('密码修改成功', 'success');
+          router.push('/admin');
+        }
+        return { form, error, submit };
+      }
+    };
+
+    // ============ 路由 ============
+    const routes = [
+      { path: '/', redirect: '/home' },
+      { path: '/home', component: Home },
+      { path: '/consultation', component: Consultation },
+      { path: '/doctor-chat/:id', component: DoctorChat, props: true },
+      { path: '/life-plan', component: LifePlan },
+      { path: '/news', component: News },
+      { path: '/article/:id', component: ArticleDetail, props: true },
+      { path: '/news-favorites', component: NewsFavorites },
+      { path: '/diabetes-type/:id', component: DiabetesTypeDetail, props: true },
+      { path: '/ai-start', component: AiStart },
+      { path: '/profile', component: Profile },
+      { path: '/login', component: Login },
+      { path: '/risk', component: Risk },
+      { path: '/punch', component: Punch },
+      { path: '/advice', component: HealthAdvice },
+      { path: '/admin', component: Admin },
+      { path: '/change-password', component: ChangePassword }
+    ];
+
+    const router = createRouter({ history: createWebHashHistory(), routes });
+
+    router.beforeEach((to) => {
+      const authRequired = ['/life-plan', '/profile', '/risk', '/punch', '/advice', '/admin', '/news-favorites'].some(p => to.path.startsWith(p));
+      const adminRequired = to.path === '/admin';
+      if (authRequired && !store.token) return '/login';
+      if (adminRequired && !isAdmin.value) return '/home';
+    });
+
+    router.afterEach((to) => {
+      const map = { '/home': 'home', '/consultation': 'consultation', '/doctor-chat': 'consultation', '/life-plan': 'life-plan', '/news': 'news', '/article': 'news', '/profile': 'profile', '/login': 'profile', '/risk': 'profile', '/punch': 'profile', '/advice': 'profile' };
+      const tab = Object.keys(map).find(k => to.path.startsWith(k));
+      if (tab) store.activeTab = map[tab];
+    });
+
+    const app = createApp({
+      components: { AppShell },
+      template: '<app-shell></app-shell>'
+    });
+    app.use(router);
+    app.mount('#app');
+  </script>
+</body>
+</html>

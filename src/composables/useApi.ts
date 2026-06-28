@@ -17,12 +17,29 @@ api.interceptors.request.use((config) => {
 })
 
 api.interceptors.response.use(
-  (res) => res,
+  (res) => {
+    // PHASE1: 日志收集期 — 记录 success:false 响应并 reject，
+    // 确认无误报后移除 console.warn (G14-phase2)
+    if (res.data && typeof res.data.success === 'boolean' && !res.data.success) {
+      console.warn(
+        '[API] success:false 响应拦截',
+        {
+          url: res.config?.url,
+          method: res.config?.method?.toUpperCase(),
+          status: res.status,
+          message: res.data.message ?? '(无消息)',
+        },
+      )
+      const err = new Error(res.data.message || '请求失败') as Error & { response?: { data?: { message?: string } } }
+      err.response = { data: { message: res.data.message } }
+      return Promise.reject(err)
+    }
+    return res
+  },
   (err) => {
     if (err.response?.status === 401) {
       const authStore = useAuthStore()
       authStore.clearAuth()
-      // 非阻断 Toast 提示
       import('sweetalert2').then((Swal) => {
         Swal.default.fire({
           toast: true,

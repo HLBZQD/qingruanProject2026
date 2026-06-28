@@ -26,6 +26,7 @@ lerna-debug.log*
 *.sln
 *.sw?
 
-.claude/
-
+./claude
 .atomcode/
+
+sqlite3.exe

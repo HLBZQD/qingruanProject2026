@@ -19,7 +19,36 @@ export interface SSEErrorEvent {
   code: string;
 }
 
-export type SSEEvent = SSEMessageEvent | SSEMessageEndEvent | SSEErrorEvent;
+export interface SSEWorkflowStartedEvent {
+  event: 'workflow_started'
+  workflow_run_id: string
+}
+
+export interface SSEWorkflowFinishedEvent {
+  event: 'workflow_finished'
+  workflow_run_id: string
+}
+
+export interface SSEAgentMessageEvent {
+  event: 'agent_message'
+  answer: string
+  conversation_id: string
+}
+
+export interface SSEAgentThoughtEvent {
+  event: 'agent_thought'
+  thought: string
+  tool?: string
+}
+
+export type SSEEvent =
+  | SSEMessageEvent
+  | SSEMessageEndEvent
+  | SSEErrorEvent
+  | SSEWorkflowStartedEvent
+  | SSEWorkflowFinishedEvent
+  | SSEAgentMessageEvent
+  | SSEAgentThoughtEvent
 
 export interface ChatMessage {
   id: string;
