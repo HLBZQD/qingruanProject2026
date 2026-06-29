@@ -80,15 +80,24 @@ function goNewsList(): void {
   router.push('/news')
 }
 function onSearch(): void {
-  // prototype 仅占位；弹 Swal 提示开发中
-  void Swal.fire({
-    toast: true,
-    position: 'top',
-    icon: 'info',
-    title: '搜索功能开发中',
-    showConfirmButton: false,
-    timer: 1800,
-    timerProgressBar: true,
+  void Swal.fire<string>({
+    title: '搜索健康资讯',
+    input: 'text',
+    inputPlaceholder: '输入文章标题或标签关键词',
+    inputAttributes: {
+      'aria-label': '搜索关键词',
+    },
+    showCancelButton: true,
+    confirmButtonText: '搜索',
+    cancelButtonText: '取消',
+    inputValidator: (value) => {
+      if (!value || !value.trim()) return '请输入搜索关键词'
+      return null
+    },
+    preConfirm: (keyword) => {
+      const trimmed = keyword.trim()
+      router.push('/news?keyword=' + encodeURIComponent(trimmed))
+    },
   })
 }
 

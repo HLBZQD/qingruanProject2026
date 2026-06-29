@@ -12,6 +12,7 @@ import {
   getAssistantConversations,
 } from '@/composables/useChatApi'
 import type { ChatMessage, SSEEvent, ConversationHistoryItem } from '@/types/sse'
+import { router } from '@/router'
 
 export const useChatStore = defineStore('chat', () => {
   // ===== 状态 =====
@@ -255,6 +256,13 @@ function handleSSEEvent(event: SSEEvent): void {
       if (lastMsg && lastMsg.role === 'assistant') {
         lastMsg.id = event.message_id || lastMsg.id
         lastMsg.timestamp = (event.created_at || 0) * 1000
+
+        // D2 AI导航：检测 [[NAVIGATE:/path]] 标记
+        const navMatch = lastMsg.content.match(/\[\[NAVIGATE:([^\]]+)\]\]/)
+        if (navMatch) {
+          lastMsg.content = lastMsg.content.replace(/\[\[NAVIGATE:[^\]]+\]\]/g, '').trim()
+          navigate({ path: navMatch[1] })
+        }
       }
       isStreaming.value = false
     },
@@ -621,8 +629,8 @@ function handleSSEEvent(event: SSEEvent): void {
   }
 
   /** 导航方法 (预留，后续轮次使用) */
-  function navigate(_path: string): void {
-    // v3 留空，v4 实现
+  function navigate(target: { name?: string; path?: string; params?: object; query?: object }): void {
+    router.push(target)
   }
 
   // ===== 历史会话 =====
