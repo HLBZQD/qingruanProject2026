@@ -1,14 +1,28 @@
 // src/stores/chatStore.ts
 import { ref } from 'vue'
 import { defineStore } from 'pinia'
-import { sendChatMessage, sendAssistantChatMessage, sendAdminChatMessage } from '@/composables/useChatApi'
-import type { ChatMessage } from '@/types/sse'
-import type { SSEEvent } from '@/types/sse'
+import {
+  sendChatMessage,
+  sendAssistantChatMessage,
+  sendAdminChatMessage,
+  getDoctorConversationHistory,
+  getAssistantConversations,
+} from '@/composables/useChatApi'
+import type { ChatMessage, SSEEvent, ConversationHistoryItem } from '@/types/sse'
 
 export const useChatStore = defineStore('chat', () => {
   // ===== 状态 =====
   /** 当前对话消息列表 (响应式数组，驱动 DoctorChatView 模板渲染) */
   const conversations = ref<ChatMessage[]>([])
+
+  /** 历史会话列表（Dify 返回的会话元数据数组，非消息内容） */
+  const conversationHistory = ref<ConversationHistoryItem[]>([])
+
+  /** 历史会话加载中标志 */
+  const historyLoading = ref(false)
+
+  /** 历史会话加载错误消息（空字符串表示无错误） */
+  const historyError = ref('')
 
   /** SSE 流是否活跃 (用于 UI: 发送按钮 disabled + "对方正在输入..." 动画) */
   const isStreaming = ref(false)
@@ -717,6 +731,71 @@ export const useChatStore = defineStore('chat', () => {
     // v3 留空，v4 实现
   }
 
+  // ===== 历史会话 =====
+
+  /**
+   * 加载指定医生的历史会话列表。
+   *
+   * 调用时机：DoctorChatView.vue 中用户点击"历史会话"按钮后触发。
+   *
+   * 执行流程：
+   *   1. 设置 historyLoading = true, historyError = ''
+   *   2. await getDoctorConversationHistory(doctorId, token)
+   *   3. 写入 conversationHistory.value = result
+   *   4. catch: historyError.value = err.message（网络错误/401 等）
+   *   5. finally: historyLoading = false
+   *
+   * @param doctorId - 医生主键
+   * @param token    - JWT Token（调用方从 authStore.token 取）
+   */
+  async function loadDoctorConversationHistory(
+    doctorId: number,
+    token: string
+  ): Promise<void> {
+    historyLoading.value = true
+    historyError.value = ''
+    try {
+      conversationHistory.value = await getDoctorConversationHistory(doctorId, token)
+    } catch (err: unknown) {
+      historyError.value = err instanceof Error ? err.message : '加载历史会话失败'
+    } finally {
+      historyLoading.value = false
+    }
+  }
+
+  /**
+   * 加载 AI 助手的历史会话列表。
+   *
+   * 调用时机：AssistantChatView.vue 中用户触发（本轮 D1 仅落地接口，UI 后续轮次实现）。
+   *
+   * 执行流程：同 loadDoctorConversationHistory。
+   *
+   * @param token - JWT Token
+   */
+  async function loadAssistantConversationHistory(
+    token: string
+  ): Promise<void> {
+    historyLoading.value = true
+    historyError.value = ''
+    try {
+      conversationHistory.value = await getAssistantConversations(token)
+    } catch (err: unknown) {
+      historyError.value = err instanceof Error ? err.message : '加载历史会话失败'
+    } finally {
+      historyLoading.value = false
+    }
+  }
+
+  /**
+   * 清空历史会话列表 state。
+   *
+   * 调用时机：弹层关闭、切换医生、或组件卸载时调用。
+   */
+  function clearConversationHistory(): void {
+    conversationHistory.value = []
+    historyError.value = ''
+  }
+
   // ===== Store 导出 =====
   return {
     // state
@@ -757,5 +836,15 @@ export const useChatStore = defineStore('chat', () => {
     // actions — UI
     toggleFab,
     navigate,
+
+    // state — 历史会话
+    conversationHistory,
+    historyLoading,
+    historyError,
+
+    // actions — 历史会话
+    loadDoctorConversationHistory,
+    loadAssistantConversationHistory,
+    clearConversationHistory,
   }
 })

@@ -6,6 +6,10 @@ import { useChatStore } from '@/stores/chatStore'
 import { useAuthStore } from '@/stores/authStore'
 import { getDoctorInfo } from '@/composables/useChatApi'
 import type { Doctor } from '@/types/api'
+import type { ConversationHistoryItem } from '@/types/sse'
+import SkeletonLoader from '@/components/SkeletonLoader.vue'
+import ErrorRetry from '@/components/ErrorRetry.vue'
+import EmptyState from '@/components/EmptyState.vue'
 import { marked } from 'marked'
 import DOMPurify from 'dompurify'
 
@@ -20,6 +24,8 @@ const loading = ref(true)
 const doctorError = ref('')
 const inputText = ref('')
 const messagesContainer = ref<HTMLElement | null>(null)
+/** 历史会话弹层可见性 */
+const showHistoryPanel = ref(false)
 
 // ===== 计算属性 =====
 const userAvatar = computed(() => {
@@ -128,6 +134,68 @@ function formatTime(timestamp: number): string {
   })
 }
 
+// ===== 历史会话 =====
+
+/**
+ * 切换历史会话弹层显示/隐藏。
+ * 打开时自动加载历史会话列表；关闭时清空历史 state。
+ */
+function toggleHistoryList(): void {
+  showHistoryPanel.value = !showHistoryPanel.value
+  if (showHistoryPanel.value) {
+    loadHistory()
+  } else {
+    chatStore.clearConversationHistory()
+  }
+}
+
+/**
+ * 加载当前医生的历史会话列表。
+ * 从 authStore 获取 token，从 route.params.id 获取 doctorId。
+ */
+function loadHistory(): void {
+  const token = authStore.token
+  if (!token) return
+  const doctorId = Number(route.params.id)
+  if (!Number.isFinite(doctorId) || doctorId <= 0) return
+  chatStore.loadDoctorConversationHistory(doctorId, token)
+}
+
+/**
+ * 选中某个历史会话并恢复。
+ * 调用 chatStore.setDoctorConversation 设置 conversation_id，
+ * 清空当前消息列表（切换会话上下文），关闭弹层。
+ *
+ * @param item - 选中的历史会话项
+ */
+function selectHistorySession(item: ConversationHistoryItem): void {
+  const doctorId = Number(route.params.id)
+  chatStore.setDoctorConversation(doctorId, item.conversation_id)
+  // 清空当前消息列表以展示新会话上下文
+  chatStore.conversations.length = 0
+  showHistoryPanel.value = false
+  chatStore.clearConversationHistory()
+}
+
+/**
+ * 格式化 ISO 时间字符串为 "YYYY-MM-DD HH:mm"。
+ * 复用现有 formatTime(timestamp: number) 的命名空间（新函数为 formatHistoryTime）。
+ *
+ * @param isoString - ISO 8601 时间字符串（如 "2026-06-29T10:30:00.000Z"）
+ * @returns 格式化后的时间字符串，解析失败返回原始字符串
+ */
+function formatHistoryTime(isoString: string): string {
+  if (!isoString) return ''
+  const d = new Date(isoString)
+  if (isNaN(d.getTime())) return isoString
+  const year = d.getFullYear()
+  const month = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  const hours = String(d.getHours()).padStart(2, '0')
+  const minutes = String(d.getMinutes()).padStart(2, '0')
+  return `${year}-${month}-${day} ${hours}:${minutes}`
+}
+
 // ===== 路由参数变化监听 (医生A → 医生B 同组件复用) =====
 watch(
   () => route.params.id,
@@ -168,6 +236,14 @@ onUnmounted(() => {
         </div>
       </div>
       <button
+        class="btn-history"
+        @click="toggleHistoryList"
+        title="历史会话"
+        aria-label="历史会话"
+      >
+        <i class="fas fa-history"></i>
+      </button>
+      <button
         class="btn-delete"
         @click="clearChat"
         title="清空对话"
@@ -176,6 +252,63 @@ onUnmounted(() => {
         <i class="fas fa-trash"></i>
       </button>
     </header>
+
+    <!-- 历史会话弹层 -->
+    <div v-if="showHistoryPanel" class="history-panel-overlay" @click.self="toggleHistoryList">
+      <div class="history-panel">
+        <div class="history-panel-header">
+          <h3>历史会话</h3>
+          <button class="btn-close-panel" @click="toggleHistoryList" aria-label="关闭">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+
+        <div class="history-panel-body">
+          <!-- 加载中 -->
+          <SkeletonLoader
+            v-if="chatStore.historyLoading"
+            type="list"
+            :rows="3"
+          />
+
+          <!-- 加载失败 -->
+          <ErrorRetry
+            v-else-if="chatStore.historyError"
+            :message="chatStore.historyError"
+            @retry="loadHistory"
+          />
+
+          <!-- 空列表 -->
+          <EmptyState
+            v-else-if="chatStore.conversationHistory.length === 0"
+            icon="fa-history"
+            title="暂无历史会话"
+            description="当前医生没有历史对话记录"
+          />
+
+          <!-- 会话列表 -->
+          <ul v-else class="history-list">
+            <li
+              v-for="item in chatStore.conversationHistory"
+              :key="item.conversation_id"
+              class="history-item"
+              @click="selectHistorySession(item)"
+            >
+              <div class="history-item-icon">
+                <i class="fas fa-comment-dots"></i>
+              </div>
+              <div class="history-item-info">
+                <span class="history-item-name">{{ item.name || '未命名会话' }}</span>
+                <span class="history-item-time">{{ formatHistoryTime(item.created_at) }}</span>
+              </div>
+              <div class="history-item-arrow">
+                <i class="fas fa-chevron-right"></i>
+              </div>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
 
     <!-- 免责声明条 (对话全程可见) -->
     <div class="disclaimer-bar">
@@ -518,5 +651,142 @@ onUnmounted(() => {
   font-weight: 700;
   border: none;
   cursor: pointer;
+}
+
+/* ===== 历史会话按钮 ===== */
+.btn-history {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-body);
+  border-radius: var(--radius-full);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.btn-history:hover {
+  color: var(--color-primary);
+  background: rgba(74, 144, 217, 0.1);
+}
+
+/* ===== 历史会话弹层 ===== */
+.history-panel-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.3);
+  z-index: 1000;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+.history-panel {
+  width: 100%;
+  max-width: 768px;
+  max-height: 60vh;
+  background: var(--color-card);
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  display: flex;
+  flex-direction: column;
+  animation: slideUp 0.25s ease-out;
+}
+@keyframes slideUp {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
+/* ===== 弹层头部 ===== */
+.history-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--spacing-md) var(--spacing-lg);
+  border-bottom: 1px solid var(--color-divider);
+  flex-shrink: 0;
+}
+.history-panel-header h3 {
+  font-size: var(--font-size-h4);
+  font-weight: 700;
+  color: var(--color-text-primary);
+}
+.btn-close-panel {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  color: var(--color-text-secondary);
+  font-size: 14px;
+  border-radius: var(--radius-full);
+  cursor: pointer;
+}
+
+/* ===== 弹层内容区 ===== */
+.history-panel-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--spacing-sm) 0;
+}
+
+/* ===== 会话列表 ===== */
+.history-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.history-item {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  padding: var(--spacing-md) var(--spacing-lg);
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.history-item:hover,
+.history-item:active {
+  background: var(--color-bg);
+}
+.history-item-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-full);
+  background: var(--color-primary-light);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.history-item-icon i {
+  font-size: 14px;
+  color: var(--color-primary);
+}
+.history-item-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.history-item-name {
+  font-size: var(--font-size-body);
+  font-weight: 600;
+  color: var(--color-text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.history-item-time {
+  font-size: 11px;
+  color: var(--color-text-secondary);
+}
+.history-item-arrow {
+  flex-shrink: 0;
+  color: var(--color-text-tertiary);
+  font-size: 12px;
 }
 </style>
