@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import { getArticles } from '@/composables/useHomeApi'
 import { generateArticle, isCategorySelection, isArticleDetail } from '@/composables/useArticleApi'
 import { useAuthStore } from '@/stores/authStore'
@@ -11,6 +11,7 @@ import EmptyState from '@/components/EmptyState.vue'
 import DisclaimerBar from '@/components/DisclaimerBar.vue'
 
 const router = useRouter()
+const route = useRoute()
 const authStore = useAuthStore()
 
 const categories = ['全部', '饮食指导', '运动指南', '生活习惯', '知识科普']
@@ -195,11 +196,104 @@ async function handleGenerate() {
   }
 }
 
+// ===== C2 搜索模式 =====
+
+const keyword = ref('')
+const searchMode = computed(() => keyword.value.trim().length > 0)
+const searchLoading = ref(false)
+const searchError = ref('')
+const searchResults = ref<Article[]>([])
+const searchedKeyword = ref('')
+
+/** 简易防抖 */
+function debounce<T extends (...args: any[]) => any>(fn: T, delay: number): (...args: Parameters<T>) => void {
+  let timer: ReturnType<typeof setTimeout> | null = null
+  return (...args: Parameters<T>) => {
+    if (timer) clearTimeout(timer)
+    timer = setTimeout(() => fn(...args), delay)
+  }
+}
+
+/** 标题关键词高亮 (HTML-safe: 只对非 HTML 标题执行替换) */
+function highlightKeyword(text: string, kw: string): string {
+  if (!text || !kw) return text
+  const escaped = kw.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+  return text.replace(new RegExp(`(${escaped})`, 'gi'), '<mark class="search-highlight">$1</mark>')
+}
+
+/** 执行搜索：全量拉取文章后本地过滤 */
+async function doSearch(q: string) {
+  const trimmed = q.trim()
+  await router.replace({ query: trimmed ? { keyword: trimmed } : {} })
+  if (!trimmed) return
+
+  searchLoading.value = true
+  searchError.value = ''
+  searchResults.value = []
+
+  try {
+    // 全量拉取：pageSize=100，最多 2 页（200 条）
+    const allArticles: Article[] = []
+    let page = 1
+    let hasMoreArticles = true
+    while (hasMoreArticles) {
+      const res = await getArticles({ page, pageSize: 100 })
+      allArticles.push(...res)
+      hasMoreArticles = res.length === 100
+      page++
+      if (page > 2) hasMoreArticles = false
+    }
+
+    const lower = trimmed.toLowerCase()
+    searchResults.value = allArticles.filter((a) =>
+      a.title.toLowerCase().includes(lower) ||
+      (a.tags && a.tags.some((t: string) => t.toLowerCase().includes(lower)))
+    )
+    searchedKeyword.value = trimmed
+  } catch {
+    searchError.value = '搜索失败，请检查网络后重试'
+  } finally {
+    searchLoading.value = false
+  }
+}
+
+const debouncedSearch = debounce((q: string) => doSearch(q), 300)
+
+/** 输入框内容变化 → 防抖搜索 */
+watch(keyword, (val) => {
+  debouncedSearch(val)
+})
+
+/** URL query 同步 → 初始化/恢复搜索 */
+watch(() => route.query.keyword, (val) => {
+  keyword.value = typeof val === 'string' ? val : ''
+})
+
+/** 清除搜索，返回普通列表 */
+function clearSearch() {
+  keyword.value = ''
+  searchedKeyword.value = ''
+  searchResults.value = []
+  searchError.value = ''
+  router.replace({ query: {} })
+  // 恢复普通列表显示
+  if (articles.value.length === 0) {
+    fetchArticles(true)
+  }
+}
+
 watch(currentCategory, saveState)
 
 onMounted(() => {
-  restoreState()
-  fetchArticles(true)
+  // 优先处理 URL 中的 keyword 参数（来自 Home.vue 搜索入口跳转）
+  const kwFromUrl = route.query.keyword
+  if (kwFromUrl && typeof kwFromUrl === 'string' && kwFromUrl.trim()) {
+    keyword.value = kwFromUrl.trim()
+    // doSearch 会由 watch(keyword) 自动触发
+  } else {
+    restoreState()
+    fetchArticles(true)
+  }
 })
 </script>
 
@@ -218,8 +312,28 @@ onMounted(() => {
       </router-link>
     </header>
 
-    <!-- 分类标签 -->
-    <div class="category-tabs" role="tablist" aria-label="资讯分类">
+    <!-- 搜索栏 -->
+    <div class="search-bar" role="search">
+      <i class="fas fa-search search-icon" aria-hidden="true"></i>
+      <input
+        v-model="keyword"
+        type="search"
+        placeholder="搜索文章标题或标签"
+        class="search-input"
+        aria-label="搜索健康资讯"
+      />
+      <button
+        v-if="keyword"
+        class="search-clear"
+        aria-label="清除搜索"
+        @click="clearSearch"
+      >
+        <i class="fas fa-times" aria-hidden="true"></i>
+      </button>
+    </div>
+
+    <!-- 分类标签（搜索模式下隐藏） -->
+    <div v-if="!searchMode" class="category-tabs" role="tablist" aria-label="资讯分类">
       <button
         v-for="cat in categories"
         :key="cat"
@@ -233,69 +347,128 @@ onMounted(() => {
       </button>
     </div>
 
-    <!-- 加载态 -->
-    <div v-if="loading && articles.length === 0" class="content-pad">
-      <SkeletonLoader type="article" :rows="3" />
-    </div>
-
-    <!-- 错误态 -->
-    <ErrorRetry
-      v-else-if="error && articles.length === 0"
-      :message="error"
-      @retry="fetchArticles(true)"
-    />
-
-    <!-- 空态 -->
-    <EmptyState
-      v-else-if="articles.length === 0 && !loading"
-      icon="fa-newspaper"
-      title="暂无资讯"
-      description="当前分类下还没有文章，您可以生成一篇专属健康资讯。"
-      action-text="生成健康资讯"
-      @action="handleGenerate"
-    />
-
-    <!-- 文章列表 -->
-    <div v-else id="article-list" class="content-pad">
-      <article
-        v-for="item in articles"
-        :key="item.id"
-        class="article-card"
-        @click="goDetail(item.id)"
-      >
-        <img
-          class="card-cover"
-          :src="item.cover || '/static/images/placeholder-article.svg'"
-          :alt="item.title"
-          @error="($event.target as HTMLImageElement).style.display = 'none'"
-        />
-        <div class="card-body">
-          <div>
-            <span class="card-category">{{ item.category }}</span>
-            <h3 class="card-title">{{ item.title }}</h3>
-            <p v-if="item.summary" class="card-summary">{{ item.summary }}</p>
-          </div>
-          <div class="card-meta">
-            <span>{{ item.author || 'AI健康助手' }} · {{ formatDate(item.created_at) }}</span>
-            <span><i class="fas fa-eye" aria-hidden="true"></i> {{ item.views }}</span>
-          </div>
-        </div>
-      </article>
-
-      <!-- 加载更多 -->
-      <div class="load-more-wrap">
-        <button
-          v-if="hasMore"
-          class="btn-load-more"
-          :disabled="loading"
-          @click="loadMore"
-        >
-          <i v-if="loading" class="fas fa-spinner fa-spin" aria-hidden="true"></i>
-          {{ loading ? '加载中...' : '加载更多' }}
-        </button>
-        <p v-else class="no-more">已经到底啦</p>
+    <!-- ===== 搜索模式 ===== -->
+    <template v-if="searchMode">
+      <!-- 搜索加载中 -->
+      <div v-if="searchLoading" class="content-pad">
+        <SkeletonLoader type="article" :rows="3" />
       </div>
-    </div>
+
+      <!-- 搜索错误 -->
+      <ErrorRetry
+        v-else-if="searchError && searchResults.length === 0"
+        :message="searchError"
+        @retry="doSearch(searchedKeyword)"
+      />
+
+      <!-- 搜索空结果 -->
+      <EmptyState
+        v-else-if="searchResults.length === 0 && !searchLoading"
+        icon="fa-search"
+        title="未找到相关文章"
+        :description="`没有找到与 &quot;${searchedKeyword}&quot; 相关的文章，换个关键词试试，或让 AI 生成一篇。`"
+        action-text="生成健康资讯"
+        @action="handleGenerate"
+      />
+
+      <!-- 搜索结果列表 -->
+      <div v-else class="content-pad">
+        <div class="search-result-hint" aria-live="polite">
+          &quot;{{ searchedKeyword }}&quot; 的搜索结果（共 {{ searchResults.length }} 条）
+        </div>
+        <article
+          v-for="item in searchResults"
+          :key="item.id"
+          class="article-card"
+          @click="goDetail(item.id)"
+        >
+          <img
+            class="card-cover"
+            :src="item.cover || '/static/images/placeholder-article.svg'"
+            :alt="item.title"
+            @error="($event.target as HTMLImageElement).style.display = 'none'"
+          />
+          <div class="card-body">
+            <div>
+              <span class="card-category">{{ item.category }}</span>
+              <h3 class="card-title" v-html="highlightKeyword(item.title, searchedKeyword)"></h3>
+              <p v-if="item.summary" class="card-summary">{{ item.summary }}</p>
+            </div>
+            <div class="card-meta">
+              <span>{{ item.author || 'AI健康助手' }} · {{ formatDate(item.created_at) }}</span>
+              <span><i class="fas fa-eye" aria-hidden="true"></i> {{ item.views }}</span>
+            </div>
+          </div>
+        </article>
+      </div>
+    </template>
+
+    <!-- ===== 普通浏览模式 ===== -->
+    <template v-else>
+      <!-- 加载态 -->
+      <div v-if="loading && articles.length === 0" class="content-pad">
+        <SkeletonLoader type="article" :rows="3" />
+      </div>
+
+      <!-- 错误态 -->
+      <ErrorRetry
+        v-else-if="error && articles.length === 0"
+        :message="error"
+        @retry="fetchArticles(true)"
+      />
+
+      <!-- 空态 -->
+      <EmptyState
+        v-else-if="articles.length === 0 && !loading"
+        icon="fa-newspaper"
+        title="暂无资讯"
+        description="当前分类下还没有文章，您可以生成一篇专属健康资讯。"
+        action-text="生成健康资讯"
+        @action="handleGenerate"
+      />
+
+      <!-- 文章列表 -->
+      <div v-else id="article-list" class="content-pad">
+        <article
+          v-for="item in articles"
+          :key="item.id"
+          class="article-card"
+          @click="goDetail(item.id)"
+        >
+          <img
+            class="card-cover"
+            :src="item.cover || '/static/images/placeholder-article.svg'"
+            :alt="item.title"
+            @error="($event.target as HTMLImageElement).style.display = 'none'"
+          />
+          <div class="card-body">
+            <div>
+              <span class="card-category">{{ item.category }}</span>
+              <h3 class="card-title">{{ item.title }}</h3>
+              <p v-if="item.summary" class="card-summary">{{ item.summary }}</p>
+            </div>
+            <div class="card-meta">
+              <span>{{ item.author || 'AI健康助手' }} · {{ formatDate(item.created_at) }}</span>
+              <span><i class="fas fa-eye" aria-hidden="true"></i> {{ item.views }}</span>
+            </div>
+          </div>
+        </article>
+
+        <!-- 加载更多 -->
+        <div class="load-more-wrap">
+          <button
+            v-if="hasMore"
+            class="btn-load-more"
+            :disabled="loading"
+            @click="loadMore"
+          >
+            <i v-if="loading" class="fas fa-spinner fa-spin" aria-hidden="true"></i>
+            {{ loading ? '加载中...' : '加载更多' }}
+          </button>
+          <p v-else class="no-more">已经到底啦</p>
+        </div>
+      </div>
+    </template>
 
     <!-- 生成按钮 -->
     <button
@@ -545,6 +718,79 @@ onMounted(() => {
 .btn-generate:disabled {
   opacity: 0.7;
   cursor: not-allowed;
+}
+
+.search-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: var(--spacing-sm) var(--spacing-lg);
+  background: var(--color-card);
+  border-bottom: 1px solid var(--color-divider);
+  position: sticky;
+  top: 0;
+  z-index: 30;
+}
+
+.search-icon {
+  color: var(--color-text-tertiary);
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.search-input {
+  flex: 1;
+  min-height: 44px;
+  border: 1px solid var(--color-divider);
+  border-radius: var(--radius-full);
+  padding: 0 14px;
+  font-size: 14px;
+  background: var(--color-bg);
+  color: var(--color-text-primary);
+  outline: none;
+  transition: border-color var(--transition-fast);
+}
+
+.search-input:focus {
+  border-color: var(--color-primary);
+}
+
+.search-input::placeholder {
+  color: var(--color-text-tertiary);
+}
+
+.search-clear {
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  color: var(--color-text-tertiary);
+  font-size: 16px;
+  cursor: pointer;
+  flex-shrink: 0;
+  border-radius: var(--radius-full);
+  transition: background var(--transition-fast);
+}
+
+.search-clear:active {
+  background: var(--color-bg);
+}
+
+.search-result-hint {
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  margin-bottom: var(--spacing-md);
+  padding: var(--spacing-xs) 0;
+}
+
+.search-highlight {
+  background: #fff3b0;
+  color: #333;
+  padding: 0 2px;
+  border-radius: 2px;
 }
 
 .news-disclaimer {
