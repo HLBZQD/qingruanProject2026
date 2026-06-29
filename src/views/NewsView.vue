@@ -207,6 +207,15 @@ onMounted(() => {
   <div class="news-list-container">
     <header class="top-bar">
       <h1>健康资讯</h1>
+      <router-link
+        v-if="isLoggedIn"
+        to="/news/collections"
+        class="btn-collections"
+        aria-label="我的收藏"
+      >
+        <i class="fas fa-heart" aria-hidden="true"></i>
+        <span>我的收藏</span>
+      </router-link>
     </header>
 
     <!-- 分类标签 -->
@@ -320,12 +329,38 @@ onMounted(() => {
   background: var(--color-card);
   border-bottom: 1px solid var(--color-divider);
   padding: var(--spacing-lg) var(--spacing-xl);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
 
 .top-bar h1 {
   font-size: var(--font-size-h2);
   font-weight: 700;
   color: var(--color-text-primary);
+}
+
+.btn-collections {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 12px;
+  border-radius: var(--radius-full);
+  background: var(--color-primary-light);
+  color: var(--color-primary);
+  font-size: 12px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: transform var(--transition-fast);
+}
+
+.btn-collections:active {
+  transform: scale(0.96);
+}
+
+.btn-collections i {
+  font-size: 11px;
+  color: #FF4D4F;
 }
 
 .category-tabs {
