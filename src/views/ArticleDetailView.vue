@@ -1,9 +1,8 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { marked } from 'marked'
-import DOMPurify from 'dompurify'
 import { getArticle } from '@/composables/useHomeApi'
+import { renderMarkdown } from '@/composables/useMarkdown'
 import type { ArticleDetail } from '@/types/api'
 
 const route = useRoute()
@@ -15,14 +14,8 @@ const loading = ref(true)
 const error = ref<string | null>(null)
 const notFound = ref(false)
 
-// ===== Markdown 净化链（复用 LifePlan safeContentHtml 范式） =====
-const safeContent = computed(() => {
-  const md = article.value?.content
-  if (typeof md !== 'string' || md.length === 0) return ''
-  const html = marked.parse(md, { async: false })
-  if (typeof html !== 'string') return ''
-  return DOMPurify.sanitize(html)
-})
+// ===== Markdown 净化链（统一使用 useMarkdown.renderMarkdown） =====
+const safeContent = computed(() => renderMarkdown(article.value?.content))
 
 // ===== 日期格式化（"2026-06-23T07:30:00" → "2026年6月23日"） =====
 function formatDate(iso: string): string {

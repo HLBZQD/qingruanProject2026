@@ -3,7 +3,46 @@
  *
  * 类型策略: API composable 采用内联类型定义每个接口的请求/响应结构，
  * 更好地表达每个端点的具体契约。不使用泛型包装器 (ApiResponse<T> 等)。
+ *
+ * 业务实体类型（User/Doctor/Article/LifePlan 等）已拆分至 models.ts，
+ * 本文件通过 re-export 保持向后兼容，避免一次改动所有引用方。
  */
+
+import type {
+  AdminLog,
+  Article,
+  ArticleDetail,
+  CompletionStatus,
+  DiabetesType,
+  DiabetesTypeDetail,
+  Doctor,
+  DoctorDetail,
+  HealthAdvice,
+  LifePlan,
+  PlanType,
+  PunchRecord,
+  PunchType,
+  User,
+  UserProfile,
+} from './models'
+
+export type {
+  AdminLog,
+  Article,
+  ArticleDetail,
+  CompletionStatus,
+  DiabetesType,
+  DiabetesTypeDetail,
+  Doctor,
+  DoctorDetail,
+  HealthAdvice,
+  LifePlan,
+  PlanType,
+  PunchRecord,
+  PunchType,
+  User,
+  UserProfile,
+} from './models'
 
 // ========== 通用类型 ==========
 
@@ -27,6 +66,7 @@ export interface PaginationInfo {
 }
 
 // ========== 认证类型 ==========
+
 export interface LoginRequest {
   username: string;
   password: string;
@@ -37,26 +77,11 @@ export interface RegisterRequest {
   password: string;
 }
 
-export interface LoginUser {
-  id: number;
-  username: string;
-  role: 'user' | 'admin';
-  avatar: string | null;
-}
-
 export interface LoginResponse {
   token: string;
   role: 'user' | 'admin';
-  user: LoginUser;
+  user: User;
   must_change_password?: boolean;
-}
-
-export interface UserProfile {
-  id: number;
-  username: string;
-  role: 'user' | 'admin';
-  avatar: string | null;
-  created_at: string;
 }
 
 export interface UpdateProfileRequest {
@@ -69,18 +94,8 @@ export interface ChangePasswordRequest {
   new_password: string
 }
 
-/** 管理员操作日志 */
-export interface AdminLog {
-  id: number
-  operator_id: number
-  operator_username: string
-  operation_type: 'INSERT' | 'UPDATE' | 'DELETE' | 'SELECT' | string
-  operation_content: string
-  operation_result: string
-  operation_time: string
-}
-
 // ========== 风险预测类型 ==========
+
 export interface RiskPredictRequest {
   diabetes_history: 'healthy' | 'prediabetes' | 'diagnosed';
   diabetes_type?: 'type1' | 'type2' | 'gestational' | 'other';
@@ -118,53 +133,26 @@ export interface RiskHistoryItem {
 }
 
 // ========== 医生类型 ==========
-export interface Doctor {
-  id: number;
-  name: string;
-  department: string;
-  title: string;
-  description: string;
-  avatar: string | null;
-}
 
 /** 医生详情 (含在线状态)，GET /api/doctors/:id */
-export interface DoctorDetail extends Doctor {
-  is_online: boolean
-}
+// Doctor / DoctorDetail 业务实体已定义在 models.ts 并通过顶部 re-export 暴露。
 
 // ========== 健康科普文章类型 ==========
+
 /**
  * 健康科普文章列表项（GET /api/articles 的 data 数组元素，无完整正文 content）。
  * 字段严格对齐 docs/2_detailed_design_v3.md 3.8.3 / 3.2.19（v13 修订后稳定返回）。
  * 注意：3.2.19 注释中 created_at↔publish_time、views↔read_count 为语义映射，
  *       后端只返回 created_at / views，不引入别名字段，避免类型允许不可能状态。
+ *
+ * Article 业务实体已定义在 models.ts 并通过顶部 re-export 暴露。
  */
-export interface Article {
-  id: number;
-  title: string;
-  /** 封面图 URL；契约为 string | null（可空但字段存在）。缺失时组件回退占位图 */
-  cover: string | null;
-  author: string;
-  category: string;
-  /** 标签数组；DB 以 TEXT(JSON) 存储，Express 已 JSON.parse 降级为 [] */
-  tags: string[];
-  /** 文章摘要（列表卡片副文案）；v13 修订后稳定返回 */
-  summary: string;
-  /** 阅读量；对应需求 6.7 节 read_count，后端字段名为 views */
-  views: number;
-  /** 发布时间 ISO 字符串；对应需求 6.7 节 publish_time，后端字段名为 created_at */
-  created_at: string;
-}
 
 /** 文章详情（含正文），GET /api/articles/:id
  *  设计依据: docs/2_detailed_design_v3.md 3.2.20 节 (第2051行)
+ *
+ *  ArticleDetail 业务实体已定义在 models.ts 并通过顶部 re-export 暴露。
  */
-export interface ArticleDetail extends Article {
-  /** Markdown 正文 */
-  content: string
-  /** 当前用户是否已收藏 */
-  is_collected: boolean
-}
 
 /** 文章生成两阶段响应 */
 export interface ArticleGenerateCategorySelection {
@@ -178,62 +166,25 @@ export interface ArticleGenerateCategorySelection {
 
 export type ArticleGenerateResponse = ArticleGenerateCategorySelection | ArticleDetail
 
-/** 健康建议 */
-export interface HealthAdvice {
-  id: number
-  title: string
-  tags: string[]
-  content: string
-  created_at: string
-}
+/** 健康建议
+ *  HealthAdvice 业务实体已定义在 models.ts 并通过顶部 re-export 暴露。
+ */
 
 // ========== 糖尿病类型科普 ==========
+
 /**
  * 糖尿病类型（GET /api/diabetes-types 列表元素，与 GET /api/diabetes-types/:id 详情字段一致）。
  * 字段对齐 docs/2_detailed_design_v3.md 3.8.3 / 3.2.24。
  * id 为后端 number 主键。
+ *
+ * DiabetesType / DiabetesTypeDetail 业务实体已定义在 models.ts 并通过顶部 re-export 暴露。
  */
-export interface DiabetesType {
-  id: number;
-  name: string;
-  /** 后端真实字段名为 image；string | null，缺失时组件用主色渐变叠层占位 */
-  image: string | null;
-  pathogenesis: string;
-  manifestation: string;
-  treatment: string;
-}
-
-/**
- * 糖尿病类型详情（GET /api/diabetes-types/:id）。
- * 3.2.24 详情响应字段与列表一致，故直接取 DiabetesType。
- */
-export type DiabetesTypeDetail = DiabetesType;
 
 // ========== 生活方案类型（Task 2）==========
 
-/** 方案类型枚举：diet=饮食, exercise=运动, other=其他（仅展示不打卡） */
-export type PlanType = 'diet' | 'exercise' | 'other';
-
 /**
- * 方案条目（life_plans 表行 / PlanResponse 各分组数组元素）。
- * 字段对齐 docs/2_detailed_design_v3.md 3.8.3 / 2.5 数据字典。
- * 权威字段仅此 6 个；原型 kcal/min/icon/completed 不入契约类型，
- * 由组件/store 视图派生（对齐 Round1 DiabetesTypeView 范式）。
+ * PlanType 业务实体已定义在 models.ts 并通过顶部 re-export 暴露。
  */
-export interface LifePlan {
-  /** 方案项主键 id（life_plans.id AUTOINCREMENT） */
-  id: number;
-  /** 方案类型：diet/exercise/other（英文枚举，UI 经 enumLabel 映射中文） */
-  plan_type: PlanType;
-  /** 排序号：饮食 1=早餐 2=午餐 3=晚餐 4=加餐；运动 1=晨间 2=晚间 3=周末 */
-  order_num: number;
-  /** 时间描述文本（如 "7:00-8:00"）；可空字符串 */
-  time_desc: string;
-  /** 方案项标题（如 "燕麦粥 + 水煮蛋"） */
-  title: string;
-  /** 方案详细内容，可能含 Markdown，前端 marked.parse+DOMPurify.sanitize+v-html 渲染 */
-  content: string;
-}
 
 /**
  * 方案生成请求体（POST /api/plan/generate）。
@@ -285,11 +236,9 @@ export interface PlanCurrentResponse extends PlanResponse {
 
 // ========== 打卡类型（Task 2 前置落地，供 Task 3 复用）==========
 
-/** 打卡类型枚举：仅 diet/exercise（'other' 方案项不打卡，DDL CHECK 约束） */
-export type PunchType = 'diet' | 'exercise';
-
-/** 完成状态枚举：completed=已完成, uncompleted=未完成 */
-export type CompletionStatus = 'completed' | 'uncompleted';
+/**
+ * PunchType / CompletionStatus 业务实体已定义在 models.ts 并通过顶部 re-export 暴露。
+ */
 
 /** 打卡创建请求（POST /api/punch）；plan_id 为方案项 ID（LifePlan.id） */
 export interface PunchCreateRequest {
@@ -319,18 +268,9 @@ export interface PunchListParams extends PaginationParams {
   punch_type?: PunchType;
 }
 
-/** 打卡记录（GET /api/punch/list 的 data 数组元素，Task 3 用；本轮仅落地类型） */
-export interface PunchRecord {
-  id: number;
-  /** 方案组 ID（可空，历史记录可能方案已过期） */
-  plan_id: number | null;
-  /** 关联方案项标题（LEFT JOIN life_plans 得，可空） */
-  plan_title?: string;
-  punch_type: PunchType;
-  completion_status: CompletionStatus;
-  remarks: string;
-  punch_time: string;
-}
+/** 打卡记录（GET /api/punch/list 的 data 数组元素，Task 3 用；本轮仅落地类型）
+ *  PunchRecord 业务实体已定义在 models.ts 并通过顶部 re-export 暴露。
+ */
 
 // ========== 打卡分析类型（Task 3）==========
 

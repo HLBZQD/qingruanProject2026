@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import type { RouteRecordRaw } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
+import { hasAcceptedDisclaimer, showDisclaimer, setDisclaimerAccepted } from '@/composables/useUI'
 
 const routes: RouteRecordRaw[] = [
   {
@@ -90,25 +91,7 @@ function isValidRedirect(path: string): boolean {
   return path.startsWith('/') && !path.startsWith('//') && !path.includes('://')
 }
 
-function hasAcceptedDisclaimer(): boolean {
-  return localStorage.getItem('disclaimer_accepted') === 'true'
-}
-
-async function showDisclaimer(): Promise<boolean> {
-  const Swal = (await import('sweetalert2')).default
-  const result = await Swal.fire({
-    title: '医学免责声明',
-    html: '<p style="text-align:left;font-size:14px">本平台的 AI 健康建议、风险预测、方案生成等内容仅供健康参考，<b>不能替代专业医疗诊断、治疗或建议</b>。如有健康问题，请及时就医咨询专业医师。</p>',
-    icon: 'info',
-    showCancelButton: true,
-    confirmButtonText: '我已知晓并同意',
-    cancelButtonText: '不同意',
-    allowOutsideClick: false,
-  })
-  return result.isConfirmed
-}
-
-router.beforeEach(async (to, _from, next) => {
+router.beforeEach(async (to, from, next) => {
   const authStore = useAuthStore()
 
   if (to.meta.requiresAuth === false) {
@@ -131,10 +114,15 @@ router.beforeEach(async (to, _from, next) => {
   if (to.meta.requiresDisclaimer && !hasAcceptedDisclaimer()) {
     const agreed = await showDisclaimer()
     if (agreed) {
-      localStorage.setItem('disclaimer_accepted', 'true')
+      setDisclaimerAccepted(true)
       next()
     } else {
-      next('/home')
+      // 有来源页时中止导航保留来源页；无来源页（直接打开/刷新）回首页
+      if (from && from.path && from.path !== to.path) {
+        next(false)
+      } else {
+        next('/home')
+      }
     }
     return
   }

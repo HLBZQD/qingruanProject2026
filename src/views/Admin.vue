@@ -1,11 +1,12 @@
 ﻿<script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, nextTick, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { marked } from 'marked'
-import DOMPurify from 'dompurify'
 import { useAuthStore } from '@/stores/authStore'
 import { useChatStore } from '@/stores/chatStore'
-import { getAdminLogs } from '@/composables/useAdminApi'
+import { getAdminLogs, sendAdminChatMessage } from '@/composables/useAdminApi'
+import { renderMarkdown } from '@/composables/useMarkdown'
+import type { ChatMessage } from '@/types/sse'
+import type { SSEEvent } from '@/types/sse'
 import type { AdminLog } from '@/types/api'
 import SkeletonLoader from '@/components/SkeletonLoader.vue'
 import ErrorRetry from '@/components/ErrorRetry.vue'
@@ -60,14 +61,7 @@ async function handleSend() {
 }
 
 function renderContent(content: string): string {
-  if (!content) return ''
-  try {
-    const html = marked.parse(content, { async: false })
-    if (typeof html !== 'string') return ''
-    return DOMPurify.sanitize(html)
-  } catch {
-    return DOMPurify.sanitize(content)
-  }
+  return renderMarkdown(content)
 }
 
 function formatTime(timestamp: number): string {

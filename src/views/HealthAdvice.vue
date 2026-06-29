@@ -1,10 +1,9 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { marked } from 'marked'
-import DOMPurify from 'dompurify'
 import { getHealthAdvice } from '@/composables/useAdviceApi'
 import { useChatStore } from '@/stores/chatStore'
+import { renderMarkdown } from '@/composables/useMarkdown'
 import type { HealthAdvice as HealthAdviceItem } from '@/types/api'
 import SkeletonLoader from '@/components/SkeletonLoader.vue'
 import ErrorRetry from '@/components/ErrorRetry.vue'
@@ -66,14 +65,7 @@ function formatDate(iso: string): string {
 }
 
 function renderContent(content: string): string {
-  if (!content) return ''
-  try {
-    const html = marked.parse(content, { async: false })
-    if (typeof html !== 'string') return ''
-    return DOMPurify.sanitize(html)
-  } catch {
-    return DOMPurify.sanitize(content)
-  }
+  return renderMarkdown(content)
 }
 
 function goBack() {

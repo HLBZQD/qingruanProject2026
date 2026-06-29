@@ -5,13 +5,8 @@ import { useRoute, useRouter } from 'vue-router'
 import { useChatStore } from '@/stores/chatStore'
 import { useAuthStore } from '@/stores/authStore'
 import { getDoctorInfo } from '@/composables/useChatApi'
+import { renderMarkdown } from '@/composables/useMarkdown'
 import type { Doctor } from '@/types/api'
-import type { ConversationHistoryItem } from '@/types/sse'
-import SkeletonLoader from '@/components/SkeletonLoader.vue'
-import ErrorRetry from '@/components/ErrorRetry.vue'
-import EmptyState from '@/components/EmptyState.vue'
-import { marked } from 'marked'
-import DOMPurify from 'dompurify'
 
 const route = useRoute()
 const router = useRouter()
@@ -112,15 +107,7 @@ async function scrollToBottom() {
 
 // ===== 消息内容渲染 (Markdown → 安全 HTML) =====
 function renderContent(content: string): string {
-  if (!content) return ''
-  try {
-    const html = marked.parse(content, { async: false })
-    if (typeof html !== 'string') return ''
-    return DOMPurify.sanitize(html)
-  } catch {
-    // marked 解析失败，返回原始文本 (DOMPurify 转义)
-    return DOMPurify.sanitize(content)
-  }
+  return renderMarkdown(content)
 }
 
 // ===== 时间格式化 (Unix ms → HH:MM) =====

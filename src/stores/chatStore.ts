@@ -1,6 +1,9 @@
 // src/stores/chatStore.ts
 import { ref } from 'vue'
 import { defineStore } from 'pinia'
+import { readSSEStream, dispatchSSEEvent } from '@/composables/useSSE'
+import type { ChatMessage } from '@/types/sse'
+import type { SSEEvent } from '@/types/sse'
 import {
   sendChatMessage,
   sendAssistantChatMessage,
@@ -207,191 +210,74 @@ export const useChatStore = defineStore('chat', () => {
     delays: [2000, 4000, 8000], // 固定延迟 (ms)
   }
 
-  // ===== [G3] SSE 协议解析 =====
+// ===== [G3] SSE 事件处理 =====
 
-  /**
-   * 按 \n\n 分隔解析 SSE 事件块。
-   *
-   * 设计依据: docs/2_detailed_design_v3.md 3.3 节 (第2373行):
-   *   "前端在 fetch 的 ReadableStream 中按 \n\n 分隔事件块，
-   *    每行去除 data: 前缀后 JSON.parse 解析"
-   *
-   * 算法:
-   *   1. 按 \n\n 分割 buffer → 完整事件块数组 + 最后一个半截块
-   *   2. 对每个完整事件块:
-   *      a. 按 \n 分行
-   *      b. 跳过非 "data: " 开头的行 (如 event: 行、空行)
-   *      c. 去除 "data: " 前缀 (6个字符)
-   *      d. JSON.parse 解析为 SSEEvent
-   *      e. 解析失败则静默跳过 (console.warn)
-   *   3. 返回 { events, remaining } — remaining 为未完成的半截块
-   *
-   * @param buffer - 当前累积的文本缓冲区
-   * @returns 解析出的事件列表 + 剩余未完成文本
-   */
-  function parseSSEBuffer(buffer: string): {
-    events: SSEEvent[]
-    remaining: string
-  } {
-    const events: SSEEvent[] = []
-
-    // 按 \n\n 分隔事件块 (SSE 协议标准分隔符)
-    const parts = buffer.split('\n\n')
-    // 最后一部分可能是不完整的半截块，留待后续 chunk 拼接
-    const remaining = parts.pop() || ''
-
-    for (const part of parts) {
-      if (!part.trim()) continue
-
-      // 按行处理每个事件块
-      const lines = part.split('\n')
-      let dataLine = ''
-
-      for (const line of lines) {
-        if (line.startsWith('data: ')) {
-          dataLine = line.slice(6)  // 去除 "data: " 前缀
-        }
-        // 忽略其他行 (event: 行、空行等)
-      }
-
-      if (!dataLine) continue
-
-      try {
-        const parsed = JSON.parse(dataLine) as SSEEvent
-        events.push(parsed)
-      } catch {
-        // JSON 解析失败: 静默跳过损坏的事件块
-        console.warn(
-          '[chatStore] SSE 事件 JSON 解析失败:',
-          dataLine.slice(0, 100)
-        )
-      }
-    }
-
-    return { events, remaining }
-  }
-
-  /**
-   * 根据 event 字段分发处理 SSE 事件。
-   *
-   * 设计依据: docs/2_detailed_design_v3.md
-   *   - 3.3 节: SSE 事件格式表 (第2359-2367行)
-   *   - 3.8.7 节: SSE 事件类型定义 (第2843-2893行)
-   *   - 4.3 节: DoctorChatView.vue 流程图事件分发分支 (第3547-3553行)
-   *
-   * @param event - 解析后的 SSE 事件对象
-   */
-  function dispatchSSEEvent(event: SSEEvent): void {
-    switch (event.event) {
-      case 'message': {
-        // AI 逐 token 生成时多次推送
-        // 增量追加 answer 到当前最后一条 assistant 消息
-        const lastMsg = conversations.value[conversations.value.length - 1]
-        if (lastMsg && lastMsg.role === 'assistant') {
-          // 已有 assistant 气泡: 追加内容 (字符串拼接)
-          lastMsg.content += event.answer
-        } else {
-          // 首个 message 事件: 创建新 assistant 气泡
-          const assistantMsg: ChatMessage = {
-            id: event.message_id || `assistant_${Date.now()}`,
-            role: 'assistant',
-            content: event.answer,
-            timestamp: (event.created_at || 0) * 1000,  // Unix秒 → 毫秒
-            mode: activeChatMode.value,
-          }
-          conversations.value.push(assistantMsg)
-        }
-        break
-      }
-
-      case 'message_end': {
-        // AI 完整回复结束
-        // 保存 conversation_id
-        if (event.conversation_id) {
-          if (activeChatMode.value === 'doctor' && currentDoctorId.value != null) {
-            setDoctorConversation(currentDoctorId.value, event.conversation_id)
-          } else if (activeChatMode.value === 'assistant') {
-            setAssistantConversation(event.conversation_id)
-          } else if (activeChatMode.value === 'admin') {
-            setAdminConversation(event.conversation_id)
-          }
-        }
-        // 更新最后一条 assistant 消息的元数据
-        const lastMsg = conversations.value[conversations.value.length - 1]
-        if (lastMsg && lastMsg.role === 'assistant') {
-          lastMsg.id = event.message_id || lastMsg.id
-          lastMsg.timestamp = (event.created_at || 0) * 1000
-        }
-        isStreaming.value = false
-        break
-      }
-
-      case 'error': {
-        // 流内逻辑错误 (工具调用失败等)
-        const errorMsg: ChatMessage = {
-          id: `error_${Date.now()}`,
+/**
+ * 业务侧 SSE 事件处理。
+ *
+ * 使用 useSSE.dispatchSSEEvent 作为通用分发框架，
+ * 将 chatStore 特定的状态更新逻辑注入 handlers。
+ */
+function handleSSEEvent(event: SSEEvent): void {
+  dispatchSSEEvent(event, {
+    onMessage: (event) => {
+      // AI 逐 token 生成时多次推送
+      // 增量追加 answer 到当前最后一条 assistant 消息
+      const lastMsg = conversations.value[conversations.value.length - 1]
+      if (lastMsg && lastMsg.role === 'assistant') {
+        // 已有 assistant 气泡: 追加内容 (字符串拼接)
+        lastMsg.content += event.answer
+      } else {
+        // 首个 message 事件: 创建新 assistant 气泡
+        const assistantMsg: ChatMessage = {
+          id: event.message_id || `assistant_${Date.now()}`,
           role: 'assistant',
-          content: `[错误] ${event.message || '未知错误'}`,
-          timestamp: Date.now(),
-          mode: activeChatMode.value,
+          content: event.answer,
+          timestamp: (event.created_at || 0) * 1000, // Unix秒 → 毫秒
         }
-        conversations.value.push(errorMsg)
-        isStreaming.value = false
-        break
+        conversations.value.push(assistantMsg)
       }
-
-      // 以下事件类型静默忽略 (设计文档 3.3 节标注为可选/预扩展)
-      case 'workflow_started':
-      case 'workflow_finished':
-      case 'agent_message':
-      case 'agent_thought':
-        // 不渲染，不报错 — 容错处理
-        break
-
-      default:
-        // 未知事件类型静默忽略 (向前兼容)
-        break
-    }
-  }
-
-  // ===== SSE 流读取循环 =====
-
-  /**
-   * SSE 流读取循环框架。
-   *
-   * 设计依据: docs/2_detailed_design_v3.md
-   *   - 3.3 节: 按 \n\n 分隔事件块，去除 data: 前缀后 JSON.parse (第2373行)
-   *   - 4.4.2 节: useSSE.ts streamRequest 循环模式 (第4097-4112行)
-   *
-   * @param reader - ReadableStreamDefaultReader<Uint8Array>
-   */
-  async function readSSEStream(
-    reader: ReadableStreamDefaultReader<Uint8Array>
-  ): Promise<void> {
-    const decoder = new TextDecoder()
-    let buffer = ''
-
-    try {
-      while (true) {
-        const { done, value } = await reader.read()
-        if (done) break
-
-        // 解码 chunk → 文本 (stream: true 保留不完整的多字节字符)
-        buffer += decoder.decode(value, { stream: true })
-
-        const result = parseSSEBuffer(buffer)
-        buffer = result.remaining
-        for (const event of result.events) {
-          dispatchSSEEvent(event)
+    },
+    onMessageEnd: (event) => {
+      // AI 完整回复结束
+      // 保存 conversation_id
+      if (event.conversation_id) {
+        if (activeChatMode.value === 'doctor' && currentDoctorId.value != null) {
+          setDoctorConversation(currentDoctorId.value, event.conversation_id)
+        } else if (activeChatMode.value === 'assistant') {
+          setAssistantConversation(event.conversation_id)
+        } else if (activeChatMode.value === 'admin') {
+          setAdminConversation(event.conversation_id)
         }
       }
-    } finally {
-      // 确保流资源释放
-      reader.releaseLock()
-    }
-  }
+      // 更新最后一条 assistant 消息的元数据
+      const lastMsg = conversations.value[conversations.value.length - 1]
+      if (lastMsg && lastMsg.role === 'assistant') {
+        lastMsg.id = event.message_id || lastMsg.id
+        lastMsg.timestamp = (event.created_at || 0) * 1000
+      }
+      isStreaming.value = false
+    },
+    onError: (event) => {
+      // 流内逻辑错误 (工具调用失败等)
+      const errorMsg: ChatMessage = {
+        id: `error_${Date.now()}`,
+        role: 'assistant',
+        content: `[错误] ${event.message || '未知错误'}`,
+        timestamp: Date.now(),
+      }
+      conversations.value.push(errorMsg)
+      isStreaming.value = false
+    },
+  })
+}
 
-  // ===== 通用 SSE 发送辅助 =====
+// ===== SSE 流读取循环 =====
+
+// readSSEStream / parseSSEBuffer / dispatchSSEEvent 已下沉至 useSSE.ts，
+// chatStore 通过 readSSEStream(reader, handleSSEEvent) 复用通用实现。
+
+// ===== 通用 SSE 发送辅助 =====
 
   /**
    * 统一的 SSE 请求发送与流式消费。
@@ -433,7 +319,7 @@ export const useChatStore = defineStore('chat', () => {
         throw new Error('浏览器不支持 ReadableStream')
       }
 
-      await readSSEStream(reader)
+      await readSSEStream(reader, handleSSEEvent)
     } finally {
       isStreaming.value = false
     }

@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { api } from '@/composables/useApi'
-import type { LoginUser } from '@/types/api'
+import type { User } from '@/types/models'
 import { useHomeStore } from '@/stores/homeStore'
 import { useLifePlanStore } from '@/stores/lifePlanStore'
 
@@ -38,12 +38,12 @@ export const useAuthStore = defineStore('auth', () => {
 
   const token = ref<string | null>(sessionStorage.getItem('token'))
   const role = ref<'user' | 'admin' | null>(parseRole(sessionStorage.getItem('role')))
-  const user = ref<LoginUser | null>(
+  const user = ref<User | null>(
     (() => {
       try {
         const raw = JSON.parse(sessionStorage.getItem('user') || 'null')
         if (raw && typeof raw === 'object' && typeof raw.id === 'number' && typeof raw.username === 'string' && (raw.role === 'user' || raw.role === 'admin')) {
-          return raw as LoginUser
+          return raw as User
         }
       } catch { /* corrupted */ }
       return null
@@ -66,7 +66,7 @@ export const useAuthStore = defineStore('auth', () => {
     })
   }
 
-  function setAuth(newToken: string, newRole: 'user' | 'admin', newUser: LoginUser) {
+  function setAuth(newToken: string, newRole: 'user' | 'admin', newUser: User) {
     token.value = newToken
     role.value = newRole
     user.value = newUser
@@ -85,11 +85,11 @@ export const useAuthStore = defineStore('auth', () => {
   function syncFromStorage() {
     const storedToken = sessionStorage.getItem('token')
     const storedRole = parseRole(sessionStorage.getItem('role'))
-    let storedUser: LoginUser | null = null
+    let storedUser: User | null = null
     try {
       const raw = JSON.parse(sessionStorage.getItem('user') || 'null')
       if (raw && typeof raw === 'object' && typeof raw.id === 'number' && typeof raw.username === 'string' && (raw.role === 'user' || raw.role === 'admin')) {
-        storedUser = raw as LoginUser
+        storedUser = raw as User
       }
     } catch { /* corrupted */ }
 
@@ -149,7 +149,7 @@ export const useAuthStore = defineStore('auth', () => {
   async function fetchProfile() {
     const res = await api.get('/user/profile')
     const profile = res.data.data
-    const updatedUser: LoginUser = { id: profile.id, username: profile.username, role: profile.role, avatar: profile.avatar }
+    const updatedUser: User = { id: profile.id, username: profile.username, role: profile.role, avatar: profile.avatar }
     user.value = updatedUser
     role.value = profile.role
     sessionStorage.setItem('user', JSON.stringify(updatedUser))
