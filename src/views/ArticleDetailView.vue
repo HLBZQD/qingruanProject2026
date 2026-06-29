@@ -3,16 +3,30 @@ import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { getArticle } from '@/composables/useHomeApi'
 import { renderMarkdown } from '@/composables/useMarkdown'
+import { collectArticle, uncollectArticle, syncCollectedState, useCollectedMap } from '@/composables/useArticleApi'
+import { useAuthStore } from '@/stores/authStore'
+import { getErrorMessage } from '@/utils/errorMessage'
 import type { ArticleDetail } from '@/types/api'
 
 const route = useRoute()
 const router = useRouter()
+const authStore = useAuthStore()
+const collectedMap = useCollectedMap()
 
 // ===== 状态 =====
 const article = ref<ArticleDetail | null>(null)
 const loading = ref(true)
 const error = ref<string | null>(null)
 const notFound = ref(false)
+const collectLoading = ref(false)
+
+// ===== 收藏状态（响应式追踪 collectedMap，跨页面同步） =====
+const isCollected = computed(() => {
+  if (!article.value) return false
+  // 优先使用 collectedMap 的同步状态，回退到文章详情的初始值
+  const id = article.value.id
+  return id in collectedMap.value ? !!collectedMap.value[id] : article.value.is_collected
+})
 
 // ===== Markdown 净化链（统一使用 useMarkdown.renderMarkdown） =====
 const safeContent = computed(() => renderMarkdown(article.value?.content))
@@ -45,6 +59,8 @@ async function fetchArticle(): Promise<void> {
       notFound.value = true
     } else {
       article.value = data
+      // 同步服务端收藏状态到 collectedMap（跨页面共享）
+      syncCollectedState(data.id, data.is_collected)
     }
   } catch (e: unknown) {
     // 区分 404 与一般错误
@@ -64,10 +80,62 @@ function goBack(): void {
   router.push('/news')
 }
 
-// ===== 收藏（本期占位） =====
-function toggleCollect(): void {
-  // TODO: 调用收藏 API
-  console.warn('[ArticleDetailView] 收藏功能待实现 (S5a 占位)')
+// ===== 收藏/取消收藏 =====
+async function toggleCollect(): Promise<void> {
+  if (!article.value || collectLoading.value) return
+  const id = article.value.id
+
+  // 文章详情页为公开页面，收藏操作需登录
+  if (!authStore.token) {
+    const Swal = (await import('sweetalert2')).default
+    const result = await Swal.fire({
+      title: '需要登录',
+      text: '收藏文章前请先登录',
+      icon: 'info',
+      showCancelButton: true,
+      confirmButtonText: '去登录',
+      cancelButtonText: '取消',
+    })
+    if (result.isConfirmed) {
+      router.push({ path: '/login', query: { redirect: route.fullPath } })
+    }
+    return
+  }
+
+  collectLoading.value = true
+  const wasCollected = isCollected.value
+  try {
+    if (wasCollected) {
+      await uncollectArticle(id)
+    } else {
+      await collectArticle(id)
+    }
+    // 同步本地 article.is_collected（保持与 collectedMap 一致）
+    if (article.value) article.value.is_collected = !wasCollected
+    const Swal = (await import('sweetalert2')).default
+    Swal.fire({
+      toast: true,
+      position: 'top',
+      icon: 'success',
+      title: wasCollected ? '已取消收藏' : '收藏成功',
+      showConfirmButton: false,
+      timer: 1800,
+    })
+  } catch (err: unknown) {
+    // 乐观更新已在 composable 内回滚，同步本地 article.is_collected
+    if (article.value) article.value.is_collected = wasCollected
+    const Swal = (await import('sweetalert2')).default
+    Swal.fire({
+      toast: true,
+      position: 'top',
+      icon: 'error',
+      title: getErrorMessage(err, wasCollected ? '取消收藏失败' : '收藏失败'),
+      showConfirmButton: false,
+      timer: 2500,
+    })
+  } finally {
+    collectLoading.value = false
+  }
 }
 </script>
 
@@ -83,13 +151,18 @@ function toggleCollect(): void {
       <button
         v-if="article"
         class="article-collect-btn press"
+        :disabled="collectLoading"
         @click="toggleCollect"
-        :aria-label="article.is_collected ? '取消收藏' : '收藏文章'"
+        :aria-label="isCollected ? '取消收藏' : '收藏文章'"
       >
         <i
+          v-if="collectLoading"
+          class="fa-solid fa-spinner fa-spin"
+        ></i>
+        <i
+          v-else
           :class="[
-            'fa-solid',
-            article.is_collected ? 'fa-bookmark article-collected' : 'fa-bookmark article-not-collected'
+            isCollected ? 'fa-solid fa-heart article-collected' : 'fa-regular fa-heart article-not-collected'
           ]"
         ></i>
       </button>
@@ -213,8 +286,12 @@ function toggleCollect(): void {
   font-size: 18px;
   border-radius: var(--radius-full);
 }
+.article-collect-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
 .article-collected {
-  color: #FAAD14;
+  color: #FF4D4F;
 }
 .article-not-collected {
   color: var(--color-divider);

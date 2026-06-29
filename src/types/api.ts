@@ -154,6 +154,13 @@ export interface RiskHistoryItem {
  *  ArticleDetail 业务实体已定义在 models.ts 并通过顶部 re-export 暴露。
  */
 
+/** 收藏列表项，GET /api/articles/collections 的 data 数组元素。
+ *  在 Article 基础上附带 collect_id（收藏记录主键），用于取消收藏等操作。 */
+export interface CollectedArticle extends Article {
+  /** 收藏记录主键（article_collections.id） */
+  collect_id: number
+}
+
 /** 文章生成两阶段响应 */
 export interface ArticleGenerateCategorySelection {
   stage: 'category_selection'
