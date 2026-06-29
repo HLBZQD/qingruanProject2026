@@ -2,8 +2,7 @@
 import { ref } from 'vue'
 import { defineStore } from 'pinia'
 import { readSSEStream, dispatchSSEEvent } from '@/composables/useSSE'
-import type { ChatMessage } from '@/types/sse'
-import type { SSEEvent } from '@/types/sse'
+
 import {
   sendChatMessage,
   sendAssistantChatMessage,
