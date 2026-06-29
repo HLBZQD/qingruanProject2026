@@ -1,13 +1,11 @@
-<script setup lang="ts">
+﻿<script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, nextTick, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { marked } from 'marked'
 import DOMPurify from 'dompurify'
 import { useAuthStore } from '@/stores/authStore'
 import { useChatStore } from '@/stores/chatStore'
-import { getAdminLogs, sendAdminChatMessage } from '@/composables/useAdminApi'
-import type { ChatMessage } from '@/types/sse'
-import type { SSEEvent } from '@/types/sse'
+import { getAdminLogs } from '@/composables/useAdminApi'
 import type { AdminLog } from '@/types/api'
 import SkeletonLoader from '@/components/SkeletonLoader.vue'
 import ErrorRetry from '@/components/ErrorRetry.vue'
@@ -19,9 +17,7 @@ const authStore = useAuthStore()
 const chatStore = useChatStore()
 
 const view = ref<'chat' | 'logs'>('chat')
-const messages = ref<ChatMessage[]>([])
 const inputText = ref('')
-const isStreaming = ref(false)
 const messagesContainer = ref<HTMLElement | null>(null)
 
 const logs = ref<AdminLog[]>([])
@@ -31,93 +27,12 @@ const logsPage = ref(1)
 const logsPageSize = 15
 const logsHasMore = ref(true)
 
-const isChatEmpty = computed(() => messages.value.length === 0)
+/** 过滤 admin 模式消息，隔离 doctor/assistant 对话 */
+const adminMessages = computed(() =>
+  chatStore.conversations.filter(m => m.mode === 'admin')
+)
 
-function parseSSEBuffer(buffer: string): { events: SSEEvent[]; remaining: string } {
-  const events: SSEEvent[] = []
-  const parts = buffer.split('\n\n')
-  const remaining = parts.pop() || ''
-
-  for (const part of parts) {
-    if (!part.trim()) continue
-    const lines = part.split('\n')
-    let dataLine = ''
-    for (const line of lines) {
-      if (line.startsWith('data: ')) {
-        dataLine = line.slice(6)
-      }
-    }
-    if (!dataLine) continue
-    try {
-      events.push(JSON.parse(dataLine) as SSEEvent)
-    } catch {
-      console.warn('[Admin] SSE parse failed:', dataLine.slice(0, 100))
-    }
-  }
-
-  return { events, remaining }
-}
-
-async function readSSEStream(reader: ReadableStreamDefaultReader<Uint8Array>) {
-  const decoder = new TextDecoder()
-  let buffer = ''
-
-  try {
-    while (true) {
-      const { done, value } = await reader.read()
-      if (done) break
-      buffer += decoder.decode(value, { stream: true })
-      const result = parseSSEBuffer(buffer)
-      buffer = result.remaining
-      for (const event of result.events) {
-        dispatchSSEEvent(event)
-      }
-    }
-  } finally {
-    reader.releaseLock()
-  }
-}
-
-function dispatchSSEEvent(event: SSEEvent) {
-  switch (event.event) {
-    case 'message': {
-      const lastMsg = messages.value[messages.value.length - 1]
-      if (lastMsg && lastMsg.role === 'assistant') {
-        lastMsg.content += event.answer
-      } else {
-        messages.value.push({
-          id: event.message_id || `assistant_${Date.now()}`,
-          role: 'assistant',
-          content: event.answer,
-          timestamp: (event.created_at || 0) * 1000,
-        })
-      }
-      break
-    }
-    case 'message_end': {
-      if (event.conversation_id) {
-        chatStore.setAdminConversation(event.conversation_id)
-      }
-      const lastMsg = messages.value[messages.value.length - 1]
-      if (lastMsg && lastMsg.role === 'assistant') {
-        lastMsg.id = event.message_id || lastMsg.id
-        lastMsg.timestamp = (event.created_at || 0) * 1000
-      }
-      isStreaming.value = false
-      break
-    }
-    case 'error': {
-      messages.value.push({
-        id: `error_${Date.now()}`,
-        role: 'assistant',
-        content: `[错误] ${event.message || '未知错误'}`,
-        timestamp: Date.now(),
-      })
-      isStreaming.value = false
-      break
-    }
-  }
-}
+const isChatEmpty = computed(() => adminMessages.value.length === 0)
 
 async function scrollToBottom() {
   await nextTick()
@@ -126,11 +41,11 @@ async function scrollToBottom() {
   }
 }
 
-watch(messages, scrollToBottom, { deep: true })
+watch(() => chatStore.conversations, scrollToBottom, { deep: true })
 
 async function handleSend() {
   const text = inputText.value.trim()
-  if (!text || isStreaming.value) return
+  if (!text || chatStore.isStreaming) return
 
   const token = authStore.token
   if (!token) {
@@ -140,57 +55,8 @@ async function handleSend() {
   }
 
   inputText.value = ''
-  messages.value.push({
-    id: `user_${Date.now()}`,
-    role: 'user',
-    content: text,
-    timestamp: Date.now(),
-  })
-
-  const controller = new AbortController()
-  chatStore.registerAbortController(controller)
-  isStreaming.value = true
-
-  try {
-    const response = await sendAdminChatMessage({
-      message: text,
-      token,
-      conversationId: chatStore.getAdminConversation() ?? undefined,
-      signal: controller.signal,
-    })
-
-    if (response.status === 401) {
-      authStore.clearAuth()
-      const Swal = await import('sweetalert2')
-      Swal.default.fire({ toast: true, position: 'top', icon: 'info', title: '登录已过期，请重新登录', showConfirmButton: false, timer: 2500 })
-      isStreaming.value = false
-      return
-    }
-
-    if (!response.ok) {
-      throw new Error(`SSE 请求失败: HTTP ${response.status}`)
-    }
-
-    const reader = response.body?.getReader()
-    if (!reader) {
-      throw new Error('浏览器不支持 ReadableStream')
-    }
-
-    await readSSEStream(reader)
-  } catch (err: unknown) {
-    if (err instanceof DOMException && err.name === 'AbortError') {
-      return
-    }
-    messages.value.push({
-      id: `fail_${Date.now()}`,
-      role: 'assistant',
-      content: `[连接失败] 无法连接到管理服务，请检查网络后重试。${err instanceof Error ? err.message : ''}`,
-      timestamp: Date.now(),
-    })
-    isStreaming.value = false
-  } finally {
-    chatStore.releaseActiveController?.(controller)
-  }
+  await chatStore.sendAdminMessage(text, token)
+  await scrollToBottom()
 }
 
 function renderContent(content: string): string {
@@ -329,7 +195,7 @@ onUnmounted(() => {
         </div>
 
         <div
-          v-for="msg in messages"
+          v-for="msg in adminMessages"
           :key="msg.id"
           :class="['message-bubble', msg.role === 'user' ? 'sent' : 'received']"
         >
@@ -340,7 +206,7 @@ onUnmounted(() => {
           <div class="msg-content" v-html="renderContent(msg.content)"></div>
         </div>
 
-        <div v-if="isStreaming" class="typing-indicator">
+        <div v-if="chatStore.isStreaming" class="typing-indicator">
           <span></span><span></span><span></span>
         </div>
       </div>
@@ -349,13 +215,13 @@ onUnmounted(() => {
         <input
           v-model="inputText"
           type="text"
-          placeholder="输入管理指令，如“查询所有用户”"
-          :disabled="isStreaming"
+          placeholder="输入管理指令，如「查询所有用户」"
+          :disabled="chatStore.isStreaming"
           @keyup.enter="handleSend"
         />
         <button
           class="btn-send"
-          :disabled="!inputText.trim() || isStreaming"
+          :disabled="!inputText.trim() || chatStore.isStreaming"
           aria-label="发送"
           @click="handleSend"
         >

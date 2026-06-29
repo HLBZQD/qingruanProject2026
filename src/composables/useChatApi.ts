@@ -1,6 +1,7 @@
 // src/composables/useChatApi.ts
 import { api } from '@/composables/useApi'
 import type { Doctor } from '@/types/api'
+import type { ConversationHistoryItem } from '@/types/sse'
 
 /**
  * 发起医生对话 SSE 请求
@@ -115,4 +116,69 @@ export async function sendAdminChatMessage(params: {
     body: JSON.stringify(body),
     signal,
   })
+}
+
+/**
+ * 查询指定医生的 Dify 历史会话列表。
+ *
+ * GET /api/chat/doctor/:id/conversations
+ * 鉴权：fetch + Authorization: Bearer ${token}（与 sendChatMessage 一致）
+ *
+ * 后端路由：server/routes/chat.js:40-53
+ * 返回结构：{ success: true, message: '查询成功', data: ConversationHistoryItem[] }
+ *
+ * @param doctorId - 医生主键（number，来自 route.params.id）
+ * @param token    - JWT Token（调用方从 authStore.token 获取）
+ * @returns ConversationHistoryItem[] — 历史会话列表（无历史时为空数组 []）
+ * @throws  Error — 网络错误 或 HTTP !ok（含 401）
+ */
+export async function getDoctorConversationHistory(
+  doctorId: number,
+  token: string
+): Promise<ConversationHistoryItem[]> {
+  const res = await fetch(`/api/chat/doctor/${doctorId}/conversations`, {
+    method: 'GET',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+    },
+  })
+
+  if (!res.ok) {
+    throw new Error(`获取医生历史会话失败: HTTP ${res.status}`)
+  }
+
+  const json = await res.json()
+  // 响应结构: { success: true, data: [...] }
+  return (json.data as ConversationHistoryItem[]) || []
+}
+
+/**
+ * 查询 AI 助手的 Dify 历史会话列表。
+ *
+ * GET /api/assistant/conversations
+ * 鉴权：fetch + Authorization: Bearer ${token}
+ *
+ * 后端路由：server/routes/assistant.js:64-74
+ * 返回结构：{ success: true, message: '查询成功', data: ConversationHistoryItem[] }
+ *
+ * @param token - JWT Token（调用方从 authStore.token 获取）
+ * @returns ConversationHistoryItem[] — 历史会话列表（无历史时为空数组 []）
+ * @throws  Error — 网络错误 或 HTTP !ok（含 401）
+ */
+export async function getAssistantConversations(
+  token: string
+): Promise<ConversationHistoryItem[]> {
+  const res = await fetch('/api/assistant/conversations', {
+    method: 'GET',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+    },
+  })
+
+  if (!res.ok) {
+    throw new Error(`获取助手历史会话失败: HTTP ${res.status}`)
+  }
+
+  const json = await res.json()
+  return (json.data as ConversationHistoryItem[]) || []
 }
