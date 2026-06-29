@@ -1,5 +1,6 @@
 const express = require('express');
-const { db } = require('../db/database');
+const { getAdapter } = require('../db/database');
+const sql = require('../db/sql');
 const { success, AppError } = require('../utils/response');
 const { parsePagination, buildPagination } = require('../utils/pagination');
 const { validateRiskPredict } = require('../utils/validators');
@@ -30,6 +31,8 @@ function parseRiskOutputRegex(text) {
 
 router.post('/predict', authMiddleware, async (req, res, next) => {
   try {
+    const adapter = getAdapter();
+
     const err = validateRiskPredict(req.body);
     if (err) throw new AppError(422, 'VALIDATION_ERROR', err);
 
@@ -104,26 +107,26 @@ router.post('/predict', authMiddleware, async (req, res, next) => {
     };
     const resultJSON = JSON.stringify(resultObj);
 
-    const stmt = db.prepare(`
-      INSERT INTO user_risk_info
+    const info = await adapter.execute(
+      `INSERT INTO user_risk_info
         (user_id, age, gender, height, weight, family_history,
          waist, systolic_bp, pregnancy, diabetes_history, diabetes_type, result)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `);
-    const info = stmt.run(
-      req.user.user_id,
-      req.body.age, req.body.gender, req.body.height, req.body.weight,
-      req.body.family_history,
-      req.body.waist ?? null,
-      req.body.systolic_bp ?? null,
-      pregnancy ?? null,
-      req.body.diabetes_history,
-      diabetes_type ?? null,
-      resultJSON
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        req.user.user_id,
+        req.body.age, req.body.gender, req.body.height, req.body.weight,
+        req.body.family_history,
+        req.body.waist ?? null,
+        req.body.systolic_bp ?? null,
+        pregnancy ?? null,
+        req.body.diabetes_history,
+        diabetes_type ?? null,
+        resultJSON
+      ]
     );
-    const recordId = info.lastInsertRowid;
+    const recordId = info.lastInsertId;
 
-    const record = db.prepare('SELECT created_at FROM user_risk_info WHERE id = ?').get(recordId);
+    const record = await adapter.queryOne('SELECT created_at FROM user_risk_info WHERE id = ?', [recordId]);
 
     success(res, {
       record_id: recordId,
@@ -139,21 +142,24 @@ router.post('/predict', authMiddleware, async (req, res, next) => {
   }
 });
 
-router.get('/history', authMiddleware, (req, res, next) => {
+router.get('/history', authMiddleware, async (req, res, next) => {
   try {
+    const adapter = getAdapter();
     const { page, pageSize, offset, limit } = parsePagination(req.query);
 
-    const { total } = db.prepare(
-      'SELECT COUNT(*) AS total FROM user_risk_info WHERE user_id = ?'
-    ).get(req.user.user_id);
+    const countRows = await adapter.query(
+      'SELECT COUNT(*) AS total FROM user_risk_info WHERE user_id = ?',
+      [req.user.user_id]
+    );
+    const total = countRows[0].total;
 
-    const rows = db.prepare(`
-      SELECT
+    const rows = await adapter.query(
+      `SELECT
         id,
-        CAST(json_extract(result, '$.risk_score') AS INTEGER) AS risk_score,
-        json_extract(result, '$.risk_level') AS risk_level,
-        json_extract(result, '$.risk_level_label') AS risk_level_label,
-        json_extract(result, '$.matched_diabetes_type') AS matched_diabetes_type,
+        ${sql.jsonFieldAs('result', 'risk_score', 'INTEGER')} AS risk_score,
+        ${sql.jsonField('result', 'risk_level')} AS risk_level,
+        ${sql.jsonField('result', 'risk_level_label')} AS risk_level_label,
+        ${sql.jsonField('result', 'matched_diabetes_type')} AS matched_diabetes_type,
         age,
         gender,
         ROUND(weight / ((height / 100.0) * (height / 100.0)), 2) AS bmi,
@@ -162,8 +168,9 @@ router.get('/history', authMiddleware, (req, res, next) => {
       FROM user_risk_info
       WHERE user_id = ?
       ORDER BY created_at DESC
-      LIMIT ? OFFSET ?
-    `).all(req.user.user_id, limit, offset);
+      LIMIT ? OFFSET ?`,
+      [req.user.user_id, limit, offset]
+    );
 
     const pagination = buildPagination(page, pageSize, total);
     res.status(200).json({ success: true, message: '查询成功', data: rows, pagination });

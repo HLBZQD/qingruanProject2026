@@ -1,8 +1,19 @@
 const express = require('express');
+const { getAdapter } = require('../db/database');
 const router = express.Router();
 
-router.get('/health', (_req, res) => {
-  res.json({ success: true, message: '服务运行正常' });
+router.get('/health', async (_req, res, next) => {
+  try {
+    const adapter = getAdapter();
+    const ok = adapter ? await adapter.healthCheck() : false;
+    if (ok) {
+      res.json({ success: true, message: '服务运行正常', database: 'connected' });
+    } else {
+      res.status(503).json({ success: false, message: '数据库连接异常', database: 'disconnected' });
+    }
+  } catch (e) {
+    next(e);
+  }
 });
 
 router.use('/auth', require('./auth'));
