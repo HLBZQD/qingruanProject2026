@@ -4,6 +4,7 @@ import { defineStore } from 'pinia'
 import { sendChatMessage, sendAssistantChatMessage, sendAdminChatMessage } from '@/composables/useChatApi'
 import type { ChatMessage } from '@/types/sse'
 import type { SSEEvent } from '@/types/sse'
+import { router } from '@/router'
 
 export const useChatStore = defineStore('chat', () => {
   // ===== 状态 =====
@@ -306,6 +307,16 @@ export const useChatStore = defineStore('chat', () => {
         if (lastMsg && lastMsg.role === 'assistant') {
           lastMsg.id = event.message_id || lastMsg.id
           lastMsg.timestamp = (event.created_at || 0) * 1000
+
+          // D2 AI导航：检测 [[NAVIGATE:/path]] 标记
+          const navMatch = lastMsg.content.match(/\[\[NAVIGATE:([^\]]+)\]\]/)
+          if (navMatch) {
+            const path = navMatch[1]
+            // 从消息中剥离标记
+            lastMsg.content = lastMsg.content.replace(/\[\[NAVIGATE:[^\]]+\]\]/g, '').trim()
+            // 触发跳转
+            navigate({ path } as any)
+          }
         }
         isStreaming.value = false
         break
@@ -712,9 +723,9 @@ export const useChatStore = defineStore('chat', () => {
     fabOpen.value = !fabOpen.value
   }
 
-  /** 导航方法 (预留，后续轮次使用) */
-  function navigate(_path: string): void {
-    // v3 留空，v4 实现
+  /** 导航方法 (AI 文本标记解析：消息中含 [[NAVIGATE:/path]] 时自动跳转) */
+  function navigate(target: { name?: string; path?: string; params?: object; query?: object }): void {
+    router.push(target)
   }
 
   // ===== Store 导出 =====

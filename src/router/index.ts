@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import type { RouteRecordRaw } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
+import { isTokenExpired } from '@/composables/useAuth'
 
 const routes: RouteRecordRaw[] = [
   {
@@ -115,7 +116,8 @@ router.beforeEach(async (to, _from, next) => {
     return next()
   }
 
-  if (!authStore.token) {
+  if (!authStore.token || isTokenExpired(authStore.token)) {
+    authStore.clearAuth()
     const redirect = encodeURIComponent(to.fullPath)
     return next({ path: '/login', query: { redirect } })
   }
