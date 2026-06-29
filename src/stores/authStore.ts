@@ -4,6 +4,8 @@ import { api } from '@/composables/useApi'
 import type { User } from '@/types/models'
 import { useHomeStore } from '@/stores/homeStore'
 import { useLifePlanStore } from '@/stores/lifePlanStore'
+import { useChatStore } from '@/stores/chatStore'
+import { useRiskFormStore } from '@/stores/riskFormStore'
 
 function parseRole(raw: string | null): 'user' | 'admin' | null {
   if (raw === 'user' || raw === 'admin') return raw
@@ -117,6 +119,8 @@ export const useAuthStore = defineStore('auth', () => {
     // 注意：在 action 内部通过 useXxxStore() 获取实例，避免模块顶层 import 导致 Pinia 循环依赖
     try { useHomeStore().clearHomeCache() } catch { /* Store 未初始化时静默 */ }
     try { useLifePlanStore().clearPlanCache() } catch { /* Store 未初始化时静默 */ }
+    try { useChatStore().clearAllConversations() } catch { /* Store 未初始化时静默 */ }
+    try { useRiskFormStore().reset() } catch { /* Store 未初始化时静默 */ }
 
     // [S8] BC 广播：通知其他标签页清除认证状态
     getBcChannel()?.postMessage({

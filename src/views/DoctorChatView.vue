@@ -7,6 +7,10 @@ import { useAuthStore } from '@/stores/authStore'
 import { getDoctorInfo } from '@/composables/useChatApi'
 import { renderMarkdown } from '@/composables/useMarkdown'
 import type { Doctor } from '@/types/api'
+import SkeletonLoader from '@/components/SkeletonLoader.vue'
+import ErrorRetry from '@/components/ErrorRetry.vue'
+import EmptyState from '@/components/EmptyState.vue'
+import type { ConversationHistoryItem } from '@/types/sse'
 
 const route = useRoute()
 const router = useRouter()

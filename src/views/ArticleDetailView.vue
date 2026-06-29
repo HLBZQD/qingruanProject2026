@@ -137,6 +137,8 @@ async function toggleCollect(): Promise<void> {
     collectLoading.value = false
   }
 }
+
+onMounted(() => { fetchArticle() })
 </script>
 
 <template>
