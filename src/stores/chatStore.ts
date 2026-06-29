@@ -297,6 +297,7 @@ export const useChatStore = defineStore('chat', () => {
             role: 'assistant',
             content: event.answer,
             timestamp: (event.created_at || 0) * 1000,  // Unix秒 → 毫秒
+            mode: activeChatMode.value,
           }
           conversations.value.push(assistantMsg)
         }
@@ -332,6 +333,7 @@ export const useChatStore = defineStore('chat', () => {
           role: 'assistant',
           content: `[错误] ${event.message || '未知错误'}`,
           timestamp: Date.now(),
+          mode: activeChatMode.value,
         }
         conversations.value.push(errorMsg)
         isStreaming.value = false
@@ -469,6 +471,7 @@ export const useChatStore = defineStore('chat', () => {
       role: 'user',
       content: text,
       timestamp: Date.now(),
+      mode: 'doctor',
     }
     conversations.value.push(userMessage)
 
@@ -556,6 +559,7 @@ export const useChatStore = defineStore('chat', () => {
       role: 'assistant',
       content: `[连接失败] 无法连接到医生服务，请检查网络后重试。${lastError?.message || ''}`,
       timestamp: Date.now(),
+      mode: 'doctor',
     }
     conversations.value.push(failMsg)
     isStreaming.value = false
@@ -570,6 +574,7 @@ export const useChatStore = defineStore('chat', () => {
       role: 'user',
       content: text,
       timestamp: Date.now(),
+      mode: 'assistant',
     }
     conversations.value.push(userMessage)
 
@@ -595,6 +600,7 @@ export const useChatStore = defineStore('chat', () => {
         role: 'assistant',
         content: `[连接失败] 无法连接到 AI 助手，请检查网络后重试。${err instanceof Error ? err.message : ''}`,
         timestamp: Date.now(),
+        mode: 'assistant',
       }
       conversations.value.push(failMsg)
       isStreaming.value = false
@@ -614,6 +620,7 @@ export const useChatStore = defineStore('chat', () => {
       role: 'user',
       content: text,
       timestamp: Date.now(),
+      mode: 'admin',
     }
     conversations.value.push(userMessage)
 
@@ -639,6 +646,7 @@ export const useChatStore = defineStore('chat', () => {
         role: 'assistant',
         content: `[连接失败] 无法连接到管理服务，请检查网络后重试。${err instanceof Error ? err.message : ''}`,
         timestamp: Date.now(),
+        mode: 'admin',
       }
       conversations.value.push(failMsg)
       isStreaming.value = false

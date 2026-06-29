@@ -55,6 +55,8 @@ export interface ChatMessage {
   role: 'user' | 'assistant';
   content: string;
   timestamp: number;
+  /** 来源模式：区分 doctor/assistant/admin 三种对话场景，用于多模式消息过滤 */
+  mode?: 'doctor' | 'assistant' | 'admin';
 }
 
 /**
