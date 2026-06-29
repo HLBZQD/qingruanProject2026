@@ -106,7 +106,55 @@ async function handleAvatarChange(e: Event) {
 }
 
 function onEditProfile() {
-  Swal.fire({ toast: true, position: 'top', icon: 'info', title: '编辑资料功能开发中', showConfirmButton: false, timer: 2000 })
+  const currentUsername = profile.value?.username || authStore.user?.username || ''
+  void Swal.fire<string>({
+    title: '编辑资料',
+    html: '<p style="text-align:left;font-size:14px;margin-bottom:8px;color:#666">修改用户名：</p>',
+    input: 'text',
+    inputValue: currentUsername,
+    inputAttributes: {
+      maxlength: '50',
+      'aria-label': '输入新用户名',
+    },
+    showCancelButton: true,
+    confirmButtonText: '保存',
+    cancelButtonText: '取消',
+    showLoaderOnConfirm: true,
+    inputValidator: (value) => {
+      if (!value || !value.trim()) return '用户名不能为空'
+      const trimmed = value.trim()
+      if (trimmed.length < 3 || trimmed.length > 50) return '用户名长度需在 3-50 个字符之间'
+      if (!/^[a-zA-Z0-9_一-龥]+$/.test(trimmed)) return '用户名仅允许字母、数字、下划线和汉字'
+      if (trimmed === currentUsername) return '新用户名与当前用户名相同'
+      return null
+    },
+    preConfirm: async (newName) => {
+      try {
+        const res = await api.put<{ success: boolean; data: { id: number; username: string } }>('/user/profile', { username: newName.trim() })
+        return res.data.data.username
+      } catch (err: unknown) {
+        if (err && typeof err === 'object' && 'response' in err) {
+          const axiosErr = err as { response?: { status?: number; data?: { message?: string } } }
+          if (axiosErr.response?.status === 409) {
+            Swal.showValidationMessage('该用户名已被使用')
+            return
+          }
+          if (axiosErr.response?.status === 422) {
+            Swal.showValidationMessage(axiosErr.response.data?.message || '用户名格式不正确')
+            return
+          }
+        }
+        Swal.showValidationMessage('修改失败，请检查网络后重试')
+      }
+    },
+  }).then((result) => {
+    if (result.isConfirmed && result.value) {
+      const newUsername = result.value
+      if (profile.value) profile.value.username = newUsername
+      authStore.setProfile({ username: newUsername })
+      Swal.fire({ toast: true, position: 'top', icon: 'success', title: '用户名已更新', showConfirmButton: false, timer: 2000 })
+    }
+  })
 }
 
 async function handleLogout() {
