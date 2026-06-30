@@ -1,40 +1,33 @@
-# 实现需求：批次6 — P3 前端一般问题
+# 实现需求：批次7 — P3 后端一般问题
 
 ## 来源
 
 审议式三轮代码审查报告 `reviews/202606291800_full_review/todo.md`
 
-## 本批次任务（20个一般问题）
+## 本批次任务（13个一般问题）
 
-### 注释与命名
-- **G1**: main.ts:12 注释 localStorage → sessionStorage
-- **G4**: enumLabels.ts LABELS → ENUM_LABELS 或添加注释
+### 日志与监控
+- **G26**: risk.js — 正则回退解析增加 console.warn
+- **G27**: sseProxy.js — 超时/错误处理增加 console.error
 
-### 类型安全
-- **G7**: useAuth.ts JwtPayload 索引签名 any → unknown
-- **G8**: useMarkdown.ts 修复 `as any` 类型断言
-- **G13**: Consultation.vue 4处 `(doctor as any)` → DoctorDetail
-- **G32**: helpers.ts 泛型 any[] → unknown[]
+### 安全与防御
+- **G6**: admin.js — 表名白名单校验前置（可能已在 S5 中修复）
+- **G29**: upload.js — filename 回调 req.user 防御性检查
+- **G30**: app.js — CORS origin 白名单 + 速率限制
+- **G31**: 多条路由 — :id 参数合法整数校验
 
-### 代码复用与架构
-- **G3**: useApi.ts 401 添加 redirect 参数
-- **G5**: chatStore localStorage → 统一至 sessionStorage 或标注原因
-- **G9**: formatTime 统一使用 helpers.ts 版本
-- **G10**: useUI.ts 添加 showLoginRequired() 辅助函数
-- **G11**: useApi.ts + chatStore.ts SweetAlert2 动态导入 → 静态导入
-- **G15**: Profile.vue 改为调用 authStore.fetchProfile()
-- **G16**: DoctorDetail.is_online 从接口移除或新增数据库列
-- **G19**: punchStore requestId 从公共导出移除
-- **G28**: useUI.ts loadingCounter 移到 composable 内部或标注 SPA-only
+### 架构与设计合规
+- **G2**: server/routes/dify.js — 创建或标注废弃
+- **G17**: 创建 useRiskApi.ts composable
 
-### 错误处理与边界情况
-- **G22**: DoctorChatView 清空按钮添加 disabled
-- **G23**: router /change-password 守卫 replace: true
-- **G25**: NewsView sessionStorage 恢复增加类型校验
-- **G33**: Login.vue catch 使用 getErrorMessage()
+### 数据一致性
+- **G12**: plan.js — checkIdempotent 移至 callWorkflowBlocking 之前
+- **G18**: plan.js — LifePlan 类型添加可选字段
+- **G20**: chatStore.ts — readSSEStream AbortSignal 检查
+- **G21**: sseProxy.js — data handler writableEnded 检查
 
-### 类型命名
-- **G24**: LoginResponse → LoginData，添加 RegisterData
+### 文档修正
+- **G14**: punch.js — 更新 JSDoc 移除"AI"标注
 
 ## 项目根目录
 

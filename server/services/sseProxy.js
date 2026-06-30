@@ -71,6 +71,8 @@ function proxyDifySSE({ apiKey, query, conversationId, userId, res, req }) {
 
     let buffer = '';
     upstreamRes.on('data', (chunk) => {
+      // G21: 客户端断开后停止写入，防止向已关闭响应写入数据
+      if (aborted || res.writableEnded) return;
       buffer += chunk.toString();
       const lines = buffer.split('\n');
       buffer = lines.pop();
@@ -88,11 +90,15 @@ function proxyDifySSE({ apiKey, query, conversationId, userId, res, req }) {
   });
 
   upstreamReq.on('timeout', () => {
+    // G27: 记录超时日志，便于运维定位 Dify SSE 代理超时
+    console.error('[sseProxy] 上游请求超时:', upstreamUrl);
     if (aborted || res.writableEnded) return;
     writeErrorEvent('AI 服务响应超时，请稍后重试', 'UPSTREAM_ERROR');
   });
 
-  upstreamReq.on('error', () => {
+  upstreamReq.on('error', (err) => {
+    // G27: 记录连接错误日志
+    console.error('[sseProxy] 上游连接错误:', upstreamUrl, err.message);
     if (aborted || res.writableEnded) return;
     writeErrorEvent('AI 服务连接失败，请稍后重试', 'UPSTREAM_ERROR');
   });

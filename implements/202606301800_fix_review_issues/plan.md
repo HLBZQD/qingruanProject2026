@@ -48,7 +48,12 @@
 
 ---
 
-## R7 NEW 修复P3一般问题—注释与命名（G1 + G4）
-任务：main.ts 第12行注释修正（localStorage→sessionStorage）+ enumLabels.ts 常量重命名 LABELS → ENUM_LABELS
-选择理由：P3第一批20个一般问题，按依赖最低优先启动。G1和G4均为单行文本修正，无跨文件依赖，作为20个P3问题的破冰任务。
-上下文：review todo.md 批次6（第483-504行）已列出全部20个问题的精确位置。G1在main.ts:12，G4在enumLabels.ts:1。无前后端依赖。
+## R7 PASSED 修复P3一般问题—注释与命名（G1 + G4）
+结果：2个P3前端问题修复——main.ts 第12行注释 localStorage→sessionStorage，enumLabels.ts 常量 LABELS→ENUM_LABELS（定义+引用2处）。todo.md 标记 G1/G4 已修复。
+测试：verify_v7.md PASSED (修改清单2/2通过)
+
+---
+## R8 NEW 修复P3后端日志缺失（G26 + G27）
+任务：risk.js parseRiskOutputRegex 正则回退路径添加 console.warn + sseProxy.js timeout/error 回调添加 console.error
+选择理由：批次7（13个P3后端问题）的首个任务。G26和G27均为纯日志添加（各+1行），无跨文件依赖，无运行时行为变更。作为后端批次破冰任务，风险最低。
+上下文：todo.md 批次7（第506-534行）已列出全部13个后端问题。G26在 risk.js:11-29，G27在 sseProxy.js:89-98。两个文件独立无依赖。G6（admin.js表名白名单）未在S5中修复——get_table_schema（第421行）仍缺少白名单校验。

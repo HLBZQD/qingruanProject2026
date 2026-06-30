@@ -20,6 +20,8 @@ function ensureUploadDir() {
 const storage = multer.diskStorage({
   destination: (_req, _file, cb) => cb(null, uploadDir),
   filename: (req, file, cb) => {
+    // G29: 防御性检查，若中间件链被重排 req.user 为 undefined 时返回认证错误
+    if (!req.user?.user_id) return cb(new Error('User not authenticated'));
     const ext = path.extname(file.originalname);
     cb(null, `user_${req.user.user_id}_${Date.now()}${ext}`);
   }
