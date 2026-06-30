@@ -9,7 +9,7 @@ const app = createApp(App)
 app.use(createPinia())
 app.use(router)
 
-// 自动从 localStorage 恢复登录态
+// 自动从 sessionStorage 恢复登录态
 import { useAuthStore } from '@/stores/authStore'
 const authStore = useAuthStore()
 authStore.syncFromStorage()

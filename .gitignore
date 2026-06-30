@@ -32,3 +32,6 @@ lerna-debug.log*
 sqlite3.exe
 
 static/uploads/avatars/
+
+data/database.sqlite-shm
+data/database.sqlite-wal

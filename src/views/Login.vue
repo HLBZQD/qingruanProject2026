@@ -4,6 +4,8 @@ import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
 import { api } from '@/composables/useApi'
 
+import { getErrorMessage } from '@/utils/errorMessage'
+
 const router = useRouter()
 const route = useRoute()
 const authStore = useAuthStore()
@@ -39,8 +41,8 @@ async function handleLogin() {
   try {
     await authStore.login(username.value, password.value)
     router.replace(safeRedirect(route.query.redirect))
-  } catch (err: any) {
-    errorMsg.value = err?.response?.data?.error?.message || '登录失败'
+  } catch (err: unknown) {
+    errorMsg.value = getErrorMessage(err, '登录失败')
   } finally {
     loading.value = false
   }

@@ -25,6 +25,11 @@ router.post('/generate', authMiddleware, async (req, res, next) => {
     const err = validatePlanGenerate(req.body);
     if (err) throw new AppError(422, 'VALIDATION_ERROR', err);
 
+    // G12: 幂等检查移至 Dify API 调用之前，防止重复调用消耗 API token
+    if (!checkIdempotent(req.user.user_id)) {
+      throw new AppError(409, 'CONFLICT', '请求过于频繁，请稍后再试');
+    }
+
     const difyResponse = await callWorkflowBlocking(
       process.env.DIFY_PLAN_WORKFLOW_KEY,
       {
@@ -40,10 +45,6 @@ router.post('/generate', authMiddleware, async (req, res, next) => {
       callWorkflowBlocking,
       { health_info: req.body.health_info, preferences: req.body.preferences }
     );
-
-    if (!checkIdempotent(req.user.user_id)) {
-      throw new AppError(409, 'CONFLICT', '请求过于频繁，请稍后再试');
-    }
 
     const planData = db.transaction(() => {
       db.prepare(`

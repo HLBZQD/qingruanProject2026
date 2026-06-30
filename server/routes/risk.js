@@ -9,6 +9,8 @@ const authMiddleware = require('../middleware/auth');
 const router = express.Router();
 
 function parseRiskOutputRegex(text) {
+  // G26: 记录走了回退解析路径，便于运维排查 Dify 输出格式问题
+  console.warn('[risk] JSON 解析失败，回退到正则解析 parseRiskOutput');
   const extract = (pattern, text) => {
     const m = text.match(pattern);
     return m ? m[1] : undefined;

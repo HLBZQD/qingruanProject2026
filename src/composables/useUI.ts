@@ -140,6 +140,18 @@ export function setDisclaimerAccepted(accepted: boolean): void {
   }
 }
 
+// ========== 登录提示 ==========
+
+/**
+ * 显示"请先登录"提示并重定向到登录页。
+ * 统一 DoctorChatView / Admin / AiChatDialog 三处的重复 toast 逻辑。
+ */
+export async function showLoginRequired(): Promise<void> {
+  await showInfo('请先登录')
+  const { router } = await import('@/router')
+  router.push('/login?redirect=' + encodeURIComponent(window.location.pathname + window.location.search))
+}
+
 // ========== Composable 入口 ==========
 
 export function useUI() {

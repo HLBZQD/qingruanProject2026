@@ -1,4 +1,4 @@
-const LABELS = {
+const ENUM_LABELS = {
   gender: {
     male: '男',
     female: '女',
@@ -39,6 +39,6 @@ const LABELS = {
 } as const satisfies Record<string, Record<string, string>>
 
 export function enumLabel(category: string, value: string): string {
-  const group = (LABELS as Record<string, Record<string, string>>)[category]
+  const group = (ENUM_LABELS as Record<string, Record<string, string>>)[category]
   return group?.[value] ?? value
 }

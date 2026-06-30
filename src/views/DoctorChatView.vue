@@ -7,6 +7,11 @@ import { useAuthStore } from '@/stores/authStore'
 import { getDoctorInfo } from '@/composables/useChatApi'
 import { renderMarkdown } from '@/composables/useMarkdown'
 import type { Doctor } from '@/types/api'
+import SkeletonLoader from '@/components/SkeletonLoader.vue'
+import ErrorRetry from '@/components/ErrorRetry.vue'
+import EmptyState from '@/components/EmptyState.vue'
+import type { ConversationHistoryItem } from '@/types/sse'
+import DisclaimerBar from '@/components/DisclaimerBar.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -94,7 +99,7 @@ function goBack() {
 function clearChat() {
   const id = Number(route.params.id)
   chatStore.clearDoctorConversation(id)
-  chatStore.conversations.length = 0
+  chatStore.clearMessages()
 }
 
 // ===== 自动滚动到底部 =====
@@ -159,7 +164,7 @@ function selectHistorySession(item: ConversationHistoryItem): void {
   const doctorId = Number(route.params.id)
   chatStore.setDoctorConversation(doctorId, item.conversation_id)
   // 清空当前消息列表以展示新会话上下文
-  chatStore.conversations.length = 0
+  chatStore.clearMessages()
   showHistoryPanel.value = false
   chatStore.clearConversationHistory()
 }
@@ -189,7 +194,7 @@ watch(
   (newId, oldId) => {
     if (newId !== oldId && oldId !== undefined) {
       chatStore.abortActiveConnection()
-      chatStore.conversations.length = 0
+      chatStore.clearMessages()
       loadDoctor()
     }
   },
@@ -298,9 +303,7 @@ onUnmounted(() => {
     </div>
 
     <!-- 免责声明条 (对话全程可见) -->
-    <div class="disclaimer-bar">
-      <p>本对话由AI虚拟医师提供，回复内容仅供参考</p>
-    </div>
+    <DisclaimerBar text="本对话由AI虚拟医师提供，回复内容仅供参考，不能替代专业医疗诊断。" />
 
     <!-- 消息列表 (可滚动) -->
     <div
@@ -438,19 +441,6 @@ onUnmounted(() => {
   color: var(--color-text-secondary);
 }
 
-/* ===== 免责声明条 ===== */
-.disclaimer-bar {
-  padding: 6px var(--spacing-lg);
-  background: rgba(250, 173, 20, 0.1);
-  border-bottom: 1px solid rgba(250, 173, 20, 0.2);
-  flex-shrink: 0;
-}
-.disclaimer-bar p {
-  font-size: 11px;
-  color: #ad8b00;
-  text-align: center;
-  margin: 0;
-}
 
 /* ===== 消息列表 ===== */
 #chat-messages {
