@@ -116,7 +116,8 @@ router.beforeEach(async (to, from, next) => {
   }
 
   if (authStore.mustChangePassword && to.path !== '/change-password') {
-    return next('/change-password')
+    // G23: 使用 replace 避免后退按钮无限重定向
+    return next({ path: '/change-password', replace: true })
   }
 
   if (to.meta.requiresDisclaimer && !hasAcceptedDisclaimer()) {

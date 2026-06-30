@@ -23,7 +23,7 @@ export interface JwtPayload {
   /** 签发者 */
   iss?: string;
   /** 其他自定义声明 */
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 /**

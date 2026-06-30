@@ -55,7 +55,7 @@ export function formatTime(timestamp: number): string {
 
 // ========== 防抖 / 截流 ==========
 
-export type DebouncedFn<T extends (...args: any[]) => any> = {
+export type DebouncedFn<T extends (...args: unknown[]) => any> = {
   (...args: Parameters<T>): ReturnType<T> | undefined
   cancel(): void
   flush(): ReturnType<T> | undefined
@@ -68,7 +68,7 @@ export type DebouncedFn<T extends (...args: any[]) => any> = {
  * @param wait - 等待毫秒数，默认 300
  * @param immediate - 是否在触发瞬间先执行一次，默认 false
  */
-export function debounce<T extends (...args: any[]) => any>(
+export function debounce<T extends (...args: unknown[]) => any>(
   fn: T,
   wait = 300,
   immediate = false,
@@ -121,7 +121,7 @@ export function debounce<T extends (...args: any[]) => any>(
   return debounced as DebouncedFn<T>
 }
 
-export type ThrottledFn<T extends (...args: any[]) => any> = {
+export type ThrottledFn<T extends (...args: unknown[]) => any> = {
   (...args: Parameters<T>): ReturnType<T> | undefined
   cancel(): void
 }
@@ -133,7 +133,7 @@ export type ThrottledFn<T extends (...args: any[]) => any> = {
  * @param wait - 时间窗口毫秒数，默认 300
  * @param trailing - 是否在窗口结束时执行最后一次，默认 true
  */
-export function throttle<T extends (...args: any[]) => any>(
+export function throttle<T extends (...args: unknown[]) => any>(
   fn: T,
   wait = 300,
   trailing = true,

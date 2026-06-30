@@ -1,6 +1,7 @@
 import axios from 'axios'
 import { useAuthStore } from '@/stores/authStore'
 import { router } from '@/router'
+import { showInfo } from '@/composables/useUI'
 
 const api = axios.create({
   baseURL: '/api',
@@ -40,18 +41,10 @@ api.interceptors.response.use(
     if (err.response?.status === 401) {
       const authStore = useAuthStore()
       authStore.clearAuth()
-      import('sweetalert2').then((Swal) => {
-        Swal.default.fire({
-          toast: true,
-          position: 'top',
-          icon: 'info',
-          title: '登录已过期，请重新登录',
-          showConfirmButton: false,
-          timer: 2500,
-          timerProgressBar: true,
-        })
-      })
-      router.push('/login')
+      // G3: 附带 redirect 参数，登录后可回跳原页面
+      const redirect = encodeURIComponent(window.location.pathname + window.location.search)
+      showInfo('登录已过期，请重新登录')
+      router.push('/login?redirect=' + redirect)
     }
     return Promise.reject(err)
   },
