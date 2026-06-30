@@ -91,90 +91,205 @@ async function handleRegister(): Promise<void> {
 </script>
 
 <template>
-  <div class="min-h-screen bg-[#F5F5F5] flex flex-col items-center justify-center px-6">
-    <div class="w-full max-w-sm">
+  <div class="login-page">
+    <div class="login-container">
 
       <!-- ===== 登录视图 ===== -->
       <div v-show="view === 'login'">
-        <div class="text-center mb-8">
-          <h1 class="text-2xl font-bold text-[#4A90D9]">糖尿病预治智能助手</h1>
-          <p class="text-sm text-gray-400 mt-2">登录您的账号</p>
+        <div class="login-header">
+          <h1 class="login-title">糖尿病预治智能助手</h1>
+          <p class="login-subtitle">登录您的账号</p>
         </div>
 
-        <form class="space-y-4" @submit.prevent="handleLogin">
+        <form class="login-form" @submit.prevent="handleLogin">
           <input
             v-model="username"
             type="text"
             placeholder="用户名"
             autocomplete="username"
-            class="w-full bg-gray-100 rounded-full px-4 py-3 outline-none text-sm focus:ring-2 focus:ring-[#4A90D9]"
+            class="form-input"
           />
           <input
             v-model="password"
             type="password"
             placeholder="密码"
             autocomplete="current-password"
-            class="w-full bg-gray-100 rounded-full px-4 py-3 outline-none text-sm focus:ring-2 focus:ring-[#4A90D9]"
+            class="form-input"
           />
-          <div v-if="errorMsg" class="text-[#FF4D4F] text-xs text-center">{{ errorMsg }}</div>
+          <div v-if="errorMsg" class="form-error">{{ errorMsg }}</div>
           <button
             type="submit"
             :disabled="loading"
-            class="w-full bg-[#4A90D9] text-white py-3 rounded-xl font-medium hover:bg-[#3A7BC8] transition disabled:opacity-50"
+            class="form-btn"
           >
             {{ loading ? '登录中...' : '登录' }}
           </button>
         </form>
 
-        <p class="text-center text-sm text-gray-400 mt-6">
-          还没有账号？<a class="text-[#4A90D9] cursor-pointer hover:underline" @click.prevent="switchView('register')">立即注册</a>
+        <p class="switch-text">
+          还没有账号？<a class="switch-link" @click.prevent="switchView('register')">立即注册</a>
         </p>
       </div>
 
       <!-- ===== 注册视图 ===== -->
       <div v-show="view === 'register'">
-        <div class="text-center mb-8">
-          <h1 class="text-2xl font-bold text-[#4A90D9]">糖尿病预治智能助手</h1>
-          <p class="text-sm text-gray-400 mt-2">创建您的账号</p>
+        <div class="login-header">
+          <h1 class="login-title">糖尿病预治智能助手</h1>
+          <p class="login-subtitle">创建您的账号</p>
         </div>
 
-        <form class="space-y-4" @submit.prevent="handleRegister">
+        <form class="login-form" @submit.prevent="handleRegister">
           <input
             v-model="regUsername"
             type="text"
             placeholder="用户名（3-50个字符）"
             autocomplete="username"
-            class="w-full bg-gray-100 rounded-full px-4 py-3 outline-none text-sm focus:ring-2 focus:ring-[#4A90D9]"
+            class="form-input"
           />
           <input
             v-model="regPassword"
             type="password"
             placeholder="密码（不少于8位，含字母和数字）"
             autocomplete="new-password"
-            class="w-full bg-gray-100 rounded-full px-4 py-3 outline-none text-sm focus:ring-2 focus:ring-[#4A90D9]"
+            class="form-input"
           />
           <input
             v-model="regPasswordConfirm"
             type="password"
             placeholder="确认密码"
             autocomplete="new-password"
-            class="w-full bg-gray-100 rounded-full px-4 py-3 outline-none text-sm focus:ring-2 focus:ring-[#4A90D9]"
+            class="form-input"
           />
-          <div v-if="regErrorMsg" class="text-[#FF4D4F] text-xs text-center">{{ regErrorMsg }}</div>
+          <div v-if="regErrorMsg" class="form-error">{{ regErrorMsg }}</div>
           <button
             type="submit"
             :disabled="regLoading"
-            class="w-full bg-[#4A90D9] text-white py-3 rounded-xl font-medium hover:bg-[#3A7BC8] transition disabled:opacity-50"
+            class="form-btn"
           >
             {{ regLoading ? '注册中...' : '注册' }}
           </button>
         </form>
 
-        <p class="text-center text-sm text-gray-400 mt-6">
-          已有账号？<a class="text-[#4A90D9] cursor-pointer hover:underline" @click.prevent="switchView('login')">立即登录</a>
+        <p class="switch-text">
+          已有账号？<a class="switch-link" @click.prevent="switchView('login')">立即登录</a>
         </p>
       </div>
 
     </div>
   </div>
 </template>
+
+<style scoped>
+/* ===== 页面容器 ===== */
+.login-page {
+  min-height: 100vh;
+  background: #F5F5F5;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 0 24px;
+}
+
+.login-container {
+  width: 100%;
+  max-width: 360px;
+}
+
+/* ===== 头部 ===== */
+.login-header {
+  text-align: center;
+  margin-bottom: 32px;
+}
+
+.login-title {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--color-primary, #4A90D9);
+  line-height: 1.3;
+}
+
+.login-subtitle {
+  font-size: 14px;
+  color: #9ca3af;
+  margin-top: 8px;
+}
+
+/* ===== 表单 ===== */
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.form-input {
+  width: 100%;
+  background: #e5e7eb;
+  border-radius: 9999px;
+  padding: 12px 16px;
+  outline: none;
+  font-size: 14px;
+  border: 2px solid transparent;
+  color: var(--color-text-primary);
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.form-input:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px rgba(74, 144, 217, 0.2);
+}
+
+.form-input::placeholder {
+  color: #9ca3af;
+}
+
+.form-error {
+  color: #FF4D4F;
+  font-size: 12px;
+  text-align: center;
+}
+
+.form-btn {
+  width: 100%;
+  background: var(--color-primary, #4A90D9);
+  color: #fff;
+  padding: 12px;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 500;
+  border: none;
+  cursor: pointer;
+  transition: background 0.2s, opacity 0.2s;
+}
+
+.form-btn:hover:not(:disabled) {
+  background: var(--color-primary-dark, #3A7BC8);
+}
+
+.form-btn:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+.form-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ===== 切换提示 ===== */
+.switch-text {
+  text-align: center;
+  font-size: 14px;
+  color: #9ca3af;
+  margin-top: 24px;
+}
+
+.switch-link {
+  color: var(--color-primary, #4A90D9);
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.switch-link:hover {
+  text-decoration: underline;
+}
+</style>

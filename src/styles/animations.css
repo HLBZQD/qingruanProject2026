@@ -1,11 +1,11 @@
 /* ===== 页面入场动画（全局基础: 纯淡入） ===== */
 @keyframes pageEnterFadeIn {
-  from { opacity: 0; }
-  to   { opacity: 1; }
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
 .page-enter {
-  animation: pageEnterFadeIn 0.4s ease-out;
+  animation: pageEnterFadeIn 0.28s cubic-bezier(0.22, 0.61, 0.36, 1) both;
 }
 
 /* ===== 按钮按下态交互（全局） ===== */

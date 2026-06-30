@@ -303,7 +303,7 @@ onUnmounted(() => {
               <circle
                 cx="50" cy="50" r="40"
                 fill="none"
-                stroke="var(--color-border, #e0e0e0)"
+                stroke="var(--color-divider, #e0e0e0)"
                 stroke-width="8"
               />
               <!-- 进度环（有颜色、带动画） -->
@@ -1177,7 +1177,7 @@ onUnmounted(() => {
 .donut-text {
   font-size: 14px;
   font-weight: 600;
-  fill: var(--color-text, #333);
+  fill: var(--color-text-primary, #333);
 }
 
 /* 小字号变体（如 "100%" 4字符以上时缩小字号避免溢出） */
@@ -1200,7 +1200,7 @@ onUnmounted(() => {
   width: 36px;
   height: 36px;
   border-radius: 50%;
-  border: 1px solid var(--color-border, #ddd);
+  border: 1px solid var(--color-divider, #ddd);
   background: var(--color-bg, #fff);
   color: var(--color-text-secondary, #666);
   cursor: pointer;
@@ -1210,7 +1210,7 @@ onUnmounted(() => {
 }
 
 #btn-refresh:hover:not(:disabled) {
-  background: var(--color-bg-hover, #f5f5f5);
+  background: var(--color-bg, #f5f5f5);
   color: var(--color-primary, #4A90D9);
 }
 

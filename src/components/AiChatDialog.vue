@@ -446,6 +446,36 @@ onUnmounted(() => {
   border-radius: var(--radius-md);
 }
 
+/* G19: Markdown 子元素排版穿透 */
+.msg-content :deep(p) {
+  margin-bottom: var(--spacing-sm);
+}
+.msg-content :deep(ul),
+.msg-content :deep(ol) {
+  padding-left: var(--spacing-lg);
+  margin-bottom: var(--spacing-sm);
+}
+.msg-content :deep(li) {
+  margin-bottom: var(--spacing-xs);
+}
+.msg-content :deep(code) {
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+  background: var(--color-bg);
+  font-family: var(--font-family);
+  font-size: 13px;
+}
+.msg-content :deep(blockquote) {
+  border-left: 3px solid var(--color-primary-light);
+  padding-left: var(--spacing-md);
+  margin: var(--spacing-sm) 0;
+  color: var(--color-text-secondary);
+}
+.msg-content :deep(strong) {
+  color: var(--color-text-primary);
+  font-weight: 600;
+}
+
 .message-bubble.sent .msg-content {
   background: var(--color-primary);
   color: #fff;

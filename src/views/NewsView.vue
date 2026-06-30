@@ -788,7 +788,8 @@ onMounted(() => {
   padding: var(--spacing-xs) 0;
 }
 
-.search-highlight {
+/* G17: v-html 注入的 <mark> 元素不受 scoped CSS 影响，使用 :global() 穿透 */
+:global(.search-highlight) {
   background: #fff3b0;
   color: #333;
   padding: 0 2px;
