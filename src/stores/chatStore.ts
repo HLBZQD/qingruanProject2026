@@ -11,6 +11,7 @@ import {
   getAssistantConversations,
 } from '@/composables/useChatApi'
 import type { ChatMessage, SSEEvent, ConversationHistoryItem } from '@/types/sse'
+import type { RouteLocationRaw } from 'vue-router'
 import { router } from '@/router'
 
 export const useChatStore = defineStore('chat', () => {
@@ -635,7 +636,7 @@ function handleSSEEvent(event: SSEEvent): void {
   }
 
   /** 导航方法 (预留，后续轮次使用) */
-  function navigate(target: { name?: string; path?: string; params?: object; query?: object }): void {
+  function navigate(target: RouteLocationRaw): void {
     router.push(target)
   }
 

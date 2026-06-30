@@ -6,6 +6,8 @@ import { api } from '@/composables/useApi'
 import { renderMarkdown } from '@/composables/useMarkdown'
 import Swal from 'sweetalert2'
 import type { RiskPredictRequest, RiskPredictResponse, RiskHistoryItem } from '@/types/api'
+import AppIcon from '@/components/icons/AppIcon.vue'
+import DiabetesIcon from '@/components/icons/DiabetesIcon.vue'
 import DisclaimerBar from '@/components/DisclaimerBar.vue'
 
 const router = useRouter()
@@ -42,9 +44,9 @@ const step2 = reactive({
 const fieldError = ref('')
 
 const HISTORY_OPTIONS = [
-  { value: 'healthy', label: '健康 (无糖尿病)', icon: 'fa-face-smile', desc: '目前血糖指标正常' },
-  { value: 'prediabetes', label: '糖尿病前期', icon: 'fa-triangle-exclamation', desc: '血糖偏高，需警惕' },
-  { value: 'diagnosed', label: '已确诊糖尿病', icon: 'fa-user-doctor', desc: '已接受医学诊断' },
+  { value: 'healthy', label: '健康 (无糖尿病)', icon: 'heart', iconType: 'diabetes' as const, desc: '目前血糖指标正常' },
+  { value: 'prediabetes', label: '糖尿病前期', icon: 'blood-drop', iconType: 'diabetes' as const, desc: '血糖偏高，需警惕' },
+  { value: 'diagnosed', label: '已确诊糖尿病', icon: 'doctor-bag', iconType: 'diabetes' as const, desc: '已接受医学诊断' },
 ] as const
 
 const DIABETES_TYPE_OPTIONS = [
@@ -55,13 +57,13 @@ const DIABETES_TYPE_OPTIONS = [
 ] as const
 
 const GENDER_OPTIONS = [
-  { value: 'male', label: '男', icon: 'fa-mars' },
-  { value: 'female', label: '女', icon: 'fa-venus' },
+  { value: 'male', label: '男', icon: 'mars' },
+  { value: 'female', label: '女', icon: 'venus' },
 ] as const
 
 const FAMILY_HISTORY_OPTIONS = [
-  { value: 'yes', label: '有', icon: 'fa-check' },
-  { value: 'no', label: '无', icon: 'fa-xmark' },
+  { value: 'yes', label: '有', icon: 'check' },
+  { value: 'no', label: '无', icon: 'xmark' },
 ] as const
 
 const VALID_RISK_LEVELS = ['low', 'medium', 'high'] as const
@@ -344,13 +346,13 @@ const riskMeta = computed(() => {
   if (!result.value) return null
   switch (result.value.risk_level) {
     case 'low':
-      return { label: '低风险', color: '#52C41A', bg: '#F0F9EB', icon: 'fa-shield-heart' }
+      return { label: '低风险', color: '#52C41A', bg: '#F0F9EB', icon: 'heart', iconType: 'diabetes' as const }
     case 'medium':
-      return { label: '中风险', color: '#FAAD14', bg: '#FFFBE6', icon: 'fa-triangle-exclamation' }
+      return { label: '中风险', color: '#FAAD14', bg: '#FFFBE6', icon: 'blood-drop', iconType: 'diabetes' as const }
     case 'high':
-      return { label: '高风险', color: '#FF4D4F', bg: '#FFF1F0', icon: 'fa-circle-exclamation' }
+      return { label: '高风险', color: '#FF4D4F', bg: '#FFF1F0', icon: 'heart-cross', iconType: 'diabetes' as const }
     default:
-      return { label: '未知风险', color: '#999999', bg: '#F5F5F5', icon: 'fa-question-circle' }
+      return { label: '未知风险', color: '#999999', bg: '#F5F5F5', icon: 'question-circle', iconType: 'app' as const }
   }
 })
 
@@ -364,7 +366,7 @@ const riskPercent = computed(() => {
   <div class="risk-page">
     <header class="risk-header">
       <button class="back-button press" aria-label="返回" @click="router.back()">
-        <i class="fa-solid fa-arrow-left" aria-hidden="true"></i>
+        <AppIcon name="arrow-left" :size="16" />
       </button>
       <h1 class="risk-title">糖尿病风险预测</h1>
       <div class="header-spacer" aria-hidden="true"></div>
@@ -376,7 +378,7 @@ const riskPercent = computed(() => {
         <template v-for="step in 3" :key="step">
           <div class="step-node" :class="{ active: currentStep >= step, current: currentStep === step }">
             <div class="step-circle" aria-hidden="true">
-              <i v-if="currentStep > step" class="fa-solid fa-check"></i>
+              <AppIcon v-if="currentStep > step" name="check" :size="13" />
               <span v-else>{{ step }}</span>
             </div>
             <span class="step-label">{{ stepLabels[step - 1] }}</span>
@@ -407,15 +409,16 @@ const riskPercent = computed(() => {
               class="sr-only"
             />
             <div class="option-icon-wrap" :class="{ selected: step1.diabetes_history === opt.value }">
-              <i class="fa-solid" :class="opt.icon" aria-hidden="true"></i>
+              <DiabetesIcon v-if="opt.iconType === 'diabetes'" :name="opt.icon" :size="18" />
+              <AppIcon v-else :name="opt.icon" :size="18" />
             </div>
             <div class="option-body">
               <span class="option-label">{{ opt.label }}</span>
               <span class="option-desc">{{ opt.desc }}</span>
             </div>
             <div class="option-check" aria-hidden="true">
-              <i v-if="step1.diabetes_history === opt.value" class="fa-solid fa-check-circle"></i>
-              <i v-else class="fa-regular fa-circle"></i>
+              <AppIcon v-if="step1.diabetes_history === opt.value" name="check" :size="20" />
+              <AppIcon v-else name="circle-empty" :size="20" />
             </div>
           </label>
         </div>
@@ -430,20 +433,20 @@ const riskPercent = computed(() => {
                   {{ t.label }}
                 </option>
               </select>
-              <i class="fa-solid fa-chevron-down select-arrow" aria-hidden="true"></i>
+              <AppIcon class="select-arrow" name="chevron-down" :size="12" />
             </div>
           </div>
         </transition>
 
         <div id="field-error-container-step1" v-if="fieldError" class="field-error" role="alert">
-          <i class="fa-solid fa-circle-exclamation" aria-hidden="true"></i>
+          <AppIcon name="exclamation" :size="14" />
           {{ fieldError }}
         </div>
 
         <div class="step-actions">
           <button class="btn-primary press" @click="goStep1Next">
             下一步
-            <i class="fa-solid fa-arrow-right" aria-hidden="true"></i>
+            <AppIcon name="arrow-right" :size="16" />
           </button>
         </div>
       </section>
@@ -460,7 +463,7 @@ const riskPercent = computed(() => {
           <div class="form-group">
             <label class="field-label" for="risk-age">年龄 <span class="required">*</span></label>
             <div class="input-wrap">
-              <i class="fa-solid fa-cake-candles input-icon" aria-hidden="true"></i>
+              <AppIcon class="input-icon" name="cake-candles" :size="14" />
               <input
                 id="risk-age"
                 v-model.number="step2.age"
@@ -484,7 +487,7 @@ const riskPercent = computed(() => {
                 :class="{ selected: step2.gender === g.value }"
               >
                 <input v-model="step2.gender" type="radio" :value="g.value" class="sr-only" />
-                <i class="fa-solid" :class="g.icon" aria-hidden="true"></i>
+                <AppIcon :name="g.icon" :size="16" />
                 <span>{{ g.label }}</span>
               </label>
             </div>
@@ -493,7 +496,7 @@ const riskPercent = computed(() => {
           <div class="form-group">
             <label class="field-label" for="risk-height">身高 <span class="required">*</span></label>
             <div class="input-wrap">
-              <i class="fa-solid fa-ruler-vertical input-icon" aria-hidden="true"></i>
+              <AppIcon class="input-icon" name="ruler-vertical" :size="14" />
               <input
                 id="risk-height"
                 v-model.number="step2.height"
@@ -511,7 +514,7 @@ const riskPercent = computed(() => {
           <div class="form-group">
             <label class="field-label" for="risk-weight">体重 <span class="required">*</span></label>
             <div class="input-wrap">
-              <i class="fa-solid fa-weight-scale input-icon" aria-hidden="true"></i>
+              <AppIcon class="input-icon" name="weight-scale" :size="14" />
               <input
                 id="risk-weight"
                 v-model.number="step2.weight"
@@ -529,7 +532,7 @@ const riskPercent = computed(() => {
           <div class="form-group">
             <label class="field-label" for="risk-waist">腰围 <span class="optional">(选填)</span></label>
             <div class="input-wrap">
-              <i class="fa-solid fa-tape input-icon" aria-hidden="true"></i>
+              <AppIcon class="input-icon" name="tape" :size="14" />
               <input
                 id="risk-waist"
                 v-model.number="step2.waist"
@@ -547,7 +550,7 @@ const riskPercent = computed(() => {
           <div class="form-group">
             <label class="field-label" for="risk-bp">收缩压 <span class="optional">(选填)</span></label>
             <div class="input-wrap">
-              <i class="fa-solid fa-heart-pulse input-icon" aria-hidden="true"></i>
+              <AppIcon class="input-icon" name="heart-pulse" :size="14" />
               <input
                 id="risk-bp"
                 v-model.number="step2.systolic_bp"
@@ -571,7 +574,7 @@ const riskPercent = computed(() => {
                 :class="{ selected: step2.family_history === f.value }"
               >
                 <input v-model="step2.family_history" type="radio" :value="f.value" class="sr-only" />
-                <i class="fa-solid" :class="f.icon" aria-hidden="true"></i>
+                <AppIcon :name="f.icon" :size="16" />
                 <span>{{ f.label }}</span>
               </label>
             </div>
@@ -601,13 +604,13 @@ const riskPercent = computed(() => {
         </div>
 
         <div id="field-error-container" v-if="fieldError" class="field-error" role="alert">
-          <i class="fa-solid fa-circle-exclamation" aria-hidden="true"></i>
+          <AppIcon name="exclamation" :size="14" />
           {{ fieldError }}
         </div>
 
         <div class="step-actions split">
           <button class="btn-secondary press" @click="goStep2Prev">
-            <i class="fa-solid fa-arrow-left" aria-hidden="true"></i>
+            <AppIcon name="arrow-left" :size="16" />
             上一步
           </button>
           <button
@@ -615,7 +618,7 @@ const riskPercent = computed(() => {
             :disabled="submitting"
             @click="submitPredict"
           >
-            <i v-if="submitting" class="fa-solid fa-circle-notch fa-spin" aria-hidden="true"></i>
+            <AppIcon v-if="submitting" class="is-spinning" name="circle-notch" :size="16" />
             <span>{{ submitting ? '提交中...' : '提交评估' }}</span>
           </button>
         </div>
@@ -640,12 +643,12 @@ const riskPercent = computed(() => {
         <!-- 错误状态 -->
         <div v-else-if="error && !result" class="error-state" role="alert">
           <div class="error-icon">
-            <i class="fa-solid fa-circle-exclamation" aria-hidden="true"></i>
+            <AppIcon name="exclamation" :size="28" />
           </div>
           <p class="error-title">评估失败</p>
           <p class="error-desc">{{ error }}</p>
           <button class="retry-button press" :disabled="retryCooldown" @click="retryPredict">
-            <i class="fa-solid fa-rotate-right" aria-hidden="true"></i>
+            <AppIcon name="refresh" :size="16" />
             {{ retryCooldown ? '请稍后重试...' : '重新评估' }}
           </button>
         </div>
@@ -653,7 +656,7 @@ const riskPercent = computed(() => {
         <!-- 结果展示 -->
         <template v-else-if="result && riskMeta">
           <div v-if="isHistoryFallback" class="fallback-banner" role="status">
-            <i class="fa-solid fa-clock-rotate-left" aria-hidden="true"></i>
+            <AppIcon name="clock-rotate-left" :size="14" />
             <span>AI 服务暂不可用，展示最近一次历史预测结果</span>
           </div>
 
@@ -669,7 +672,8 @@ const riskPercent = computed(() => {
             </div>
 
             <div id="risk-level-badge" class="risk-level-badge" :style="{ color: riskMeta.color, background: riskMeta.bg }">
-              <i class="fa-solid" :class="riskMeta.icon" aria-hidden="true"></i>
+              <DiabetesIcon v-if="riskMeta.iconType === 'diabetes'" :name="riskMeta.icon" :size="20" />
+              <AppIcon v-else :name="riskMeta.icon" :size="20" />
               <span id="risk-level-text">{{ result.risk_level_label || riskMeta.label }}</span>
             </div>
 
@@ -682,7 +686,7 @@ const riskPercent = computed(() => {
 
           <div id="suggestions-list" class="advice-card">
             <div class="advice-header">
-              <i class="fa-solid fa-user-doctor" aria-hidden="true"></i>
+              <AppIcon name="doctor" :size="14" />
               <h3>风险分析与建议</h3>
             </div>
             <div id="risk-detail-text" class="markdown-body" v-html="safeAdviceHtml(result.advice)"></div>
@@ -692,11 +696,11 @@ const riskPercent = computed(() => {
 
           <div class="step-actions split">
             <button class="btn-secondary press" @click="restart">
-              <i class="fa-solid fa-rotate-left" aria-hidden="true"></i>
+              <AppIcon name="rotate-left" :size="16" />
               重新填写
             </button>
             <button class="btn-primary press" @click="goToLifePlan">
-              <i class="fa-solid fa-clipboard-list" aria-hidden="true"></i>
+              <AppIcon name="plan" :size="16" />
               生成生活方案
             </button>
           </div>
@@ -1244,6 +1248,10 @@ const riskPercent = computed(() => {
 @keyframes spin {
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
+}
+
+.is-spinning {
+  animation: spin 1s linear infinite;
 }
 
 .loading-title {

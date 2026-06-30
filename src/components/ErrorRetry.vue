@@ -1,11 +1,12 @@
 <script setup lang="ts">
+import AppIcon from '@/components/icons/AppIcon.vue'
 const props = withDefaults(defineProps<{
   message?: string
   icon?: string
   retryText?: string
 }>(), {
   message: '加载失败，请检查网络后重试',
-  icon: 'fa-exclamation-circle',
+  icon: 'exclamation',
   retryText: '点击重试',
 })
 
@@ -20,10 +21,12 @@ function onRetry() {
 
 <template>
   <div class="error-retry" role="alert" aria-live="polite">
-    <i :class="['fas', icon, 'error-icon']" aria-hidden="true"></i>
+    <div class="error-icon-wrap">
+      <AppIcon :name="icon" :size="28" color="var(--color-danger)" class="error-icon" />
+    </div>
     <p class="error-message">{{ message }}</p>
     <button class="retry-btn" @click="onRetry">
-      <i class="fas fa-redo-alt" aria-hidden="true"></i>
+      <AppIcon name="redo" :size="12" />
       {{ retryText }}
     </button>
   </div>
@@ -40,16 +43,28 @@ function onRetry() {
   color: var(--color-text-secondary);
 }
 
-.error-icon {
-  font-size: 48px;
-  color: var(--color-text-disabled);
+.error-icon-wrap {
+  width: 72px;
+  height: 72px;
+  border-radius: 28%;
+  background: var(--color-danger-light);
+  display: flex;
+  align-items: center;
+  justify-content: center;
   margin-bottom: var(--spacing-md);
+  transform: rotate(3deg);
+}
+
+.error-icon {
+  font-size: 28px;
+  color: var(--color-danger);
 }
 
 .error-message {
   font-size: var(--font-size-body);
   margin-bottom: var(--spacing-lg);
   line-height: 1.5;
+  max-width: 280px;
 }
 
 .retry-btn {
@@ -61,15 +76,17 @@ function onRetry() {
   background: var(--color-primary);
   color: #fff;
   font-size: var(--font-size-body);
-  font-weight: 600;
+  font-weight: 700;
   border: none;
   cursor: pointer;
-  transition: transform var(--transition-fast), opacity var(--transition-fast);
+  transition: background var(--transition-fast), transform var(--transition-fast);
+  box-shadow: var(--shadow-primary);
 }
 
 .retry-btn:active {
-  transform: scale(0.96);
-  opacity: 0.9;
+  background: var(--color-primary-dark);
+  transform: scale(0.97);
+  box-shadow: var(--shadow-md);
 }
 
 .retry-btn i {

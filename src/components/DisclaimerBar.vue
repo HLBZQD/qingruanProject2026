@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import AppIcon from '@/components/icons/AppIcon.vue'
+
 const props = withDefaults(defineProps<{
   text?: string
   fixed?: boolean
@@ -10,7 +12,8 @@ const props = withDefaults(defineProps<{
 
 <template>
   <div class="disclaimer-bar" :class="{ fixed: fixed }" role="note">
-    <i class="fas fa-info-circle disclaimer-icon" aria-hidden="true"></i>
+    <span class="disclaimer-accent" aria-hidden="true"></span>
+    <AppIcon name="info" :size="14" color="#D97706" class="disclaimer-icon" />
     <p class="disclaimer-text">{{ text }}</p>
   </div>
 </template>
@@ -21,9 +24,11 @@ const props = withDefaults(defineProps<{
   align-items: flex-start;
   gap: 8px;
   padding: 10px var(--spacing-lg);
-  background: rgba(250, 173, 20, 0.08);
-  border-top: 1px solid rgba(250, 173, 20, 0.15);
-  border-bottom: 1px solid rgba(250, 173, 20, 0.15);
+  background: linear-gradient(90deg, #FFFBEB 0%, #FEF3C7 100%);
+  border-top: 1.5px solid rgba(245, 158, 11, 0.15);
+  border-bottom: 1.5px solid rgba(245, 158, 11, 0.15);
+  position: relative;
+  overflow: hidden;
 }
 
 .disclaimer-bar.fixed {
@@ -34,9 +39,17 @@ const props = withDefaults(defineProps<{
   z-index: 40;
 }
 
+.disclaimer-accent {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background: var(--color-amber);
+  border-radius: 0 2px 2px 0;
+}
+
 .disclaimer-icon {
-  font-size: 14px;
-  color: #ad8b00;
   margin-top: 2px;
   flex-shrink: 0;
 }
@@ -45,7 +58,8 @@ const props = withDefaults(defineProps<{
   flex: 1;
   font-size: 11px;
   line-height: 1.5;
-  color: #8c6f00;
+  color: #92400E;
   margin: 0;
+  font-weight: 500;
 }
 </style>

@@ -1,11 +1,12 @@
 <script setup lang="ts">
+import AppIcon from '@/components/icons/AppIcon.vue'
 const props = withDefaults(defineProps<{
   icon?: string
   title?: string
   description?: string
   actionText?: string
 }>(), {
-  icon: 'fa-inbox',
+  icon: 'inbox',
   title: '暂无数据',
   description: '',
   actionText: '',
@@ -23,7 +24,7 @@ function onAction() {
 <template>
   <div class="empty-state" role="status">
     <div class="empty-icon-wrap">
-      <i :class="['fas', icon, 'empty-icon']" aria-hidden="true"></i>
+      <AppIcon :name="icon" :size="28" color="var(--color-primary)" class="empty-icon" />
     </div>
     <h3 class="empty-title">{{ title }}</h3>
     <p v-if="description" class="empty-desc">{{ description }}</p>
@@ -50,24 +51,27 @@ function onAction() {
 .empty-icon-wrap {
   width: 72px;
   height: 72px;
-  border-radius: var(--radius-full);
+  border-radius: 28%;
   background: var(--color-primary-light);
   display: flex;
   align-items: center;
   justify-content: center;
   margin-bottom: var(--spacing-md);
+  border: 1.5px solid var(--color-primary-soft);
+  transform: rotate(3deg);
 }
 
 .empty-icon {
-  font-size: 32px;
+  font-size: 28px;
   color: var(--color-primary);
 }
 
 .empty-title {
   font-size: var(--font-size-h4);
-  font-weight: 600;
+  font-weight: 700;
   color: var(--color-text-primary);
   margin-bottom: 4px;
+  letter-spacing: -0.01em;
 }
 
 .empty-desc {
@@ -84,14 +88,16 @@ function onAction() {
   background: var(--color-primary);
   color: #fff;
   font-size: var(--font-size-body);
-  font-weight: 600;
+  font-weight: 700;
   border: none;
   cursor: pointer;
-  transition: transform var(--transition-fast), opacity var(--transition-fast);
+  transition: background var(--transition-fast), transform var(--transition-fast);
+  box-shadow: var(--shadow-primary);
 }
 
 .empty-action:active {
-  transform: scale(0.96);
-  opacity: 0.9;
+  background: var(--color-primary-dark);
+  transform: scale(0.97);
+  box-shadow: var(--shadow-md);
 }
 </style>

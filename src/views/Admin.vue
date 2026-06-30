@@ -3,11 +3,12 @@ import { ref, computed, onMounted, onUnmounted, nextTick, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
 import { useChatStore } from '@/stores/chatStore'
-import { getAdminLogs, sendAdminChatMessage } from '@/composables/useAdminApi'
+import { getAdminLogs } from '@/composables/useAdminApi'
 import { renderMarkdown } from '@/composables/useMarkdown'
 import type { ChatMessage } from '@/types/sse'
 import type { SSEEvent } from '@/types/sse'
 import type { AdminLog } from '@/types/api'
+import AppIcon from '@/components/icons/AppIcon.vue'
 import SkeletonLoader from '@/components/SkeletonLoader.vue'
 import ErrorRetry from '@/components/ErrorRetry.vue'
 import EmptyState from '@/components/EmptyState.vue'
@@ -153,11 +154,11 @@ onUnmounted(() => {
     <div v-show="view === 'chat'" class="admin-chat-view">
       <header class="chat-header">
         <button class="btn-back" aria-label="返回" @click="goBack">
-          <i class="fas fa-arrow-left" aria-hidden="true"></i>
+          <AppIcon name="arrow-left" :size="16" />
         </button>
         <div class="admin-info-bar">
           <div class="admin-avatar">
-            <i class="fas fa-shield-halved" aria-hidden="true"></i>
+            <AppIcon name="shield" :size="16" />
           </div>
           <div>
             <h2>智能管理</h2>
@@ -165,7 +166,7 @@ onUnmounted(() => {
           </div>
         </div>
         <button class="btn-logs" @click="switchView('logs')">
-          <i class="fas fa-list-alt" aria-hidden="true"></i>
+          <AppIcon name="list-alt" :size="14" />
           日志
         </button>
       </header>
@@ -176,7 +177,7 @@ onUnmounted(() => {
         <!-- 空引导 -->
         <div v-if="isChatEmpty" class="chat-welcome">
           <div class="welcome-avatar">
-            <i class="fas fa-shield-halved" aria-hidden="true"></i>
+            <AppIcon name="shield" :size="28" />
           </div>
           <h3>智能管理助手</h3>
           <p>您可以输入自然语言指令，例如：</p>
@@ -218,7 +219,7 @@ onUnmounted(() => {
           aria-label="发送"
           @click="handleSend"
         >
-          <i class="fas fa-paper-plane" aria-hidden="true"></i>
+          <AppIcon name="send" :size="16" />
         </button>
       </div>
     </div>
@@ -227,7 +228,7 @@ onUnmounted(() => {
     <div v-show="view === 'logs'" class="admin-logs-view">
       <header class="top-bar">
         <button class="btn-back" aria-label="返回" @click="switchView('chat')">
-          <i class="fas fa-arrow-left" aria-hidden="true"></i>
+          <AppIcon name="arrow-left" :size="16" />
         </button>
         <h1>操作日志</h1>
         <div class="placeholder"></div>
@@ -245,7 +246,7 @@ onUnmounted(() => {
 
       <EmptyState
         v-else-if="logs.length === 0 && !logsLoading"
-        icon="fa-clipboard-list"
+        icon="plan"
         title="暂无操作日志"
         description="数据库操作记录将在这里展示。"
       />
@@ -269,7 +270,7 @@ onUnmounted(() => {
             :disabled="logsLoading"
             @click="loadMoreLogs"
           >
-            <i v-if="logsLoading" class="fas fa-spinner fa-spin" aria-hidden="true"></i>
+            <AppIcon v-if="logsLoading" class="is-spinning" name="spinner" :size="13" />
             {{ logsLoading ? '加载中...' : '加载更多' }}
           </button>
           <p v-else class="no-more">已经到底啦</p>
@@ -687,5 +688,14 @@ onUnmounted(() => {
 
 .no-more {
   color: var(--color-text-disabled);
+}
+
+.is-spinning {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
 </style>

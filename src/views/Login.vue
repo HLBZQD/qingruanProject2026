@@ -3,7 +3,8 @@ import { ref } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
 import { api } from '@/composables/useApi'
-
+import AppIcon from '@/components/icons/AppIcon.vue'
+import DiabetesIcon from '@/components/icons/DiabetesIcon.vue'
 import { getErrorMessage } from '@/utils/errorMessage'
 
 const router = useRouter()
@@ -24,7 +25,6 @@ const regLoading = ref(false)
 
 function safeRedirect(raw: unknown): string {
   if (typeof raw !== 'string') return '/home'
-  // 仅允许相对路径，拒绝绝对 URL 和协议地址
   if (raw.startsWith('/') && !raw.startsWith('//') && !raw.includes('://')) {
     return raw
   }
@@ -92,37 +92,69 @@ async function handleRegister(): Promise<void> {
 
 <template>
   <div class="login-page">
-    <div class="login-container">
+    <!-- 几何背景装饰 -->
+    <div class="geo-deco" aria-hidden="true">
+      <span class="deco-arc deco-arc-1"></span>
+      <span class="deco-arc deco-arc-2"></span>
+      <span class="deco-block deco-block-1"></span>
+      <span class="deco-block deco-block-2"></span>
+      <span class="deco-dots"></span>
+    </div>
 
-      <!-- ===== 登录视图 ===== -->
-      <div v-show="view === 'login'">
-        <div class="login-header">
-          <h1 class="login-title">糖尿病预治智能助手</h1>
-          <p class="login-subtitle">登录您的账号</p>
+    <div class="login-container">
+      <!-- 品牌区 -->
+      <div class="login-brand">
+        <div class="brand-mark">
+          <DiabetesIcon name="diabetes" :size="38" color="#fff" />
+        </div>
+        <h1 class="brand-title">糖尿病预治智能助手</h1>
+        <p class="brand-subtitle">精准监测 · 科学控糖 · 智慧生活</p>
+        <div class="brand-badges">
+          <span class="brand-badge brand-badge-mint">
+            <span class="data-dot-static"></span>AI 驱动
+          </span>
+          <span class="brand-badge brand-badge-coral">
+            <span class="data-dot-static"></span>7×24 在线
+          </span>
+        </div>
+      </div>
+
+      <!-- 登录视图 -->
+      <div v-show="view === 'login'" class="login-form-panel">
+        <div class="form-header">
+          <h2 class="form-title">欢迎回来</h2>
+          <p class="form-desc">登录以查看您的健康数据</p>
         </div>
 
         <form class="login-form" @submit.prevent="handleLogin">
-          <input
-            v-model="username"
-            type="text"
-            placeholder="用户名"
-            autocomplete="username"
-            class="form-input"
-          />
-          <input
-            v-model="password"
-            type="password"
-            placeholder="密码"
-            autocomplete="current-password"
-            class="form-input"
-          />
+          <div class="input-group">
+            <label class="input-label">用户名</label>
+            <input
+              v-model="username"
+              type="text"
+              placeholder="请输入用户名"
+              autocomplete="username"
+              class="form-input"
+            />
+          </div>
+          <div class="input-group">
+            <label class="input-label">密码</label>
+            <input
+              v-model="password"
+              type="password"
+              placeholder="请输入密码"
+              autocomplete="current-password"
+              class="form-input"
+            />
+          </div>
           <div v-if="errorMsg" class="form-error">{{ errorMsg }}</div>
           <button
             type="submit"
             :disabled="loading"
             class="form-btn"
           >
-            {{ loading ? '登录中...' : '登录' }}
+            <span v-if="loading" class="btn-loader"></span>
+            <span>{{ loading ? '登录中' : '登录' }}</span>
           </button>
         </form>
 
@@ -131,42 +163,52 @@ async function handleRegister(): Promise<void> {
         </p>
       </div>
 
-      <!-- ===== 注册视图 ===== -->
-      <div v-show="view === 'register'">
-        <div class="login-header">
-          <h1 class="login-title">糖尿病预治智能助手</h1>
-          <p class="login-subtitle">创建您的账号</p>
+      <!-- 注册视图 -->
+      <div v-show="view === 'register'" class="login-form-panel">
+        <div class="form-header">
+          <h2 class="form-title">创建账号</h2>
+          <p class="form-desc">开始您的健康管理之旅</p>
         </div>
 
         <form class="login-form" @submit.prevent="handleRegister">
-          <input
-            v-model="regUsername"
-            type="text"
-            placeholder="用户名（3-50个字符）"
-            autocomplete="username"
-            class="form-input"
-          />
-          <input
-            v-model="regPassword"
-            type="password"
-            placeholder="密码（不少于8位，含字母和数字）"
-            autocomplete="new-password"
-            class="form-input"
-          />
-          <input
-            v-model="regPasswordConfirm"
-            type="password"
-            placeholder="确认密码"
-            autocomplete="new-password"
-            class="form-input"
-          />
+          <div class="input-group">
+            <label class="input-label">用户名</label>
+            <input
+              v-model="regUsername"
+              type="text"
+              placeholder="3-50个字符"
+              autocomplete="username"
+              class="form-input"
+            />
+          </div>
+          <div class="input-group">
+            <label class="input-label">密码</label>
+            <input
+              v-model="regPassword"
+              type="password"
+              placeholder="不少于8位，含字母和数字"
+              autocomplete="new-password"
+              class="form-input"
+            />
+          </div>
+          <div class="input-group">
+            <label class="input-label">确认密码</label>
+            <input
+              v-model="regPasswordConfirm"
+              type="password"
+              placeholder="请再次输入密码"
+              autocomplete="new-password"
+              class="form-input"
+            />
+          </div>
           <div v-if="regErrorMsg" class="form-error">{{ regErrorMsg }}</div>
           <button
             type="submit"
             :disabled="regLoading"
             class="form-btn"
           >
-            {{ regLoading ? '注册中...' : '注册' }}
+            <span v-if="regLoading" class="btn-loader"></span>
+            <span>{{ regLoading ? '注册中' : '注册' }}</span>
           </button>
         </form>
 
@@ -174,7 +216,6 @@ async function handleRegister(): Promise<void> {
           已有账号？<a class="switch-link" @click.prevent="switchView('login')">立即登录</a>
         </p>
       </div>
-
     </div>
   </div>
 </template>
@@ -183,110 +224,296 @@ async function handleRegister(): Promise<void> {
 /* ===== 页面容器 ===== */
 .login-page {
   min-height: 100vh;
-  background: #F5F5F5;
+  background: var(--color-bg);
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 0 24px;
+  padding: 24px;
+  position: relative;
+  overflow: hidden;
+}
+
+/* ===== 几何背景装饰 ===== */
+.geo-deco {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.deco-arc {
+  position: absolute;
+  border-radius: 50%;
+  border: 3px solid transparent;
+}
+
+.deco-arc-1 {
+  width: 300px;
+  height: 300px;
+  top: -120px;
+  right: -100px;
+  border-color: var(--color-primary-soft);
+  opacity: 0.4;
+}
+
+.deco-arc-2 {
+  width: 220px;
+  height: 220px;
+  bottom: -80px;
+  left: -80px;
+  border-color: var(--color-accent);
+  opacity: 0.25;
+}
+
+.deco-block {
+  position: absolute;
+  border-radius: 24%;
+}
+
+.deco-block-1 {
+  width: 80px;
+  height: 80px;
+  top: 15%;
+  left: 8%;
+  background: var(--color-vivid);
+  opacity: 0.08;
+  transform: rotate(20deg);
+}
+
+.deco-block-2 {
+  width: 56px;
+  height: 56px;
+  bottom: 20%;
+  right: 10%;
+  background: var(--color-amber);
+  opacity: 0.1;
+  transform: rotate(-15deg);
+}
+
+.deco-dots {
+  position: absolute;
+  inset: 0;
+  opacity: 0.25;
+  background-image: radial-gradient(circle, var(--color-divider) 1.5px, transparent 1.5px);
+  background-size: 20px 20px;
 }
 
 .login-container {
   width: 100%;
-  max-width: 360px;
+  max-width: 380px;
+  position: relative;
+  z-index: 1;
 }
 
-/* ===== 头部 ===== */
-.login-header {
+/* ===== 品牌区 ===== */
+.login-brand {
   text-align: center;
-  margin-bottom: 32px;
+  margin-bottom: 28px;
 }
 
-.login-title {
-  font-size: 24px;
+.brand-mark {
+  width: 72px;
+  height: 72px;
+  margin: 0 auto 16px;
+  background: var(--color-primary);
+  border-radius: 30%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  box-shadow: var(--shadow-primary);
+  transform: rotate(3deg);
+}
+
+.brand-title {
+  font-size: var(--font-size-h2);
   font-weight: 700;
-  color: var(--color-primary, #4A90D9);
-  line-height: 1.3;
+  color: var(--color-text-primary);
+  letter-spacing: -0.02em;
 }
 
-.login-subtitle {
-  font-size: 14px;
-  color: #9ca3af;
-  margin-top: 8px;
+.brand-subtitle {
+  font-size: var(--font-size-caption);
+  color: var(--color-text-secondary);
+  margin-top: 6px;
+  font-weight: 500;
 }
 
-/* ===== 表单 ===== */
+.brand-badges {
+  display: inline-flex;
+  gap: var(--spacing-sm);
+  margin-top: var(--spacing-md);
+}
+
+.brand-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  padding: 5px 12px;
+  border-radius: var(--radius-tag);
+}
+
+.brand-badge-mint {
+  color: var(--color-accent-dark);
+  background: var(--color-accent-light);
+}
+
+.brand-badge-coral {
+  color: var(--color-vivid-dark);
+  background: var(--color-vivid-light);
+}
+
+/* ===== 表单面板 ===== */
+.login-form-panel {
+  background: var(--color-card);
+  border: 1.5px solid var(--color-border);
+  border-radius: 28px 28px 12px 12px;
+  padding: var(--spacing-2xl);
+  box-shadow: var(--shadow-lg);
+  animation: pageEnterFadeIn 0.4s cubic-bezier(0.22, 0.61, 0.36, 1) both;
+  position: relative;
+}
+
+.login-form-panel::before {
+  content: '';
+  position: absolute;
+  top: -6px;
+  left: 24px;
+  right: 24px;
+  height: 12px;
+  background: var(--color-primary-light);
+  border-radius: var(--radius-full);
+  z-index: -1;
+}
+
+.form-header {
+  margin-bottom: var(--spacing-xl);
+}
+
+.form-title {
+  font-size: var(--font-size-h2);
+  font-weight: 700;
+  color: var(--color-text-primary);
+  letter-spacing: -0.02em;
+}
+
+.form-desc {
+  font-size: var(--font-size-caption);
+  color: var(--color-text-tertiary);
+  margin-top: 4px;
+}
+
 .login-form {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: var(--spacing-md);
+}
+
+.input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.input-label {
+  font-size: var(--font-size-caption);
+  font-weight: 700;
+  color: var(--color-text-secondary);
 }
 
 .form-input {
   width: 100%;
-  background: #e5e7eb;
-  border-radius: 9999px;
-  padding: 12px 16px;
+  background: var(--color-bg);
+  border-radius: var(--radius-md);
+  padding: 13px 16px;
   outline: none;
-  font-size: 14px;
-  border: 2px solid transparent;
+  font-size: var(--font-size-body);
+  border: 1.5px solid var(--color-border);
   color: var(--color-text-primary);
-  transition: border-color 0.2s, box-shadow 0.2s;
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
 }
 
 .form-input:focus {
   border-color: var(--color-primary);
-  box-shadow: 0 0 0 2px rgba(74, 144, 217, 0.2);
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
 }
 
 .form-input::placeholder {
-  color: #9ca3af;
+  color: var(--color-text-tertiary);
 }
 
 .form-error {
-  color: #FF4D4F;
-  font-size: 12px;
+  color: var(--color-danger);
+  font-size: var(--font-size-caption);
   text-align: center;
+  padding: 8px;
+  background: var(--color-danger-light);
+  border-radius: var(--radius-sm);
+  font-weight: 600;
+  border-left: 3px solid var(--color-danger);
 }
 
 .form-btn {
   width: 100%;
-  background: var(--color-primary, #4A90D9);
+  background: var(--color-primary);
   color: #fff;
-  padding: 12px;
-  border-radius: 12px;
-  font-size: 14px;
-  font-weight: 500;
+  padding: 14px;
+  border-radius: var(--radius-button);
+  font-size: var(--font-size-body);
+  font-weight: 700;
   border: none;
   cursor: pointer;
-  transition: background 0.2s, opacity 0.2s;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-sm);
+  transition: background var(--transition-fast), transform var(--transition-fast), box-shadow var(--transition-fast);
+  margin-top: 4px;
+  box-shadow: var(--shadow-primary);
 }
 
 .form-btn:hover:not(:disabled) {
-  background: var(--color-primary-dark, #3A7BC8);
+  background: var(--color-primary-dark);
 }
 
 .form-btn:active:not(:disabled) {
   transform: scale(0.98);
+  box-shadow: var(--shadow-md);
 }
 
 .form-btn:disabled {
-  opacity: 0.5;
+  opacity: 0.7;
   cursor: not-allowed;
+}
+
+.btn-loader {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.35);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
 }
 
 /* ===== 切换提示 ===== */
 .switch-text {
   text-align: center;
-  font-size: 14px;
-  color: #9ca3af;
-  margin-top: 24px;
+  font-size: var(--font-size-body);
+  color: var(--color-text-secondary);
+  margin-top: var(--spacing-xl);
 }
 
 .switch-link {
-  color: var(--color-primary, #4A90D9);
+  color: var(--color-primary);
   cursor: pointer;
-  font-weight: 500;
+  font-weight: 700;
 }
 
 .switch-link:hover {

@@ -1,0 +1,61 @@
+@font-face {
+  font-family: "iconfont-diabetes";
+  src: url('/fonts/iconfont-diabetes.ttf?t=1782824267544') format('truetype');
+}
+
+.diabetes-iconfont {
+  font-family: "iconfont-diabetes" !important;
+  font-size: 16px;
+  font-style: normal;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.diabetes-icon-medical:before { content: "\e65e"; }
+.diabetes-icon-medical2:before { content: "\e633"; }
+.diabetes-icon-diabetes-manage:before { content: "\e609"; }
+.diabetes-icon-nurse:before { content: "\e80a"; }
+.diabetes-icon-plaster2:before { content: "\e80b"; }
+.diabetes-icon-pulse-histogram:before { content: "\e80c"; }
+.diabetes-icon-ribbon:before { content: "\e80d"; }
+.diabetes-icon-stethoscope:before { content: "\e80e"; }
+.diabetes-icon-pills:before { content: "\e80f"; }
+.diabetes-icon-cross2:before { content: "\e810"; }
+.diabetes-icon-ambulance:before { content: "\e811"; }
+.diabetes-icon-plaster:before { content: "\e812"; }
+.diabetes-icon-blood-drop2:before { content: "\e813"; }
+.diabetes-icon-blood-drop:before { content: "\e814"; }
+.diabetes-icon-pulse:before { content: "\e815"; }
+.diabetes-icon-cross:before { content: "\e816"; }
+.diabetes-icon-patient-wheelchair:before { content: "\e817"; }
+.diabetes-icon-cross3:before { content: "\e818"; }
+.diabetes-icon-doctor-bag:before { content: "\e819"; }
+.diabetes-icon-nurse-hat:before { content: "\e81a"; }
+.diabetes-icon-drug:before { content: "\e81b"; }
+.diabetes-icon-temperature:before { content: "\e81c"; }
+.diabetes-icon-doctor-notes:before { content: "\e81d"; }
+.diabetes-icon-blood-drop3:before { content: "\e81e"; }
+.diabetes-icon-syringe:before { content: "\e81f"; }
+.diabetes-icon-diagnose-heart:before { content: "\e820"; }
+.diabetes-icon-heart:before { content: "\e821"; }
+.diabetes-icon-pill:before { content: "\e822"; }
+.diabetes-icon-heart-cross:before { content: "\e823"; }
+.diabetes-icon-hospital-point:before { content: "\e824"; }
+.diabetes-icon-medical-note:before { content: "\e825"; }
+.diabetes-icon-home-care:before { content: "\e826"; }
+.diabetes-icon-helicopter-passageway:before { content: "\e827"; }
+.diabetes-icon-hospital-bed2:before { content: "\e828"; }
+.diabetes-icon-gauze:before { content: "\e829"; }
+.diabetes-icon-medicine-drug:before { content: "\e82a"; }
+.diabetes-icon-medical-sign:before { content: "\e82b"; }
+.diabetes-icon-hospital-bed:before { content: "\e82c"; }
+.diabetes-icon-report:before { content: "\e6fe"; }
+.diabetes-icon-diabetes:before { content: "\e658"; }
+.diabetes-icon-diabetes-screening:before { content: "\e666"; }
+.diabetes-icon-medical-service:before { content: "\e99a"; }
+.diabetes-icon-medical-institution:before { content: "\e99b"; }
+.diabetes-icon-diabetes-type:before { content: "\e616"; }
+.diabetes-icon-medical-screen:before { content: "\e63a"; }
+.diabetes-icon-medical-doc:before { content: "\e63b"; }
+.diabetes-icon-medical-doc2:before { content: "\e642"; }
+.diabetes-icon-medical-screen2:before { content: "\e643"; }

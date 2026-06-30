@@ -1,15 +1,193 @@
-/* ===== 页面入场动画（全局基础: 纯淡入） ===== */
+/* ===== 页面入场动画 ===== */
 @keyframes pageEnterFadeIn {
-  from { opacity: 0; transform: translateY(10px); }
-  to   { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .page-enter {
-  animation: pageEnterFadeIn 0.28s cubic-bezier(0.22, 0.61, 0.36, 1) both;
+  animation: pageEnterFadeIn 0.35s cubic-bezier(0.22, 0.61, 0.36, 1) both;
 }
 
-/* ===== 按钮按下态交互（全局） ===== */
+/* ===== 错开揭示 ===== */
+@keyframes staggerReveal {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.stagger-item {
+  opacity: 0;
+  animation: staggerReveal 0.4s cubic-bezier(0.22, 0.61, 0.36, 1) forwards;
+}
+
+.stagger-item:nth-child(1) { animation-delay: 0.05s; }
+.stagger-item:nth-child(2) { animation-delay: 0.1s; }
+.stagger-item:nth-child(3) { animation-delay: 0.15s; }
+.stagger-item:nth-child(4) { animation-delay: 0.2s; }
+.stagger-item:nth-child(5) { animation-delay: 0.25s; }
+.stagger-item:nth-child(6) { animation-delay: 0.3s; }
+
+/* ===== 数据光点脉冲（签名元素） ===== */
+@keyframes dataPulse {
+  0%, 100% {
+    box-shadow: 0 0 0 0 var(--color-accent-glow);
+  }
+  50% {
+    box-shadow: 0 0 0 6px rgba(6, 214, 160, 0);
+  }
+}
+
+@keyframes dataDotPulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.7;
+    transform: scale(1.15);
+  }
+}
+
+.data-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: var(--radius-full);
+  background: var(--color-accent);
+  animation: dataPulse 2s ease-in-out infinite;
+}
+
+.data-dot-static {
+  width: 6px;
+  height: 6px;
+  border-radius: var(--radius-full);
+  background: var(--color-accent);
+  animation: dataDotPulse 2s ease-in-out infinite;
+}
+
+/* ===== 色块呼吸 ===== */
+@keyframes shapeBreath {
+  0%, 100% {
+    transform: scale(1) rotate(0deg);
+  }
+  50% {
+    transform: scale(1.02) rotate(1deg);
+  }
+}
+
+.shape-breath {
+  animation: shapeBreath 6s ease-in-out infinite;
+}
+
+/* ===== 几何旋转 ===== */
+@keyframes geoRotate {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.geo-rotate {
+  animation: geoRotate 20s linear infinite;
+}
+
+/* ===== 骨架屏 shimmer ===== */
+@keyframes skeletonShimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+.skeleton-shimmer {
+  background: linear-gradient(90deg, var(--color-divider) 25%, #F5F2EF 50%, var(--color-divider) 75%);
+  background-size: 200% 100%;
+  animation: skeletonShimmer 1.4s infinite linear;
+}
+
+@keyframes skeletonPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+/* ===== 按钮按下态 ===== */
 .press:active {
-  transform: scale(0.96);
+  transform: scale(0.97);
   transition: transform 0.1s;
+}
+
+/* ===== 卡片悬浮 ===== */
+.hover-lift {
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.hover-lift:active {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+
+/* ===== 线条揭示 ===== */
+@keyframes lineReveal {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+.line-reveal {
+  transform-origin: left;
+  animation: lineReveal 0.6s cubic-bezier(0.22, 0.61, 0.36, 1) both;
+}
+
+/* ===== 形状弹出 ===== */
+@keyframes shapePop {
+  0% {
+    opacity: 0;
+    transform: scale(0.8) translateY(10px);
+  }
+  70% {
+    transform: scale(1.02) translateY(-2px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.shape-pop {
+  animation: shapePop 0.45s cubic-bezier(0.22, 0.61, 0.36, 1) both;
+}
+
+/* ===== 减动画偏好 ===== */
+@media (prefers-reduced-motion: reduce) {
+  .page-enter,
+  .stagger-item,
+  .shape-breath,
+  .geo-rotate,
+  .shape-pop {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
+
+  .data-dot,
+  .data-dot-static {
+    animation: none;
+  }
 }

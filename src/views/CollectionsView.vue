@@ -7,6 +7,7 @@ import type { CollectedArticle } from '@/types/api'
 import SkeletonLoader from '@/components/SkeletonLoader.vue'
 import ErrorRetry from '@/components/ErrorRetry.vue'
 import EmptyState from '@/components/EmptyState.vue'
+import AppIcon from '@/components/icons/AppIcon.vue'
 
 const router = useRouter()
 
@@ -114,7 +115,7 @@ onMounted(() => {
   <div class="collections-container">
     <header class="top-bar">
       <button class="btn-back" aria-label="返回" @click="goBack">
-        <i class="fas fa-arrow-left" aria-hidden="true"></i>
+        <AppIcon name="arrow-left" :size="16" />
       </button>
       <h1>我的收藏</h1>
     </header>
@@ -134,7 +135,7 @@ onMounted(() => {
     <!-- 空态 -->
     <EmptyState
       v-else-if="collections.length === 0 && !loading"
-      icon="fa-heart"
+      icon="heart"
       title="暂无收藏"
       description="您还没有收藏任何文章，去资讯列表发现感兴趣的内容吧。"
       action-text="浏览资讯"
@@ -169,12 +170,18 @@ onMounted(() => {
               @click.stop="handleUncollect(item)"
               aria-label="取消收藏"
             >
-              <i
+              <AppIcon
                 v-if="uncollectingId === item.id"
-                class="fas fa-spinner fa-spin"
-                aria-hidden="true"
-              ></i>
-              <i v-else class="fas fa-heart card-collected-icon" aria-hidden="true"></i>
+                name="spinner"
+                :size="16"
+                class="is-spinning"
+              />
+              <AppIcon
+                v-else
+                name="heart"
+                :size="16"
+                class="card-collected-icon"
+              />
             </button>
           </div>
         </div>
@@ -188,7 +195,7 @@ onMounted(() => {
           :disabled="loading"
           @click="loadMore"
         >
-          <i v-if="loading" class="fas fa-spinner fa-spin" aria-hidden="true"></i>
+          <AppIcon v-if="loading" name="spinner" :size="16" class="is-spinning" />
           {{ loading ? '加载中...' : '加载更多' }}
         </button>
         <p v-else class="no-more">已经到底啦</p>
@@ -375,5 +382,14 @@ onMounted(() => {
 
 .no-more {
   color: var(--color-text-disabled);
+}
+
+.is-spinning {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
 </style>

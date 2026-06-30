@@ -1,27 +1,69 @@
 :root {
-  --color-primary: #4A90D9;
-  --color-primary-light: #E8F1FB;
-  --color-primary-dark: #3A7BC8;
-  --color-accent: #52C41A;
-  --color-danger: #FF4D4F;
-  --color-warning: #FAAD14;
+  /* ===== 主色：鲜明靛蓝（Vivid Indigo） ===== */
+  --color-primary: #4F46E5;
+  --color-primary-light: #EEF2FF;
+  --color-primary-soft: #C7D2FE;
+  --color-primary-dark: #3730A3;
 
-  --color-text-primary: #333333;
-  --color-text-secondary: #666666;
-  --color-text-tertiary: #999999;
-  --color-text-disabled: #BFBFBF;
-  --color-bg: #F5F5F5;
-  --color-divider: #E8E8E8;
+  /* ===== 强调色：鲜明薄荷青（Signature Mint） ===== */
+  --color-accent: #06D6A0;
+  --color-accent-light: #E0FDF6;
+  --color-accent-dark: #059669;
+  --color-accent-glow: rgba(6, 214, 160, 0.45);
+
+  /* ===== 活力点缀：珊瑚橙（Energy Coral） ===== */
+  --color-vivid: #FF6B6B;
+  --color-vivid-light: #FFF0F0;
+  --color-vivid-dark: #E85555;
+
+  /* ===== 第三色：琥珀金（Amber） ===== */
+  --color-amber: #F59E0B;
+  --color-amber-light: #FEF3C7;
+  --color-amber-dark: #D97706;
+
+  /* ===== 第四色：薰衣草紫（Soft Lavender） ===== */
+  --color-lavender: #8B5CF6;
+  --color-lavender-light: #EDE9FE;
+  --color-lavender-dark: #7C3AED;
+
+  /* ===== 语义色：更鲜明 ===== */
+  --color-success: #10B981;
+  --color-success-light: #D1FAE5;
+  --color-danger: #EF4444;
+  --color-danger-light: #FEE2E2;
+  --color-warning: #F59E0B;
+  --color-warning-light: #FEF3C7;
+  --color-info: #3B82F6;
+  --color-info-light: #DBEAFE;
+
+  /* ===== 文本色：暖调深色 ===== */
+  --color-text-primary: #1A1A2E;
+  --color-text-secondary: #4B5563;
+  --color-text-tertiary: #9CA3AF;
+  --color-text-disabled: #D1D5DB;
+  --color-text-inverse: #FFFFFF;
+
+  /* ===== 表面色：温暖奶油调 ===== */
+  --color-bg: #F7F5F2;
+  --color-bg-elevated: #FEFDFB;
   --color-card: #FFFFFF;
+  --color-divider: #E8E4DF;
+  --color-border: #E5E0DB;
 
-  --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", "Helvetica Neue", sans-serif;
-  --font-size-h1: 20px;
-  --font-size-h2: 18px;
-  --font-size-h3: 16px;
+  /* ===== 字体：中文 Noto Sans SC + 数据 JetBrains Mono ===== */
+  --font-display: 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  --font-body: 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  --font-mono: 'JetBrains Mono', 'SFMono-Regular', 'PingFang SC', monospace;
+
+  --font-size-h1: 28px;
+  --font-size-h2: 22px;
+  --font-size-h3: 18px;
   --font-size-h4: 15px;
   --font-size-body: 14px;
   --font-size-caption: 12px;
+  --font-size-xs: 11px;
 
+  /* ===== 间距：8px 网格 ===== */
   --spacing-xs: 4px;
   --spacing-sm: 8px;
   --spacing-md: 12px;
@@ -29,21 +71,44 @@
   --spacing-xl: 20px;
   --spacing-2xl: 24px;
   --spacing-3xl: 32px;
+  --spacing-4xl: 48px;
 
+  /* ===== 圆角：多样化几何 ===== */
+  --radius-none: 0px;
   --radius-sm: 4px;
   --radius-md: 8px;
   --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-2xl: 20px;
+  --radius-3xl: 28px;
+  --radius-4xl: 32px;
   --radius-button: 12px;
   --radius-full: 9999px;
 
-  --shadow-sm: 0 1px 3px rgba(0,0,0,0.08);
-  --shadow-md: 0 2px 8px rgba(0,0,0,0.12);
+  /* ===== 异形圆角：打破千篇一律 ===== */
+  --radius-asymmetric: 20px 4px 20px 4px;
+  --radius-asymmetric-alt: 4px 20px 4px 20px;
+  --radius-pill-left: 9999px 0 0 9999px;
+  --radius-pill-right: 0 9999px 9999px 0;
+  --radius-tag: 6px;
 
-  --transition-fast: 0.15s ease;
-  --transition-normal: 0.3s ease;
+  /* ===== 阴影：柔和多层次 ===== */
+  --shadow-sm: 0 1px 3px rgba(26, 26, 46, 0.04), 0 1px 2px rgba(26, 26, 46, 0.02);
+  --shadow-md: 0 4px 8px -2px rgba(26, 26, 46, 0.08), 0 2px 4px -2px rgba(26, 26, 46, 0.04);
+  --shadow-lg: 0 12px 20px -4px rgba(26, 26, 46, 0.12), 0 4px 8px -4px rgba(26, 26, 46, 0.06);
+  --shadow-glow: 0 0 24px rgba(6, 214, 160, 0.35);
+  --shadow-vivid: 0 8px 24px rgba(255, 107, 107, 0.25);
+  --shadow-primary: 0 8px 20px rgba(79, 70, 229, 0.25);
 
-  --tab-bar-height: 64px;
-  --header-height: 48px;
+  /* ===== 过渡 ===== */
+  --transition-fast: 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-normal: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-slow: 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-spring: 0.4s cubic-bezier(0.22, 0.61, 0.36, 1);
+
+  /* ===== 布局 ===== */
+  --tab-bar-height: 68px;
+  --header-height: 56px;
 }
 
 * {
@@ -52,12 +117,18 @@
   box-sizing: border-box;
 }
 
+html {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
 body {
-  font-family: var(--font-family);
+  font-family: var(--font-body);
   font-size: var(--font-size-body);
+  font-weight: 400;
   color: var(--color-text-primary);
   background: var(--color-bg);
-  -webkit-font-smoothing: antialiased;
+  line-height: 1.5;
 }
 
 input, button, select, textarea {
@@ -67,4 +138,61 @@ input, button, select, textarea {
 a {
   color: inherit;
   text-decoration: none;
+}
+
+/* ===== 全局排版辅助 ===== */
+h1, h2, h3, h4 {
+  font-family: var(--font-display);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.25;
+}
+
+/* ===== 数字等宽 ===== */
+.font-mono,
+.stat-value,
+.data-value {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ===== 几何背景纹理 ===== */
+.bg-texture-dots {
+  background-image: radial-gradient(circle, var(--color-divider) 1px, transparent 1px);
+  background-size: 16px 16px;
+}
+
+.bg-texture-grid {
+  background-image:
+    linear-gradient(var(--color-divider) 1px, transparent 1px),
+    linear-gradient(90deg, var(--color-divider) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+.bg-texture-lines {
+  background-image: repeating-linear-gradient(
+    45deg,
+    transparent,
+    transparent 8px,
+    rgba(26, 26, 46, 0.02) 8px,
+    rgba(26, 26, 46, 0.02) 16px
+  );
+}
+
+/* ===== 超椭圆掩码（squircle） ===== */
+.squircle {
+  border-radius: 22%;
+}
+
+/* ===== 几何装饰块 ===== */
+.geo-block {
+  position: absolute;
+  pointer-events: none;
+}
+
+.geo-block::before,
+.geo-block::after {
+  content: '';
+  position: absolute;
+  border-radius: var(--radius-xl);
 }

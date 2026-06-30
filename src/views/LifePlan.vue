@@ -15,6 +15,7 @@ import type {
 } from '@/types/api'
 
 import DisclaimerBar from '@/components/DisclaimerBar.vue'
+import AppIcon from '@/components/icons/AppIcon.vue'
 
 const route = useRoute()
 const store = useLifePlanStore()
@@ -133,13 +134,13 @@ function slotLabel(item: LifePlan): string {
   return item.time_desc
 }
 
-/** 图标派生（按 plan_type + order_num，复刻原型 fa 图标） */
-const DIET_ICON: Record<number, string> = { 1: 'fa-sun', 2: 'fa-bowl-food', 3: 'fa-apple-whole', 4: 'fa-moon' }
-const SPORT_ICON: Record<number, string> = { 1: 'fa-person-walking', 2: 'fa-dumbbell', 3: 'fa-person-swimming' }
+/** AppIcon 名称派生（按 plan_type + order_num） */
+const DIET_ICON: Record<number, string> = { 1: 'sun', 2: 'bowl-food', 3: 'apple-whole', 4: 'moon' }
+const SPORT_ICON: Record<number, string> = { 1: 'person-walking', 2: 'dumbbell', 3: 'person-swimming' }
 function itemIcon(item: LifePlan): string {
-  if (item.plan_type === 'diet') return DIET_ICON[item.order_num] ?? 'fa-utensils'
-  if (item.plan_type === 'exercise') return SPORT_ICON[item.order_num] ?? 'fa-person-running'
-  return 'fa-clipboard-list'
+  if (item.plan_type === 'diet') return DIET_ICON[item.order_num] ?? 'utensils'
+  if (item.plan_type === 'exercise') return SPORT_ICON[item.order_num] ?? 'person-running'
+  return 'plan'
 }
 
 // ===== 排序后列表（order_num 升序） =====
@@ -342,7 +343,7 @@ onUnmounted(() => {
         <p class="lp-subtitle">个性化饮食与运动建议</p>
       </div>
       <button v-if="store.currentPlan" class="lp-recustomize press" @click="showForm">
-        <i class="fa-solid fa-arrows-rotate"></i> 重新定制
+        <AppIcon name="arrows-rotate" :size="14" /> 重新定制
       </button>
     </header>
 
@@ -357,7 +358,7 @@ onUnmounted(() => {
     <!-- 初始加载态（L5: 防 fetchCurrent 异步期间闪现空态） -->
     <div v-if="viewMode === 'loading'" class="lp-generating">
       <div class="lp-gen-card">
-        <div class="lp-gen-spinner"><i class="fa-solid fa-spinner"></i></div>
+        <div class="lp-gen-spinner"><AppIcon name="spinner" :size="32" /></div>
         <p class="lp-gen-text">加载中...</p>
       </div>
     </div>
@@ -366,7 +367,7 @@ onUnmounted(() => {
     <!-- 对应设计文档 4.1.4节 empty-state；项目使用 lp- 前缀作为统一命名空间 -->
     <div v-else-if="viewMode === 'empty'" class="lp-empty">
       <div class="lp-empty-card">
-        <div class="lp-empty-icon"><i class="fa-solid fa-clipboard-list"></i></div>
+        <div class="lp-empty-icon"><AppIcon name="plan" :size="32" /></div>
         <h2 class="lp-empty-title">还没有专属方案</h2>
         <p class="lp-empty-desc">基于您的健康信息，AI 将为您生成个性化饮食与运动方案</p>
         <button class="lp-cta press" @click="showForm">生成我的生活方案</button>
@@ -379,7 +380,7 @@ onUnmounted(() => {
         <h2 class="lp-section-title">方案定制</h2>
         <!-- BMI 信息条（avatar + 派生 BMI） -->
         <div class="lp-bmi-bar">
-          <div class="lp-avatar"><i class="fa-solid fa-user"></i></div>
+          <div class="lp-avatar"><AppIcon name="profile" :size="20" /></div>
           <div>
             <p class="lp-bmi-name">健康管理</p>
             <p class="lp-bmi-text">BMI {{ computedBmi }}</p>
@@ -433,7 +434,7 @@ onUnmounted(() => {
           :disabled="store.generating || !validateForm()"
           @click="handleGenerate"
         >
-          <i class="fa-solid fa-wand-magic-sparkles"></i>
+          <AppIcon name="magic" :size="16" />
           {{ store.generating ? 'AI 生成中...' : '生成生活方案' }}
         </button>
       </div>
@@ -442,7 +443,7 @@ onUnmounted(() => {
     <!-- 生成中态 -->
     <div v-else-if="viewMode === 'generating'" class="lp-generating">
       <div class="lp-gen-card">
-        <div class="lp-gen-spinner"><i class="fa-solid fa-wand-magic-sparkles"></i></div>
+        <div class="lp-gen-spinner"><AppIcon name="magic" :size="32" /></div>
         <p class="lp-gen-text">{{ stageText }}</p>
         <div class="lp-gen-progress"><div class="lp-gen-progress-bar"></div></div>
       </div>
@@ -475,14 +476,14 @@ onUnmounted(() => {
 
       <!-- 饮食管理分组 -->
       <h2 class="lp-group-title">
-        <i class="fa-solid fa-utensils"></i>{{ enumLabel('plan_type', 'diet') }}管理
+        <AppIcon name="utensils" :size="18" />{{ enumLabel('plan_type', 'diet') }}管理
       </h2>
       <div class="lp-card-list">
         <div v-for="item in sortedDiet" :key="item.id" class="lp-item-card">
           <div class="lp-item-head">
             <div class="lp-item-left">
               <div class="lp-item-icon lp-item-icon-diet">
-                <i :class="['fa-solid', itemIcon(item)]"></i>
+                <AppIcon :name="itemIcon(item)" :size="16" />
               </div>
               <div>
                 <div class="lp-item-meta">
@@ -495,7 +496,7 @@ onUnmounted(() => {
               :class="['lp-punch-btn press', isCompleted(item.id) ? 'done' : '']"
               @click="handlePunch(item)"
             >
-              <i :class="isCompleted(item.id) ? 'fa-solid fa-check' : 'fa-regular fa-circle'"></i>
+              <AppIcon :name="isCompleted(item.id) ? 'check' : 'circle-empty'" :size="14" />
               {{ isCompleted(item.id) ? '已打卡' : '打卡' }}
             </button>
           </div>
@@ -506,14 +507,14 @@ onUnmounted(() => {
 
       <!-- 运动建议分组 -->
       <h2 class="lp-group-title">
-        <i class="fa-solid fa-person-running"></i>{{ enumLabel('plan_type', 'exercise') }}建议
+        <AppIcon name="person-running" :size="18" />{{ enumLabel('plan_type', 'exercise') }}建议
       </h2>
       <div class="lp-card-list">
         <div v-for="item in sortedExercise" :key="item.id" class="lp-item-card">
           <div class="lp-item-head">
             <div class="lp-item-left">
               <div class="lp-item-icon lp-item-icon-sport">
-                <i :class="['fa-solid', itemIcon(item)]"></i>
+                <AppIcon :name="itemIcon(item)" :size="16" />
               </div>
               <div>
                 <div class="lp-item-meta">
@@ -526,7 +527,7 @@ onUnmounted(() => {
               :class="['lp-punch-btn press', isCompleted(item.id) ? 'done' : '']"
               @click="handlePunch(item)"
             >
-              <i :class="isCompleted(item.id) ? 'fa-solid fa-check' : 'fa-regular fa-circle'"></i>
+              <AppIcon :name="isCompleted(item.id) ? 'check' : 'circle-empty'" :size="14" />
               {{ isCompleted(item.id) ? '已打卡' : '打卡' }}
             </button>
           </div>
@@ -537,14 +538,14 @@ onUnmounted(() => {
       <!-- 其他分组（若有 other_plans：展示卡片但无打卡按钮） -->
       <template v-if="sortedOther.length > 0">
         <h2 class="lp-group-title">
-          <i class="fa-solid fa-clipboard-list"></i>{{ enumLabel('plan_type', 'other') }}建议
+          <AppIcon name="plan" :size="18" />{{ enumLabel('plan_type', 'other') }}建议
         </h2>
         <div class="lp-card-list">
           <div v-for="item in sortedOther" :key="item.id" class="lp-item-card">
             <div class="lp-item-head">
               <div class="lp-item-left">
                 <div class="lp-item-icon lp-item-icon-other">
-                  <i :class="['fa-solid', itemIcon(item)]"></i>
+                  <AppIcon :name="itemIcon(item)" :size="16" />
                 </div>
                 <div>
                   <div class="lp-item-meta">
@@ -562,7 +563,7 @@ onUnmounted(() => {
 
       <!-- 调整反馈入口 -->
       <button class="lp-adjust-entry press" @click="showAdjust = !showAdjust">
-        <i class="fa-solid fa-sliders"></i> 调整方案
+        <AppIcon name="sliders" :size="16" /> 调整方案
       </button>
       <div v-if="showAdjust" class="lp-adjust-card">
         <textarea
@@ -803,7 +804,7 @@ onUnmounted(() => {
   align-items: center;
   gap: var(--spacing-sm);
 }
-.lp-group-title i {
+.lp-group-title :deep(.app-icon) {
   color: var(--color-primary);
 }
 
