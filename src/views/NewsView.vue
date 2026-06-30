@@ -9,6 +9,7 @@ import SkeletonLoader from '@/components/SkeletonLoader.vue'
 import ErrorRetry from '@/components/ErrorRetry.vue'
 import EmptyState from '@/components/EmptyState.vue'
 import DisclaimerBar from '@/components/DisclaimerBar.vue'
+import AppIcon from '@/components/icons/AppIcon.vue'
 import { sanitizeHtml } from '@/utils/sanitize'
 
 const router = useRouter()
@@ -309,14 +310,14 @@ onMounted(() => {
         class="btn-collections"
         aria-label="我的收藏"
       >
-        <i class="fas fa-heart" aria-hidden="true"></i>
+        <AppIcon name="heart" :size="12" aria-hidden="true" />
         <span>我的收藏</span>
       </router-link>
     </header>
 
     <!-- 搜索栏 -->
     <div class="search-bar" role="search">
-      <i class="fas fa-search search-icon" aria-hidden="true"></i>
+      <AppIcon name="search" :size="14" class="search-icon" aria-hidden="true" />
       <input
         v-model="keyword"
         type="search"
@@ -330,7 +331,7 @@ onMounted(() => {
         aria-label="清除搜索"
         @click="clearSearch"
       >
-        <i class="fas fa-times" aria-hidden="true"></i>
+        <AppIcon name="close" :size="16" aria-hidden="true" />
       </button>
     </div>
 
@@ -366,7 +367,7 @@ onMounted(() => {
       <!-- 搜索空结果 -->
       <EmptyState
         v-else-if="searchResults.length === 0 && !searchLoading"
-        icon="fa-search"
+        icon="search"
         title="未找到相关文章"
         :description="`没有找到与 &quot;${searchedKeyword}&quot; 相关的文章，换个关键词试试，或让 AI 生成一篇。`"
         action-text="生成健康资讯"
@@ -398,7 +399,7 @@ onMounted(() => {
             </div>
             <div class="card-meta">
               <span>{{ item.author || 'AI健康助手' }} · {{ formatDate(item.created_at) }}</span>
-              <span><i class="fas fa-eye" aria-hidden="true"></i> {{ item.views }}</span>
+              <span><AppIcon name="eye" :size="12" aria-hidden="true" /> {{ item.views }}</span>
             </div>
           </div>
         </article>
@@ -422,7 +423,7 @@ onMounted(() => {
       <!-- 空态 -->
       <EmptyState
         v-else-if="articles.length === 0 && !loading"
-        icon="fa-newspaper"
+        icon="news"
         title="暂无资讯"
         description="当前分类下还没有文章，您可以生成一篇专属健康资讯。"
         action-text="生成健康资讯"
@@ -451,7 +452,7 @@ onMounted(() => {
             </div>
             <div class="card-meta">
               <span>{{ item.author || 'AI健康助手' }} · {{ formatDate(item.created_at) }}</span>
-              <span><i class="fas fa-eye" aria-hidden="true"></i> {{ item.views }}</span>
+              <span><AppIcon name="eye" :size="12" aria-hidden="true" /> {{ item.views }}</span>
             </div>
           </div>
         </article>
@@ -464,7 +465,7 @@ onMounted(() => {
             :disabled="loading"
             @click="loadMore"
           >
-            <i v-if="loading" class="fas fa-spinner fa-spin" aria-hidden="true"></i>
+            <AppIcon v-if="loading" name="spinner" :size="14" class="is-spinning" aria-hidden="true" />
             {{ loading ? '加载中...' : '加载更多' }}
           </button>
           <p v-else class="no-more">已经到底啦</p>
@@ -479,7 +480,7 @@ onMounted(() => {
       aria-label="生成健康资讯"
       @click="handleGenerate"
     >
-      <i :class="generating ? 'fas fa-spinner fa-spin' : 'fas fa-magic'" aria-hidden="true"></i>
+      <AppIcon :name="generating ? 'spinner' : 'magic'" :size="16" :class="generating ? 'is-spinning' : ''" aria-hidden="true" />
       {{ generating ? '生成中...' : '生成资讯' }}
     </button>
 
@@ -533,7 +534,7 @@ onMounted(() => {
   transform: scale(0.96);
 }
 
-.btn-collections i {
+.btn-collections :deep(.app-icon) {
   font-size: 11px;
   color: #FF4D4F;
 }
@@ -657,7 +658,7 @@ onMounted(() => {
   margin-top: 6px;
 }
 
-.card-meta i {
+.card-meta :deep(.app-icon) {
   margin-right: 2px;
 }
 
@@ -801,6 +802,19 @@ onMounted(() => {
   left: 0;
   right: 0;
   bottom: calc(var(--tab-bar-height) + env(safe-area-inset-bottom));
+}
+
+.is-spinning {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 @media (min-width: 768px) {

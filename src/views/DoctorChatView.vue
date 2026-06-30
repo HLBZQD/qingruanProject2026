@@ -11,6 +11,7 @@ import SkeletonLoader from '@/components/SkeletonLoader.vue'
 import ErrorRetry from '@/components/ErrorRetry.vue'
 import EmptyState from '@/components/EmptyState.vue'
 import type { ConversationHistoryItem } from '@/types/sse'
+import AppIcon from '@/components/icons/AppIcon.vue'
 import DisclaimerBar from '@/components/DisclaimerBar.vue'
 
 const route = useRoute()
@@ -214,7 +215,7 @@ onUnmounted(() => {
     <!-- 顶部固定: 医生信息头部 -->
     <header class="chat-header">
       <button class="btn-back" @click="goBack" aria-label="返回医生列表">
-        <i class="fas fa-arrow-left"></i>
+        <AppIcon name="arrow-left" :size="16" />
       </button>
       <div class="doctor-info-bar">
         <img
@@ -233,7 +234,7 @@ onUnmounted(() => {
         title="历史会话"
         aria-label="历史会话"
       >
-        <i class="fas fa-history"></i>
+        <AppIcon name="history" :size="16" />
       </button>
       <button
         class="btn-delete"
@@ -241,7 +242,7 @@ onUnmounted(() => {
         title="清空对话"
         aria-label="清空对话"
       >
-        <i class="fas fa-trash"></i>
+        <AppIcon name="trash" :size="16" />
       </button>
     </header>
 
@@ -251,7 +252,7 @@ onUnmounted(() => {
         <div class="history-panel-header">
           <h3>历史会话</h3>
           <button class="btn-close-panel" @click="toggleHistoryList" aria-label="关闭">
-            <i class="fas fa-times"></i>
+            <AppIcon name="close" :size="14" />
           </button>
         </div>
 
@@ -273,7 +274,7 @@ onUnmounted(() => {
           <!-- 空列表 -->
           <EmptyState
             v-else-if="chatStore.conversationHistory.length === 0"
-            icon="fa-history"
+            icon="history"
             title="暂无历史会话"
             description="当前医生没有历史对话记录"
           />
@@ -287,14 +288,14 @@ onUnmounted(() => {
               @click="selectHistorySession(item)"
             >
               <div class="history-item-icon">
-                <i class="fas fa-comment-dots"></i>
+                <AppIcon name="comment-dots" :size="14" />
               </div>
               <div class="history-item-info">
                 <span class="history-item-name">{{ item.name || '未命名会话' }}</span>
                 <span class="history-item-time">{{ formatHistoryTime(item.created_at) }}</span>
               </div>
               <div class="history-item-arrow">
-                <i class="fas fa-chevron-right"></i>
+                <AppIcon name="chevron-right" :size="12" />
               </div>
             </li>
           </ul>
@@ -318,7 +319,7 @@ onUnmounted(() => {
 
       <!-- 错误态 (医生不存在) -->
       <div v-else-if="doctorError" class="error-state">
-        <i class="fas fa-exclamation-circle error-icon"></i>
+        <AppIcon class="error-icon" name="exclamation" :size="48" />
         <p>{{ doctorError }}</p>
         <button @click="goBack" class="btn-retry">返回医生列表</button>
       </div>
@@ -328,9 +329,9 @@ onUnmounted(() => {
         v-else-if="chatStore.conversations.length === 0 && !chatStore.isStreaming"
         class="chat-welcome"
       >
-        <div class="welcome-avatar">
-          <i class="fas fa-user-doctor" aria-hidden="true"></i>
-        </div>
+          <div class="welcome-avatar">
+            <AppIcon name="doctor" :size="28" />
+          </div>
         <h3>{{ doctor?.name ? '您好，我是' + doctor.name + '医生' : '您好，我是您的AI医生' }}</h3>
         <p>请问有什么可以帮您？您可以描述症状、用药情况或血糖数据。</p>
         <div class="example-list">
@@ -392,7 +393,7 @@ onUnmounted(() => {
         :disabled="!inputText.trim() || chatStore.isStreaming"
         :class="{ visible: inputText.trim() && !chatStore.isStreaming }"
       >
-        <i class="fas fa-paper-plane"></i>
+        <AppIcon name="send" :size="16" />
       </button>
     </div>
   </div>

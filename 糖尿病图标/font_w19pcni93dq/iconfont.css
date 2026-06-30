@@ -1,0 +1,205 @@
+@font-face {
+  font-family: "iconfont"; /* Project id  */
+  src: url('iconfont.ttf?t=1782824267544') format('truetype');
+}
+
+.iconfont {
+  font-family: "iconfont" !important;
+  font-size: 16px;
+  font-style: normal;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.icon-tubiao22:before {
+  content: "\e65e";
+}
+
+.icon-yiliao:before {
+  content: "\e633";
+}
+
+.icon-tangniaobingguanli:before {
+  content: "\e609";
+}
+
+.icon-sharpicons_nurse:before {
+  content: "\e80a";
+}
+
+.icon-sharpicons_plaster-:before {
+  content: "\e80b";
+}
+
+.icon-sharpicons_pulse-histogram:before {
+  content: "\e80c";
+}
+
+.icon-sharpicons_ribbon:before {
+  content: "\e80d";
+}
+
+.icon-sharpicons_sterthooscope:before {
+  content: "\e80e";
+}
+
+.icon-sharpicons_pills:before {
+  content: "\e80f";
+}
+
+.icon-sharpicons_cross-:before {
+  content: "\e810";
+}
+
+.icon-sharpicons_ambulance:before {
+  content: "\e811";
+}
+
+.icon-sharpicons_plaster:before {
+  content: "\e812";
+}
+
+.icon-sharpicons_blood-drop-:before {
+  content: "\e813";
+}
+
+.icon-sharpicons_blood-drop:before {
+  content: "\e814";
+}
+
+.icon-sharpicons_pulse:before {
+  content: "\e815";
+}
+
+.icon-sharpicons_cross:before {
+  content: "\e816";
+}
+
+.icon-sharpicons_patient-wheelchair:before {
+  content: "\e817";
+}
+
+.icon-sharpicons_cross-1:before {
+  content: "\e818";
+}
+
+.icon-sharpicons_doctor-bag:before {
+  content: "\e819";
+}
+
+.icon-sharpicons_nurse-hat:before {
+  content: "\e81a";
+}
+
+.icon-sharpicons_drug:before {
+  content: "\e81b";
+}
+
+.icon-sharpicons_temperature:before {
+  content: "\e81c";
+}
+
+.icon-sharpicons_doctor-notes:before {
+  content: "\e81d";
+}
+
+.icon-sharpicons_blood-drop-1:before {
+  content: "\e81e";
+}
+
+.icon-sharpicons_syringe:before {
+  content: "\e81f";
+}
+
+.icon-sharpicons_diagnose-heart:before {
+  content: "\e820";
+}
+
+.icon-sharpicons_heart:before {
+  content: "\e821";
+}
+
+.icon-sharpicons_pill:before {
+  content: "\e822";
+}
+
+.icon-sharpicons_heart-cross:before {
+  content: "\e823";
+}
+
+.icon-sharpicons_hospital-point:before {
+  content: "\e824";
+}
+
+.icon-sharpicons_medical-note:before {
+  content: "\e825";
+}
+
+.icon-sharpicons_home-care:before {
+  content: "\e826";
+}
+
+.icon-sharpicons_helicopter-passageway:before {
+  content: "\e827";
+}
+
+.icon-sharpicons_hospital-bed-:before {
+  content: "\e828";
+}
+
+.icon-sharpicons_gauze:before {
+  content: "\e829";
+}
+
+.icon-sharpicons_medicine-drug:before {
+  content: "\e82a";
+}
+
+.icon-sharpicons_medical-sign:before {
+  content: "\e82b";
+}
+
+.icon-sharpicons_hospital-bed:before {
+  content: "\e82c";
+}
+
+.icon-tubiao_-:before {
+  content: "\e6fe";
+}
+
+.icon-tangniaobing:before {
+  content: "\e658";
+}
+
+.icon-S_tangniaobingshaicha:before {
+  content: "\e666";
+}
+
+.icon-yiliaofuwu:before {
+  content: "\e99a";
+}
+
+.icon-yiliaojigou:before {
+  content: "\e99b";
+}
+
+.icon-tangniaobingleixing:before {
+  content: "\e616";
+}
+
+.icon-yiliao_yiliaodaping:before {
+  content: "\e63a";
+}
+
+.icon-yiliao_yiliaowendang:before {
+  content: "\e63b";
+}
+
+.icon-yiliao_yiliaowendang1:before {
+  content: "\e642";
+}
+
+.icon-yiliao_yiliaodaping1:before {
+  content: "\e643";
+}
+

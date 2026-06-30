@@ -6,18 +6,17 @@ import { useChatStore } from '@/stores/chatStore'
 import TabBar from '@/components/TabBar.vue'
 import FabButton from '@/components/FabButton.vue'
 import AiChatDialog from '@/components/AiChatDialog.vue'
-
 const route = useRoute()
 const router = useRouter()
 const authStore = useAuthStore()
 const chatStore = useChatStore()
 
 const tabs = [
-  { path: '/home', label: '首页', icon: 'fa-home' },
-  { path: '/consultation', label: '咨询', icon: 'fa-user-md' },
-  { path: '/life-plan', label: '生活方案', icon: 'fa-clipboard-list' },
-  { path: '/news', label: '资讯', icon: 'fa-newspaper' },
-  { path: '/profile', label: '我的', icon: 'fa-user' },
+  { path: '/home', label: '首页', icon: 'diabetes', iconType: 'diabetes' as const },
+  { path: '/consultation', label: '咨询', icon: 'stethoscope', iconType: 'diabetes' as const },
+  { path: '/life-plan', label: '生活方案', icon: 'pills', iconType: 'diabetes' as const },
+  { path: '/news', label: '资讯', icon: 'medical-note', iconType: 'diabetes' as const },
+  { path: '/profile', label: '我的', icon: 'home-care', iconType: 'diabetes' as const },
 ]
 
 const showTabBar = computed(() => {

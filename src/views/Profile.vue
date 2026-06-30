@@ -6,6 +6,8 @@ import { useRiskFormStore } from '@/stores/riskFormStore'
 import { api } from '@/composables/useApi'
 import { formatDate } from '@/utils/helpers'
 import Swal from 'sweetalert2'
+import AppIcon from '@/components/icons/AppIcon.vue'
+import DiabetesIcon from '@/components/icons/DiabetesIcon.vue'
 import type { UserProfile } from '@/types/api'
 
 const router = useRouter()
@@ -140,7 +142,7 @@ function onEditProfile() {
   const currentUsername = profile.value?.username || authStore.user?.username || ''
   void Swal.fire<string>({
     title: '编辑资料',
-    html: '<p style="text-align:left;font-size:14px;margin-bottom:8px;color:#666">修改用户名：</p>',
+    html: '<p style="text-align:left;font-size:14px;margin-bottom:8px;color:#4B5563">修改用户名：</p>',
     input: 'text',
     inputValue: currentUsername,
     inputAttributes: {
@@ -196,7 +198,7 @@ async function handleLogout() {
     showCancelButton: true,
     confirmButtonText: '退出',
     cancelButtonText: '取消',
-    confirmButtonColor: '#FF4D4F',
+    confirmButtonColor: '#EF4444',
   })
   if (!result.isConfirmed) return
 
@@ -215,6 +217,7 @@ async function handleLogout() {
 interface MenuItem {
   label: string
   icon: string
+  iconType?: 'app' | 'diabetes'
   iconColor: string
   bgColor: string
   to?: string
@@ -226,39 +229,44 @@ const menuItems = computed<MenuItem[]>(() => {
   const items: MenuItem[] = [
     {
       label: '风险预测',
-      icon: 'fa-heart-pulse',
-      iconColor: '#4A90D9',
-      bgColor: '#E8F1FB',
+      icon: 'diagnose-heart',
+      iconType: 'diabetes',
+      iconColor: '#4F46E5',
+      bgColor: '#EEF2FF',
       to: '/profile/risk',
     },
     {
       label: '打卡记录',
-      icon: 'fa-clipboard-check',
-      iconColor: '#52C41A',
-      bgColor: '#F0F9EB',
+      icon: 'medical-note',
+      iconType: 'diabetes',
+      iconColor: '#06D6A0',
+      bgColor: '#E0FDF6',
       to: '/profile/punch',
     },
     {
       label: '健康建议',
-      icon: 'fa-lightbulb',
-      iconColor: '#FAAD14',
-      bgColor: '#FFFBE6',
+      icon: 'lightbulb',
+      iconType: 'app',
+      iconColor: '#FF6B6B',
+      bgColor: '#FFF0F0',
       to: '/profile/advice',
     },
     {
       label: '编辑资料',
-      icon: 'fa-user-edit',
-      iconColor: '#4A90D9',
-      bgColor: '#E8F1FB',
+      icon: 'doctor-notes',
+      iconType: 'diabetes',
+      iconColor: '#4F46E5',
+      bgColor: '#EEF2FF',
       action: onEditProfile,
     },
   ]
   if (authStore.isAdmin) {
     items.push({
       label: '智能管理',
-      icon: 'fa-shield-halved',
-      iconColor: '#7C3AED',
-      bgColor: '#F3E8FF',
+      icon: 'medical-sign',
+      iconType: 'diabetes',
+      iconColor: '#8B5CF6',
+      bgColor: '#EDE9FE',
       to: '/admin',
     })
   }
@@ -290,6 +298,7 @@ onUnmounted(() => {
       <!-- 加载骨架屏 -->
       <template v-if="profileLoading">
         <div class="profile-hero skeleton-hero" aria-hidden="true">
+          <div class="hero-grid" aria-hidden="true"></div>
           <div class="skeleton-avatar"></div>
           <div class="skeleton-line skeleton-name"></div>
           <div class="skeleton-line skeleton-meta"></div>
@@ -308,12 +317,12 @@ onUnmounted(() => {
       <!-- 错误重试 -->
       <div v-else-if="profileError" class="profile-error" role="alert">
         <div class="error-icon">
-          <i class="fa-solid fa-circle-exclamation"></i>
+          <AppIcon name="exclamation" :size="32" />
         </div>
         <p class="error-title">资料加载失败</p>
         <p class="error-desc">请检查网络后重试</p>
         <button class="retry-button" @click="loadProfile">
-          <i class="fa-solid fa-rotate-right"></i>
+          <AppIcon name="refresh" :size="16" />
           重新加载
         </button>
       </div>
@@ -321,12 +330,12 @@ onUnmounted(() => {
       <!-- 正常内容 -->
       <template v-else>
         <header class="profile-hero">
-          <div class="hero-bg" aria-hidden="true">
-            <div class="hero-bubble hero-bubble-1"></div>
-            <div class="hero-bubble hero-bubble-2"></div>
-            <div class="hero-bubble hero-bubble-3"></div>
+          <div class="hero-grid" aria-hidden="true"></div>
+          <div class="hero-shapes" aria-hidden="true">
+            <span class="hero-shape hero-shape-1"></span>
+            <span class="hero-shape hero-shape-2"></span>
+            <span class="hero-shape hero-shape-3"></span>
           </div>
-
           <div class="hero-content">
             <div class="avatar-wrapper" @click="triggerAvatarUpload">
               <img
@@ -336,7 +345,7 @@ onUnmounted(() => {
                 class="avatar-img"
               />
               <div class="avatar-overlay" aria-hidden="true">
-                <i class="fa-solid fa-camera"></i>
+                <AppIcon name="camera" :size="24" color="#fff" />
               </div>
               <input
                 ref="avatarInput"
@@ -357,21 +366,35 @@ onUnmounted(() => {
               </div>
             </div>
           </div>
+          <div class="hero-wave" aria-hidden="true">
+            <svg viewBox="0 0 400 36" preserveAspectRatio="none">
+              <path d="M0,0 L0,16 Q100,34 200,22 T400,16 L400,0 Z" fill="var(--color-bg)" />
+            </svg>
+          </div>
         </header>
 
         <main class="profile-body">
           <!-- 数据概览 -->
           <section class="stats-row" aria-label="健康数据概览">
-            <article class="stat-card">
-              <span class="stat-value">{{ memberDays }}</span>
+            <article class="stat-card stat-card-indigo">
+              <div class="stat-icon-wrap">
+                <AppIcon name="calendar" :size="18" color="#fff" />
+              </div>
+              <span class="stat-value font-mono">{{ memberDays }}</span>
               <span class="stat-label">注册天数</span>
             </article>
-            <article class="stat-card">
-              <span class="stat-value stat-placeholder">--</span>
+            <article class="stat-card stat-card-mint">
+              <div class="stat-icon-wrap">
+                <AppIcon name="heart" :size="18" color="#fff" />
+              </div>
+              <span class="stat-value font-mono stat-placeholder">--</span>
               <span class="stat-label">健康评分</span>
             </article>
-            <article class="stat-card">
-              <span class="stat-value stat-placeholder">--</span>
+            <article class="stat-card stat-card-coral">
+              <div class="stat-icon-wrap">
+                <AppIcon name="check-in" :size="18" color="#fff" />
+              </div>
+              <span class="stat-value font-mono stat-placeholder">--</span>
               <span class="stat-label">连续打卡</span>
             </article>
           </section>
@@ -379,7 +402,12 @@ onUnmounted(() => {
           <!-- 功能菜单 -->
           <section class="menu-section" aria-label="功能菜单">
             <div class="section-head">
-              <h2 class="section-title">常用功能</h2>
+              <div class="section-title-wrap">
+                <span class="section-icon-wrap">
+                  <AppIcon name="sliders" :size="16" color="#fff" />
+                </span>
+                <h2 class="section-title">常用功能</h2>
+              </div>
             </div>
             <div class="menu-grid" role="list">
               <button
@@ -390,15 +418,23 @@ onUnmounted(() => {
                 @click="onMenuClick(item)"
               >
                 <div class="menu-icon-wrap" :style="{ background: item.bgColor }">
-                  <i
-                    class="fa-solid menu-icon"
-                    :class="item.icon"
-                    :style="{ color: item.iconColor }"
-                    aria-hidden="true"
-                  ></i>
+                  <AppIcon
+                    v-if="!item.iconType || item.iconType === 'app'"
+                    :name="item.icon"
+                    :size="20"
+                    :color="item.iconColor"
+                    class="menu-icon"
+                  />
+                  <DiabetesIcon
+                    v-else
+                    :name="item.icon"
+                    :size="20"
+                    :color="item.iconColor"
+                    class="menu-icon"
+                  />
                 </div>
                 <span class="menu-label">{{ item.label }}</span>
-                <i class="fa-solid fa-chevron-right menu-arrow" aria-hidden="true"></i>
+                <AppIcon name="chevron-right" :size="12" color="#9CA3AF" class="menu-arrow" />
               </button>
             </div>
           </section>
@@ -406,7 +442,7 @@ onUnmounted(() => {
           <!-- 退出登录 -->
           <section class="logout-area">
             <button class="logout-button press" @click="handleLogout">
-              <i class="fa-solid fa-sign-out-alt" aria-hidden="true"></i>
+              <AppIcon name="sign-out" :size="18" />
               <span>退出登录</span>
             </button>
           </section>
@@ -451,47 +487,62 @@ onUnmounted(() => {
 /* ========== Hero 头部 ========== */
 .profile-hero {
   position: relative;
-  padding: 52px var(--spacing-lg) 32px;
+  padding: 52px var(--spacing-lg) 36px;
   overflow: hidden;
-  background: linear-gradient(135deg, #4A90D9 0%, #3A7BC8 100%);
-  border-bottom-left-radius: 24px;
-  border-bottom-right-radius: 24px;
-  box-shadow: 0 8px 24px rgba(74, 144, 217, 0.28);
+  background: var(--color-primary);
+  box-shadow: var(--shadow-primary);
 }
 
-.hero-bg {
+.hero-grid {
+  position: absolute;
+  inset: 0;
+  opacity: 0.08;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.5) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.5) 1px, transparent 1px);
+  background-size: 28px 28px;
+  pointer-events: none;
+}
+
+.hero-shapes {
   position: absolute;
   inset: 0;
   pointer-events: none;
-  overflow: hidden;
 }
 
-.hero-bubble {
+.hero-shape {
   position: absolute;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.12);
+  border-radius: 24%;
 }
 
-.hero-bubble-1 {
-  width: 160px;
-  height: 160px;
+.hero-shape-1 {
+  width: 120px;
+  height: 120px;
+  background: var(--color-vivid);
+  opacity: 0.15;
   top: -40px;
-  right: -30px;
+  right: -20px;
+  transform: rotate(20deg);
 }
 
-.hero-bubble-2 {
-  width: 96px;
-  height: 96px;
-  bottom: 20px;
+.hero-shape-2 {
+  width: 80px;
+  height: 80px;
+  background: var(--color-accent);
+  opacity: 0.2;
+  bottom: 40px;
   left: -20px;
+  transform: rotate(-15deg);
 }
 
-.hero-bubble-3 {
+.hero-shape-3 {
   width: 48px;
   height: 48px;
-  top: 60px;
-  right: 110px;
-  background: rgba(255, 255, 255, 0.2);
+  background: var(--color-amber);
+  opacity: 0.2;
+  top: 30px;
+  right: 25%;
+  border-radius: 30%;
 }
 
 .hero-content {
@@ -503,28 +554,45 @@ onUnmounted(() => {
   text-align: center;
 }
 
+.hero-wave {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 32px;
+  transform: translateY(1px);
+}
+
+.hero-wave svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
 /* ========== 头像 ========== */
 .avatar-wrapper {
   position: relative;
-  width: 104px;
-  height: 104px;
-  border-radius: 50%;
+  width: 108px;
+  height: 108px;
+  border-radius: 30%;
   cursor: pointer;
   flex-shrink: 0;
   padding: 4px;
-  background: rgba(255, 255, 255, 0.35);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  box-shadow: 0 0 0 4px rgba(6, 214, 160, 0.18);
   transition: transform var(--transition-fast);
+  transform: rotate(2deg);
 }
 
 .avatar-wrapper:active {
-  transform: scale(0.96);
+  transform: rotate(0deg) scale(0.96);
 }
 
 .avatar-img {
   width: 100%;
   height: 100%;
-  border-radius: 50%;
+  border-radius: 28%;
   object-fit: cover;
   border: 3px solid #fff;
   background: #fff;
@@ -533,18 +601,13 @@ onUnmounted(() => {
 .avatar-overlay {
   position: absolute;
   inset: 4px;
-  border-radius: 50%;
-  background: rgba(0, 0, 0, 0.35);
+  border-radius: 28%;
+  background: rgba(26, 26, 46, 0.55);
   display: flex;
   align-items: center;
   justify-content: center;
   opacity: 0;
   transition: opacity var(--transition-fast);
-}
-
-.avatar-overlay i {
-  color: #fff;
-  font-size: 24px;
 }
 
 .avatar-wrapper:hover .avatar-overlay,
@@ -573,7 +636,7 @@ onUnmounted(() => {
   font-size: 22px;
   font-weight: 700;
   line-height: 1.3;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  letter-spacing: -0.02em;
 }
 
 .user-meta {
@@ -589,28 +652,28 @@ onUnmounted(() => {
   display: inline-flex;
   align-items: center;
   padding: 3px 10px;
-  border-radius: var(--radius-full);
-  font-size: 11px;
+  border-radius: var(--radius-tag);
+  font-size: var(--font-size-xs);
   font-weight: 600;
-  background: rgba(255, 255, 255, 0.22);
+  background: rgba(255, 255, 255, 0.18);
   color: #fff;
-  border: 1px solid rgba(255, 255, 255, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.3);
 }
 
 .role-badge.admin {
-  background: rgba(124, 58, 237, 0.35);
-  border-color: rgba(124, 58, 237, 0.55);
+  background: rgba(6, 214, 160, 0.25);
+  border-color: rgba(6, 214, 160, 0.45);
 }
 
 .join-date {
-  font-size: 12px;
-  color: rgba(255, 255, 255, 0.85);
+  font-size: var(--font-size-caption);
+  color: rgba(255, 255, 255, 0.8);
 }
 
 /* ========== 页面主体 ========== */
 .profile-body {
   padding: 0 var(--spacing-lg);
-  margin-top: -24px;
+  margin-top: -20px;
   position: relative;
   z-index: 2;
 }
@@ -624,22 +687,51 @@ onUnmounted(() => {
 }
 
 .stat-card {
-  background: var(--color-card);
-  border-radius: var(--radius-lg);
-  padding: var(--spacing-md) var(--spacing-sm);
+  position: relative;
+  border-radius: var(--radius-xl);
+  padding: var(--spacing-sm) var(--spacing-md) var(--spacing-md);
   text-align: center;
   box-shadow: var(--shadow-sm);
-  border: 1px solid var(--color-divider);
+  border: 1.5px solid var(--color-border);
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
+  gap: 6px;
+  overflow: hidden;
+  background: var(--color-card);
 }
+
+.stat-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+}
+
+.stat-card-indigo::before { background: var(--color-primary); }
+.stat-card-mint::before { background: var(--color-accent); }
+.stat-card-coral::before { background: var(--color-vivid); }
+
+.stat-icon-wrap {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 2px;
+}
+
+.stat-card-indigo .stat-icon-wrap { background: var(--color-primary); }
+.stat-card-mint .stat-icon-wrap { background: var(--color-accent); }
+.stat-card-coral .stat-icon-wrap { background: var(--color-vivid); }
 
 .stat-value {
   font-size: 22px;
   font-weight: 700;
-  color: var(--color-primary);
+  color: var(--color-text-primary);
   line-height: 1.2;
 }
 
@@ -648,9 +740,10 @@ onUnmounted(() => {
 }
 
 .stat-label {
-  font-size: 11px;
+  font-size: var(--font-size-xs);
   color: var(--color-text-secondary);
   line-height: 1.2;
+  font-weight: 500;
 }
 
 /* ========== 菜单区块 ========== */
@@ -666,10 +759,28 @@ onUnmounted(() => {
   padding: 0 2px;
 }
 
+.section-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.section-icon-wrap {
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-sm);
+  background: var(--color-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
 .section-title {
   font-size: var(--font-size-h3);
   font-weight: 700;
   color: var(--color-text-primary);
+  letter-spacing: -0.01em;
 }
 
 .menu-grid {
@@ -684,9 +795,9 @@ onUnmounted(() => {
   gap: var(--spacing-md);
   padding: var(--spacing-md);
   background: var(--color-card);
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-xl);
   box-shadow: var(--shadow-sm);
-  border: 1px solid var(--color-divider);
+  border: 1.5px solid var(--color-border);
   cursor: pointer;
   text-align: left;
   transition: box-shadow var(--transition-fast), transform var(--transition-fast);
@@ -705,7 +816,7 @@ onUnmounted(() => {
 .menu-icon-wrap {
   width: 44px;
   height: 44px;
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-sm);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -720,7 +831,7 @@ onUnmounted(() => {
   flex: 1;
   font-size: var(--font-size-body);
   color: var(--color-text-primary);
-  font-weight: 500;
+  font-weight: 600;
 }
 
 .menu-arrow {
@@ -741,18 +852,18 @@ onUnmounted(() => {
   gap: var(--spacing-sm);
   padding: 14px var(--spacing-lg);
   background: var(--color-card);
-  border: 1px solid var(--color-danger);
-  border-radius: var(--radius-lg);
+  border: 1.5px solid var(--color-danger);
+  border-radius: var(--radius-xl);
   color: var(--color-danger);
   font-size: var(--font-size-body);
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
   transition: background var(--transition-fast), color var(--transition-fast);
 }
 
 .logout-button:hover,
 .logout-button:focus {
-  background: #fff1f0;
+  background: var(--color-danger-light);
 }
 
 .logout-button:active {
@@ -773,17 +884,14 @@ onUnmounted(() => {
 .error-icon {
   width: 72px;
   height: 72px;
-  border-radius: 50%;
-  background: #fff1f0;
+  border-radius: 30%;
+  background: var(--color-danger-light);
   display: flex;
   align-items: center;
   justify-content: center;
   margin-bottom: var(--spacing-md);
-}
-
-.error-icon i {
-  font-size: 32px;
   color: var(--color-danger);
+  transform: rotate(3deg);
 }
 
 .error-title {
@@ -809,9 +917,10 @@ onUnmounted(() => {
   border: none;
   border-radius: var(--radius-button);
   font-size: var(--font-size-body);
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
   transition: background var(--transition-fast);
+  box-shadow: var(--shadow-primary);
 }
 
 .retry-button:hover,
@@ -824,20 +933,20 @@ onUnmounted(() => {
   display: flex;
   flex-direction: column;
   align-items: center;
-  background: linear-gradient(135deg, #9fc7ed 0%, #7cace0 100%);
+  background: var(--color-primary);
   pointer-events: none;
 }
 
 .skeleton-avatar {
-  width: 104px;
-  height: 104px;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.35);
+  width: 108px;
+  height: 108px;
+  border-radius: 30%;
+  background: rgba(255, 255, 255, 0.2);
 }
 
 .skeleton-line {
   border-radius: var(--radius-full);
-  background: rgba(255, 255, 255, 0.35);
+  background: rgba(255, 255, 255, 0.2);
   margin-top: var(--spacing-sm);
 }
 
@@ -853,35 +962,28 @@ onUnmounted(() => {
 }
 
 .skeleton-stat {
-  min-height: 78px;
-  background: linear-gradient(90deg, #f0f0f0 25%, #e8e8e8 50%, #f0f0f0 75%);
+  min-height: 96px;
+  background: linear-gradient(90deg, var(--color-divider) 25%, #F5F2EF 50%, var(--color-divider) 75%);
   background-size: 200% 100%;
   animation: skeletonShimmer 1.2s infinite linear;
+  border-radius: var(--radius-xl);
 }
 
 .skeleton-menu {
   min-height: 76px;
-  background: linear-gradient(90deg, #f0f0f0 25%, #e8e8e8 50%, #f0f0f0 75%);
+  background: linear-gradient(90deg, var(--color-divider) 25%, #F5F2EF 50%, var(--color-divider) 75%);
   background-size: 200% 100%;
   animation: skeletonShimmer 1.2s infinite linear;
   border: none;
+  border-radius: var(--radius-xl);
 }
 
 .skeleton-logout {
   height: 50px;
-  border-radius: var(--radius-lg);
-  background: linear-gradient(90deg, #f0f0f0 25%, #e8e8e8 50%, #f0f0f0 75%);
+  border-radius: var(--radius-xl);
+  background: linear-gradient(90deg, var(--color-divider) 25%, #F5F2EF 50%, var(--color-divider) 75%);
   background-size: 200% 100%;
   animation: skeletonShimmer 1.2s infinite linear;
-}
-
-@keyframes skeletonShimmer {
-  0% {
-    background-position: 200% 0;
-  }
-  100% {
-    background-position: -200% 0;
-  }
 }
 
 @media (prefers-reduced-motion: reduce) {

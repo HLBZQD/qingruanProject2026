@@ -7,6 +7,7 @@ import { usePunchStore } from '@/stores/punchStore'
 import { enumLabel } from '@/utils/enumLabels'
 import type { PunchType } from '@/types/api'
 import DisclaimerBar from '@/components/DisclaimerBar.vue'
+import AppIcon from '@/components/icons/AppIcon.vue'
 
 const router = useRouter()
 const route = useRoute()
@@ -115,7 +116,7 @@ function formatPunchTime(iso: string): string {
 
 // ===== 类型图标派生 =====
 function typeIcon(punchType: PunchType): string {
-  return punchType === 'diet' ? 'fa-utensils' : 'fa-person-running'
+  return punchType === 'diet' ? 'utensils' : 'person-running'
 }
 
 // ===== 滚动触底监听（loadMore） =====
@@ -246,7 +247,7 @@ onUnmounted(() => {
         @click="router.push('/profile')"
         aria-label="返回"
       >
-        <i class="fa-solid fa-chevron-left"></i>
+        <AppIcon name="chevron-left" :size="18" />
       </button>
       <h1 class="punch-title">打卡记录与分析</h1>
       <div class="punch-header-spacer"></div>
@@ -266,7 +267,7 @@ onUnmounted(() => {
       <!-- AI 分析失败：降级提示条 + 重试 -->
       <div v-else-if="store.analysisError" class="punch-analysis-card punch-analysis-fallback">
         <div class="punch-fallback-row">
-          <i class="fa-solid fa-circle-exclamation punch-fallback-icon"></i>
+          <AppIcon name="exclamation" :size="18" class="punch-fallback-icon" />
           <p class="punch-fallback-text">{{ getErrorMessage(store.analysisError, 'AI 分析暂不可用') }}</p>
           <button class="punch-retry-btn press" @click="store.retryFetchAnalysis()">重试</button>
         </div>
@@ -365,7 +366,7 @@ onUnmounted(() => {
         <!-- AI 依从性评语（Markdown 净化链） -->
         <div class="punch-comment-card">
           <div class="punch-comment-head">
-            <i class="fa-solid fa-lightbulb punch-comment-icon"></i>
+            <AppIcon name="lightbulb" :size="18" class="punch-comment-icon" />
             <h3 class="punch-comment-title">AI 分析</h3>
           </div>
           <div
@@ -425,7 +426,7 @@ onUnmounted(() => {
           :title="refreshTitle"
           aria-label="刷新打卡数据"
         >
-          <i class="fa-solid fa-rotate" :class="{ 'fa-spin': isRefreshing }"></i>
+          <AppIcon name="arrows-rotate" :size="18" :class="{ 'is-spinning': isRefreshing }" />
         </button>
       </div>
 
@@ -478,7 +479,7 @@ onUnmounted(() => {
       <div id="empty-container" v-else-if="store.records.length === 0" class="punch-empty">
         <div class="punch-empty-card">
           <div class="punch-empty-icon">
-            <i class="fa-solid fa-clipboard-check"></i>
+            <AppIcon name="calendar-check" :size="48" />
           </div>
           <h2 class="punch-empty-title">还没有打卡记录</h2>
           <p class="punch-empty-desc">
@@ -497,7 +498,7 @@ onUnmounted(() => {
       <template v-else>
         <!-- 筛选重新加载中微弱指示条（列表已有记录，重新拉取时告知用户） -->
         <div v-if="store.listLoading && store.records.length > 0" class="punch-reloading-bar">
-          <i class="fa-solid fa-spinner punch-spinner punch-spinner-sm"></i>
+          <AppIcon name="spinner" :size="12" class="punch-spinner punch-spinner-sm" />
           <span>刷新中...</span>
         </div>
 
@@ -517,7 +518,7 @@ onUnmounted(() => {
                     : 'punch-type-exercise',
                 ]"
               >
-                <i :class="['fa-solid', typeIcon(record.punch_type)]"></i>
+                <AppIcon :name="typeIcon(record.punch_type)" :size="16" />
               </div>
               <!-- 打卡信息 -->
               <div class="punch-record-info">
@@ -560,7 +561,7 @@ onUnmounted(() => {
 
         <!-- 加载更多中 -->
         <div v-if="store.listLoadingMore" class="punch-loadmore">
-          <i class="fa-solid fa-spinner punch-spinner"></i>
+          <AppIcon name="spinner" :size="18" class="punch-spinner" />
           <span>加载中...</span>
         </div>
 
@@ -1220,13 +1221,12 @@ onUnmounted(() => {
 }
 
 /* 旋转动画 class */
-#btn-refresh .fa-spin {
-  animation: refresh-spin 1s linear infinite;
+.is-spinning {
+  animation: spin 1s linear infinite;
 }
 
-/* FontAwesome 风格旋转关键帧 */
-@keyframes refresh-spin {
-  0%   { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+/* 通用旋转关键帧 */
+@keyframes spin {
+  to { transform: rotate(360deg); }
 }
 </style>

@@ -8,6 +8,7 @@ import { useAuthStore } from '@/stores/authStore'
 import { getErrorMessage } from '@/utils/errorMessage'
 import type { ArticleDetail } from '@/types/api'
 import DisclaimerBar from '@/components/DisclaimerBar.vue'
+import AppIcon from '@/components/icons/AppIcon.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -147,7 +148,7 @@ onMounted(() => { fetchArticle() })
     <!-- Header 粘性顶栏 -->
     <header class="article-header">
       <button class="article-back press" @click="goBack" aria-label="返回资讯列表">
-        <i class="fa-solid fa-chevron-left"></i>
+        <AppIcon name="chevron-left" :size="16" />
       </button>
       <h1 class="article-header-title">文章详情</h1>
       <!-- 收藏按钮（正常态可见） -->
@@ -158,16 +159,18 @@ onMounted(() => { fetchArticle() })
         @click="toggleCollect"
         :aria-label="isCollected ? '取消收藏' : '收藏文章'"
       >
-        <i
+        <AppIcon
           v-if="collectLoading"
-          class="fa-solid fa-spinner fa-spin"
-        ></i>
-        <i
+          name="spinner"
+          :size="18"
+          class="is-spinning"
+        />
+        <AppIcon
           v-else
-          :class="[
-            isCollected ? 'fa-solid fa-heart article-collected' : 'fa-regular fa-heart article-not-collected'
-          ]"
-        ></i>
+          :name="isCollected ? 'heart' : 'heart-empty'"
+          :size="18"
+          :class="isCollected ? 'article-collected' : 'article-not-collected'"
+        />
       </button>
       <div v-else class="article-header-spacer"></div>
     </header>
@@ -183,7 +186,7 @@ onMounted(() => { fetchArticle() })
 
     <!-- 404态 -->
     <div v-else-if="notFound" class="article-error-card">
-      <i class="fa-solid fa-file-circle-question article-error-icon"></i>
+      <AppIcon name="file-question" :size="48" class="article-error-icon" />
       <h2 class="article-error-title">文章不存在</h2>
       <p class="article-error-desc">文章可能已被删除，或链接地址不正确</p>
       <button class="article-retry-btn press" @click="goBack">返回资讯列表</button>
@@ -191,7 +194,7 @@ onMounted(() => { fetchArticle() })
 
     <!-- 错误态 -->
     <div v-else-if="error" class="article-error-card">
-      <i class="fa-solid fa-triangle-exclamation article-error-icon"></i>
+      <AppIcon name="triangle-warning" :size="48" class="article-error-icon" />
       <h2 class="article-error-title">加载失败</h2>
       <p class="article-error-desc">{{ error }}</p>
       <button class="article-retry-btn press" @click="fetchArticle">重试</button>
@@ -204,19 +207,19 @@ onMounted(() => { fetchArticle() })
         <h1 class="article-title">{{ article.title }}</h1>
         <div class="article-meta-row">
           <span class="article-meta-item">
-            <i class="fa-solid fa-user-pen"></i> {{ article.author }}
+            <AppIcon name="user-pen" :size="14" /> {{ article.author }}
           </span>
           <span class="article-meta-sep">|</span>
           <span class="article-meta-item">
-            <i class="fa-solid fa-layer-group"></i> {{ article.category }}
+            <AppIcon name="layer-group" :size="14" /> {{ article.category }}
           </span>
           <span class="article-meta-sep">|</span>
           <span class="article-meta-item">
-            <i class="fa-solid fa-calendar"></i> {{ formatDate(article.created_at) }}
+            <AppIcon name="calendar" :size="14" /> {{ formatDate(article.created_at) }}
           </span>
           <span class="article-meta-sep">|</span>
           <span class="article-meta-item">
-            <i class="fa-solid fa-eye"></i> {{ article.views }} 阅读
+            <AppIcon name="eye" :size="14" /> {{ article.views }} 阅读
           </span>
         </div>
         <!-- 标签 -->
@@ -478,5 +481,14 @@ onMounted(() => { fetchArticle() })
 .press:active {
   transform: scale(0.96);
   transition: var(--transition-fast);
+}
+
+.is-spinning {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
 </style>

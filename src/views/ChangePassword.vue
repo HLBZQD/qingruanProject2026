@@ -4,6 +4,7 @@ import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
 import { changePassword } from '@/composables/useUserApi'
 import Swal from 'sweetalert2'
+import AppIcon from '@/components/icons/AppIcon.vue'
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -69,7 +70,7 @@ onMounted(() => {
   <div class="change-pwd-container">
     <div class="change-pwd-card">
       <div class="lock-icon">
-        <i class="fas fa-lock" aria-hidden="true"></i>
+        <AppIcon name="lock" :size="28" />
       </div>
       <h1>首次登录，请修改密码</h1>
       <p class="hint-text">
@@ -113,7 +114,7 @@ onMounted(() => {
           class="btn-submit"
           :disabled="submitting"
         >
-          <i v-if="submitting" class="fas fa-spinner fa-spin" aria-hidden="true"></i>
+          <AppIcon v-if="submitting" name="spinner" :size="16" class="is-spinning" />
           {{ submitting ? '提交中...' : '确认修改' }}
         </button>
       </form>
@@ -243,6 +244,19 @@ onMounted(() => {
 .btn-submit:disabled {
   opacity: 0.7;
   cursor: not-allowed;
+}
+
+.is-spinning {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .footer-text {

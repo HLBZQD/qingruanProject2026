@@ -83,6 +83,11 @@ const props = withDefaults(defineProps<{
 .skeleton-article {
   background: var(--color-divider);
   border-radius: var(--radius-md);
+}
+
+.skeleton-line,
+.skeleton-avatar,
+.skeleton-cover {
   animation: skeletonPulse 1.4s ease-in-out infinite;
 }
 
@@ -93,14 +98,14 @@ const props = withDefaults(defineProps<{
 .skeleton-avatar {
   width: 48px;
   height: 48px;
-  border-radius: var(--radius-full);
+  border-radius: 28%;
   flex-shrink: 0;
 }
 
 .skeleton-cover {
   width: 88px;
   height: 88px;
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-md);
   flex-shrink: 0;
 }
 
@@ -109,12 +114,18 @@ const props = withDefaults(defineProps<{
 .skeleton-article {
   background: var(--color-card);
   padding: var(--spacing-lg);
+  border: 1.5px solid var(--color-border);
 }
 
 .skeleton-list-item {
   display: flex;
   align-items: center;
   gap: var(--spacing-md);
+  border-radius: 20px 8px 20px 8px;
+}
+
+.skeleton-list-item:nth-child(even) {
+  border-radius: 8px 20px 8px 20px;
 }
 
 .skeleton-lines {
@@ -128,6 +139,7 @@ const props = withDefaults(defineProps<{
   display: flex;
   flex-direction: column;
   gap: var(--spacing-sm);
+  border-radius: var(--radius-xl);
 }
 
 .skeleton-card-header {
@@ -140,6 +152,7 @@ const props = withDefaults(defineProps<{
 .skeleton-article {
   display: flex;
   gap: var(--spacing-md);
+  border-radius: var(--radius-xl);
 }
 
 .skeleton-article-body {
@@ -151,12 +164,19 @@ const props = withDefaults(defineProps<{
 }
 
 @keyframes skeletonPulse {
-  0%,
-  100% {
-    opacity: 1;
+  0%, 100% {
+    opacity: 0.55;
   }
   50% {
-    opacity: 0.55;
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton-line,
+  .skeleton-avatar,
+  .skeleton-cover {
+    animation: none;
   }
 }
 </style>

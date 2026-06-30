@@ -6,26 +6,27 @@ import { escapeHtml, sanitizeHtml } from '@/utils/sanitize'
 import { useHomeStore } from '@/stores/homeStore'
 import type { DiabetesTypeView } from '@/stores/homeStore'
 import type { Article, DiabetesType, DiabetesTypeDetail } from '@/types/api'
+import AppIcon from '@/components/icons/AppIcon.vue'
+import DiabetesIcon from '@/components/icons/DiabetesIcon.vue'
 
 const router = useRouter()
 const homeStore = useHomeStore()
 
-// 占位常量（与 store 内同名常量保持一致值；store 不暴露常量，故组件自带）
 const FALLBACK_ARTICLE_COVER = '/static/images/placeholder-article.svg'
 const FALLBACK_DOCTOR_AVATAR = '/static/images/placeholder-doctor.svg'
 
-// ===== 轮播 Banner（复刻 prototype banners 3 条） =====
 interface Banner {
   id: number
   title: string
   subtitle: string
-  gradientClass: string
+  stat: string
   icon: string
+  color: string
 }
 const banners: Banner[] = [
-  { id: 1, title: '科学控糖 · 智慧生活', subtitle: '个性化方案，从今天开始', gradientClass: 'banner-grad-1', icon: 'fa-heart-pulse' },
-  { id: 2, title: 'AI 医师 7×24 在线', subtitle: '专业咨询，触手可及', gradientClass: 'banner-grad-2', icon: 'fa-user-doctor' },
-  { id: 3, title: '每日打卡 · 健康相伴', subtitle: '记录每一份坚持', gradientClass: 'banner-grad-3', icon: 'fa-calendar-check' },
+  { id: 1, title: '科学控糖', subtitle: '个性化方案，从今天开始', stat: '7×24', icon: 'pulse', color: '#06D6A0' },
+  { id: 2, title: 'AI 医师在线', subtitle: '专业咨询，触手可及', stat: 'AI', icon: 'doctor-bag', color: '#FF6B6B' },
+  { id: 3, title: '每日健康打卡', subtitle: '记录每一份坚持', stat: '365', icon: 'medical-note', color: '#F59E0B' },
 ]
 const current = ref(0)
 let bannerTimer: ReturnType<typeof setInterval> | null = null
@@ -43,34 +44,32 @@ function stopAuto(): void {
   }
 }
 
-// ===== 派生展示数据 =====
 const doctors = computed(() => homeStore.doctors)
-const articles = computed(() => homeStore.articles.slice(0, 3)) // 取前 3 条（store 已取 3，二次保险）
+const articles = computed(() => homeStore.articles.slice(0, 3))
 const diabetesTypes = computed<DiabetesTypeView[]>(() => homeStore.diabetesTypes)
 
-// 阅读量/封面展示助手（直接取契约字段，无 read_count 兜底）
 const articleCover = (a: Article): string => a.cover || FALLBACK_ARTICLE_COVER
 const articleViews = (a: Article): number => a.views
 const articleSummary = (a: Article): string => a.summary
 
-// 按 id 选 4 组主色渐变 scoped 类（与原型 mock 4 色一致）
-function typeGradientClass(id: number): string {
+function typeStyle(id: number): { bg: string; accent: string } {
   const m = id % 4
-  if (m === 1) return 'type-grad-1'
-  if (m === 2) return 'type-grad-2'
-  if (m === 3) return 'type-grad-3'
-  return 'type-grad-4'
+  if (m === 1) return { bg: '#EEF2FF', accent: '#4F46E5' }
+  if (m === 2) return { bg: '#FFF0F0', accent: '#FF6B6B' }
+  if (m === 3) return { bg: '#E0FDF6', accent: '#06D6A0' }
+  return { bg: '#FEF3C7', accent: '#F59E0B' }
 }
 
-// 区块加载/错误态（供模板判定）
 const doctorsLoading = computed(() => homeStore.loading && doctors.value.length === 0 && !homeStore.doctorsError)
 const articlesLoading = computed(() => homeStore.loading && articles.value.length === 0 && !homeStore.articlesError)
 const typesLoading = computed(() => homeStore.loading && diabetesTypes.value.length === 0 && !homeStore.typesError)
 
-// ===== 跳转 =====
-function goDoctor(doc: { id: number }): void {
-  // 设计 4.3 节：首页点击医生卡片直达对话页 /consultation/doctor/:id
-  router.push('/consultation/doctor/' + doc.id)
+function goDoctor(doc?: { id: number }): void {
+  if (doc?.id) {
+    router.push('/consultation/doctor/' + doc.id)
+  } else {
+    router.push('/consultation')
+  }
 }
 function goArticle(id: number): void {
   if (!id) return
@@ -101,26 +100,21 @@ function onSearch(): void {
   })
 }
 
-// ===== 糖尿病类型弹层（SweetAlert2 + DOMPurify） =====
-// 列表项已含完整三段文本；按需拉详情（接口存在），失败回退列表项数据。
-// 单次 Swal.fire，不重弹、不 update。
 async function showDiabetesType(t: DiabetesType): Promise<void> {
   try {
     const detail = await homeStore.fetchDiabetesTypeDetail(t.id)
     const data: DiabetesTypeDetail = detail ?? t
     openTypeSwal(data)
   } catch {
-    // 接口失败回退到列表项数据（t 本身已含 pathogenesis/manifestation/treatment）
     openTypeSwal(t)
   }
 }
 
 function openTypeSwal(t: DiabetesTypeDetail): void {
-  // buildSection：纯文本段拼成带标签的 HTML 结构；DOMPurify 在最终 html 整体净化一次（不双重净化）。
   const buildSection = (label: string, body?: string): string =>
     body
-      ? `<h4 style="color:#4A90D9;font-size:15px;margin:12px 0 4px;text-align:left">${label}</h4>` +
-        `<p style="font-size:13px;line-height:1.6;color:#333;margin:0;text-align:left">${escapeHtml(body)}</p>`
+      ? `<h4 style="color:#4F46E5;font-size:15px;margin:14px 0 6px;text-align:left;font-weight:700">${label}</h4>` +
+        `<p style="font-size:13px;line-height:1.7;color:#4B5563;margin:0;text-align:left">${escapeHtml(body)}</p>`
       : ''
   const html = sanitizeHtml(
     `<div class="dt-modal">
@@ -133,16 +127,15 @@ function openTypeSwal(t: DiabetesTypeDetail): void {
     title: t.name || '糖尿病类型',
     html,
     confirmButtonText: '了解了',
+    confirmButtonColor: '#4F46E5',
     width: 340,
   })
 }
 
-// ===== img onerror 回退（占位资源缺失兜底） =====
 function hideImg(e: Event): void {
   ;(e.target as HTMLImageElement).style.display = 'none'
 }
 
-// ===== 区块重试（供降级 UI 调用） =====
 function retryDoctors(): void {
   void homeStore.retryDoctors()
 }
@@ -153,10 +146,9 @@ function retryTypes(): void {
   void homeStore.retryTypes()
 }
 
-// ===== 生命周期 =====
 onMounted(() => {
   startAuto()
-  void homeStore.fetchHomeData() // fire-and-forget；store 内部管 loading/error
+  void homeStore.fetchHomeData()
 })
 onUnmounted(() => {
   stopAuto()
@@ -165,19 +157,32 @@ onUnmounted(() => {
 
 <template>
   <div class="home-page page-enter">
-    <!-- A. 顶部 Header（sticky） -->
+    <!-- A. 顶部 Header -->
     <header class="home-header">
-      <div class="home-header-left">
-        <div class="home-logo"><i class="fa-solid fa-heart-pulse"></i></div>
-        <div>
-          <h1 class="home-title">糖尿病预治智能助手</h1>
-          <p class="home-subtitle">科学控糖 · 智慧生活</p>
-        </div>
+      <div class="header-shapes" aria-hidden="true">
+        <span class="shape-dot shape-dot-1"></span>
+        <span class="shape-dot shape-dot-2"></span>
+        <span class="shape-ring"></span>
       </div>
-      <!-- 搜索图标——功能占位（待后续迭代实现完整搜索），当前弹出 Toast 提示 -->
-      <button class="home-search-btn" aria-label="搜索" @click="onSearch">
-        <i class="fa-solid fa-magnifying-glass"></i>
-      </button>
+      <div class="home-header-inner">
+        <div class="home-header-left">
+          <div class="home-logo">
+            <DiabetesIcon name="diabetes" :size="20" color="#fff" />
+          </div>
+          <div>
+            <h1 class="home-title">糖尿病预治智能助手</h1>
+            <p class="home-subtitle">科学控糖 · 智慧生活</p>
+          </div>
+        </div>
+        <button class="home-search-btn" aria-label="搜索" @click="onSearch">
+          <AppIcon name="search" :size="16" />
+        </button>
+      </div>
+      <div class="header-wave" aria-hidden="true">
+        <svg viewBox="0 0 400 48" preserveAspectRatio="none">
+          <path d="M0,0 L0,20 Q100,48 200,20 T400,20 L400,0 Z" fill="var(--color-bg)" />
+        </svg>
+      </div>
     </header>
 
     <!-- B. 轮播 Banner -->
@@ -187,14 +192,29 @@ onUnmounted(() => {
           v-for="(b, i) in banners"
           :key="b.id"
           v-show="current === i"
-          :class="['banner-slide', 'banner-glow', b.gradientClass]"
+          class="banner-slide"
+          :style="{ '--banner-accent': b.color }"
         >
+          <div class="banner-shapes" aria-hidden="true">
+            <span class="banner-shape banner-shape-1"></span>
+            <span class="banner-shape banner-shape-2"></span>
+            <span class="banner-shape banner-shape-3"></span>
+          </div>
           <div class="banner-text">
+            <div class="banner-eyebrow">
+              <span class="data-dot-static"></span>
+              <span>智能健康监测</span>
+            </div>
             <h2 class="banner-title">{{ b.title }}</h2>
             <p class="banner-subtitle">{{ b.subtitle }}</p>
-            <button class="banner-cta" @click.stop="nextBanner">立即了解 →</button>
+            <button class="banner-cta" @click.stop="nextBanner">
+              立即了解 <AppIcon name="arrow-right" :size="10" />
+            </button>
           </div>
-          <i class="fa-solid banner-icon" :class="b.icon"></i>
+          <div class="banner-stat">
+            <span class="banner-stat-value font-mono">{{ b.stat }}</span>
+            <DiabetesIcon :name="b.icon" :size="52" color="rgba(255,255,255,0.25)" />
+          </div>
         </div>
         <div class="banner-dots">
           <span
@@ -208,30 +228,33 @@ onUnmounted(() => {
     </div>
 
     <!-- C. 专业医师团队 -->
-    <section class="home-section">
+    <section class="home-section stagger-item">
       <div class="section-head">
-        <h2 class="section-title">专业医师团队</h2>
-        <button class="section-link" @click="goDoctor">
-          查看全部 <i class="fa-solid fa-chevron-right"></i>
+        <div class="section-title-wrap">
+          <span class="section-icon-wrap section-icon-indigo">
+            <DiabetesIcon name="stethoscope" :size="16" color="#fff" />
+          </span>
+          <h2 class="section-title">专业医师团队</h2>
+        </div>
+        <button class="section-link" @click="() => goDoctor()">
+          查看全部 <AppIcon name="arrow-right" :size="10" />
         </button>
       </div>
 
-      <!-- 错误态 -->
       <div v-if="homeStore.doctorsError" class="block-empty">
         <p class="block-empty-text">医师列表加载失败</p>
         <button class="retry-btn" @click="retryDoctors">点击重试</button>
       </div>
-      <!-- 加载态 -->
       <div v-else-if="doctorsLoading" class="doctor-scroll">
         <div v-for="n in 3" :key="`ds-${n}`" class="doctor-skeleton"></div>
       </div>
-      <!-- 正常态 -->
       <div v-else-if="doctors.length === 0" class="block-empty">
         <p class="block-empty-text">暂无可咨询医师</p>
         <button class="retry-btn" @click="retryDoctors">点击重试</button>
       </div>
       <div v-else class="doctor-scroll">
         <div v-for="doc in doctors" :key="doc.id" class="doctor-card" @click="goDoctor(doc)">
+          <div class="doctor-card-bg" aria-hidden="true"></div>
           <div class="doctor-avatar-wrap">
             <div class="avatar-ring">
               <img
@@ -241,6 +264,7 @@ onUnmounted(() => {
                 @error="hideImg"
               />
             </div>
+            <span class="online-dot" aria-hidden="true"></span>
           </div>
           <p class="doctor-name">{{ doc.name }}</p>
           <p class="doctor-dept">{{ doc.department }}</p>
@@ -250,11 +274,16 @@ onUnmounted(() => {
     </section>
 
     <!-- D. 健康科普 -->
-    <section class="home-section">
+    <section class="home-section stagger-item">
       <div class="section-head">
-        <h2 class="section-title">健康科普</h2>
+        <div class="section-title-wrap">
+          <span class="section-icon-wrap section-icon-coral">
+            <DiabetesIcon name="medical-note" :size="16" color="#fff" />
+          </span>
+          <h2 class="section-title">健康科普</h2>
+        </div>
         <button class="section-link" @click="goNewsList">
-          更多 <i class="fa-solid fa-chevron-right"></i>
+          更多 <AppIcon name="arrow-right" :size="10" />
         </button>
       </div>
 
@@ -271,6 +300,7 @@ onUnmounted(() => {
       </div>
       <div v-else class="article-list">
         <article v-for="a in articles" :key="a.id" class="article-card" @click="goArticle(a.id)">
+          <span class="article-color-bar" aria-hidden="true"></span>
           <img class="article-cover" :src="articleCover(a)" :alt="a.title" @error="hideImg" />
           <div class="article-body">
             <div>
@@ -280,7 +310,7 @@ onUnmounted(() => {
             <div>
               <p v-if="articleSummary(a)" class="article-summary">{{ articleSummary(a) }}</p>
               <div class="article-meta">
-                <span><i class="fa-regular fa-eye"></i>{{ articleViews(a) }}</span>
+                <span><AppIcon name="eye" :size="12" />{{ articleViews(a) }}</span>
               </div>
             </div>
           </div>
@@ -289,12 +319,16 @@ onUnmounted(() => {
     </section>
 
     <!-- E. 糖尿病类型 -->
-    <section class="home-section">
+    <section class="home-section stagger-item">
       <div class="section-head">
-        <h2 class="section-title">糖尿病类型</h2>
-        <!-- 全部链接为预留入口，待后续迭代实现糖尿病类型列表页 -->
+        <div class="section-title-wrap">
+          <span class="section-icon-wrap section-icon-mint">
+            <DiabetesIcon name="pills" :size="16" color="#fff" />
+          </span>
+          <h2 class="section-title">糖尿病类型</h2>
+        </div>
         <span class="section-link-static">
-          全部 <i class="fa-solid fa-chevron-right"></i>
+          全部 <AppIcon name="arrow-right" :size="10" />
         </span>
       </div>
 
@@ -314,9 +348,10 @@ onUnmounted(() => {
           v-for="t in diabetesTypes"
           :key="t.id"
           class="type-card"
+          :style="{ background: typeStyle(t.id).bg, '--type-accent': typeStyle(t.id).accent }"
           @click="showDiabetesType(t)"
         >
-          <div :class="['type-cover-wrap', typeGradientClass(t.id)]">
+          <div class="type-cover-wrap">
             <img v-if="t.cover" class="type-cover" :src="t.cover" :alt="t.name" @error="hideImg" />
             <div class="type-cover-overlay"></div>
             <h3 class="type-name">{{ t.name }}</h3>
@@ -341,226 +376,385 @@ onUnmounted(() => {
   position: relative;
 }
 
-/* ============ Home 专属入场动画（在全局 fadeIn 基础上追加 translateY 上滑效果） ============ */
-.page-enter.home-page {
-  animation-name: pageEnterHome;
-  animation-duration: 0.4s;
-}
-
-@keyframes pageEnterHome {
-  from {
-    opacity: 0;
-    transform: translateY(8px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
 /* ============ A. Header ============ */
 .home-header {
-  background: var(--color-card);
-  padding: 48px var(--spacing-lg) 12px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
   position: sticky;
   top: 0;
   z-index: 30;
-  box-shadow: var(--shadow-sm);
+  background: var(--color-card);
+  padding: 48px var(--spacing-lg) 0;
+  overflow: hidden;
+  box-shadow: 0 2px 12px rgba(26, 26, 46, 0.04);
 }
+
+.header-shapes {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.shape-dot {
+  position: absolute;
+  border-radius: var(--radius-full);
+  background: var(--color-primary-soft);
+}
+
+.shape-dot-1 {
+  width: 12px;
+  height: 12px;
+  top: 24px;
+  right: 80px;
+}
+
+.shape-dot-2 {
+  width: 8px;
+  height: 8px;
+  top: 36px;
+  right: 64px;
+  background: var(--color-accent);
+}
+
+.shape-ring {
+  position: absolute;
+  width: 80px;
+  height: 80px;
+  top: -30px;
+  right: -24px;
+  border-radius: 24%;
+  border: 2px solid var(--color-primary-soft);
+  opacity: 0.5;
+  transform: rotate(15deg);
+}
+
+.home-header-inner {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 14px;
+}
+
 .home-header-left {
   display: flex;
   align-items: center;
   gap: var(--spacing-sm);
 }
+
 .home-logo {
-  width: 36px;
-  height: 36px;
-  background: linear-gradient(135deg, var(--color-primary-dark), var(--color-primary));
-  border-radius: var(--radius-lg);
+  width: 40px;
+  height: 40px;
+  background: var(--color-primary);
+  border-radius: 24%;
   display: flex;
   align-items: center;
   justify-content: center;
   color: #fff;
-  font-size: 16px;
   flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+  transform: rotate(3deg);
+  transition: transform var(--transition-fast);
 }
+
+.home-logo:active {
+  transform: rotate(0deg) scale(0.95);
+}
+
 .home-title {
-  font-size: 16px;
+  font-size: 17px;
   font-weight: 700;
   color: var(--color-text-primary);
   line-height: 1.25;
+  letter-spacing: -0.01em;
 }
+
 .home-subtitle {
-  font-size: 10px;
-  color: #94a3b8;
+  font-size: 11px;
+  color: var(--color-text-tertiary);
+  margin-top: 2px;
+  font-weight: 500;
 }
+
 .home-search-btn {
-  width: 36px;
-  height: 36px;
+  width: 40px;
+  height: 40px;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #64748b;
-  background: transparent;
-  border: none;
+  color: var(--color-text-secondary);
+  background: var(--color-bg);
+  border: 1.5px solid var(--color-divider);
+  border-radius: 24%;
   cursor: pointer;
-  transition: opacity var(--transition-fast);
+  transition: all var(--transition-fast);
   flex-shrink: 0;
 }
+
 .home-search-btn:active {
-  opacity: 0.6;
+  background: var(--color-primary-light);
+  color: var(--color-primary);
+  border-color: var(--color-primary-soft);
+}
+
+.header-wave {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 24px;
+  transform: translateY(1px);
+}
+
+.header-wave svg {
+  width: 100%;
+  height: 100%;
+  display: block;
 }
 
 /* ============ 区块通用 ============ */
 .home-section {
   padding: 0 var(--spacing-lg);
-  margin-top: 20px;
+  margin-top: 28px;
 }
+
 .section-head {
   display: flex;
   align-items: center;
   justify-content: space-between;
   margin-bottom: var(--spacing-md);
 }
+
+.section-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.section-icon-wrap {
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.section-icon-indigo {
+  background: var(--color-primary);
+}
+
+.section-icon-coral {
+  background: var(--color-vivid);
+}
+
+.section-icon-mint {
+  background: var(--color-accent);
+}
+
 .section-title {
-  font-size: 16px;
+  font-size: var(--font-size-h3);
   font-weight: 700;
   color: var(--color-text-primary);
+  letter-spacing: -0.01em;
 }
+
 .section-link {
-  font-size: 12px;
-  color: var(--color-primary);
+  font-size: var(--font-size-caption);
+  color: var(--color-text-secondary);
   display: flex;
   align-items: center;
   background: transparent;
   border: none;
   cursor: pointer;
-  transition: opacity var(--transition-fast);
+  transition: color var(--transition-fast);
+  font-weight: 600;
 }
+
 .section-link:active {
-  opacity: 0.6;
-}
-.section-link i {
-  margin-left: 4px;
-  font-size: 10px;
-}
-.section-link-static {
-  font-size: 12px;
   color: var(--color-primary);
+}
+
+.section-link .app-icon {
+  margin-left: 4px;
+}
+
+.section-link-static {
+  font-size: var(--font-size-caption);
+  color: var(--color-text-tertiary);
   display: flex;
   align-items: center;
+  font-weight: 600;
 }
-.section-link-static i {
+
+.section-link-static .app-icon {
   margin-left: 4px;
-  font-size: 10px;
 }
 
 /* ============ B. Banner ============ */
 .home-banner-wrap {
   padding: 0 var(--spacing-lg);
-  margin-top: var(--spacing-md);
+  margin-top: var(--spacing-lg);
 }
+
 .banner-frame {
   position: relative;
-  border-radius: 16px;
+  border-radius: var(--radius-3xl);
   overflow: hidden;
-  height: 144px;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.06);
+  height: 168px;
+  background: var(--color-primary);
   cursor: pointer;
+  box-shadow: var(--shadow-primary);
 }
+
 .banner-slide {
   position: absolute;
   inset: 0;
   display: flex;
   align-items: center;
+  justify-content: space-between;
   padding: 0 24px;
   color: #fff;
   transition: opacity 0.5s ease;
 }
-/* 3 组渐变（对齐 prototype banners） */
-.banner-grad-1 {
-  background: linear-gradient(135deg, var(--color-primary-dark) 0%, var(--color-primary) 50%, var(--color-primary) 100%);
-}
-.banner-grad-2 {
-  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 50%, var(--color-primary) 100%);
-}
-.banner-grad-3 {
-  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary) 50%, var(--color-primary-dark) 100%);
-}
-.banner-glow {
-  position: relative;
-}
-.banner-glow::after {
-  content: '';
+
+.banner-shapes {
   position: absolute;
   inset: 0;
   pointer-events: none;
-  background: radial-gradient(circle at 80% 20%, rgba(255, 255, 255, 0.25), transparent 60%);
-  animation: bannerGlow 3s ease-in-out infinite alternate;
+  overflow: hidden;
 }
-@keyframes bannerGlow {
-  from {
-    opacity: 0.4;
-  }
-  to {
-    opacity: 0.9;
-  }
+
+.banner-shape {
+  position: absolute;
+  border-radius: 24%;
 }
+
+.banner-shape-1 {
+  width: 120px;
+  height: 120px;
+  background: var(--color-vivid);
+  opacity: 0.2;
+  top: -40px;
+  right: -20px;
+  transform: rotate(15deg);
+}
+
+.banner-shape-2 {
+  width: 80px;
+  height: 80px;
+  background: var(--color-accent);
+  opacity: 0.25;
+  bottom: -20px;
+  left: 40%;
+  transform: rotate(-10deg);
+}
+
+.banner-shape-3 {
+  width: 48px;
+  height: 48px;
+  background: var(--color-amber);
+  opacity: 0.2;
+  top: 30px;
+  left: 30px;
+  border-radius: 30%;
+}
+
 .banner-text {
   position: relative;
   z-index: 10;
   flex: 1;
+  min-width: 0;
 }
+
+.banner-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--font-size-xs);
+  font-weight: 700;
+  color: var(--color-accent);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 8px;
+  background: rgba(255, 255, 255, 0.12);
+  padding: 3px 8px;
+  border-radius: var(--radius-tag);
+}
+
 .banner-title {
-  font-size: 20px;
+  font-size: 24px;
   font-weight: 700;
   margin-bottom: 4px;
+  letter-spacing: -0.02em;
 }
+
 .banner-subtitle {
-  font-size: 14px;
-  color: rgba(255, 255, 255, 0.8);
+  font-size: var(--font-size-caption);
+  color: rgba(255, 255, 255, 0.75);
   margin-bottom: var(--spacing-md);
+  font-weight: 500;
 }
+
 .banner-cta {
-  background: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.3);
   backdrop-filter: blur(4px);
   color: #fff;
-  font-size: 12px;
-  font-weight: 500;
-  padding: 6px 16px;
-  border-radius: var(--radius-full);
-  border: none;
+  font-size: var(--font-size-caption);
+  font-weight: 700;
+  padding: 8px 16px;
+  border-radius: var(--radius-button);
   cursor: pointer;
+  transition: all var(--transition-fast);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
 }
-.banner-icon {
+
+.banner-cta:active {
+  background: rgba(255, 255, 255, 0.25);
+}
+
+.banner-stat {
   position: relative;
   z-index: 10;
-  font-size: 60px;
-  color: rgba(255, 255, 255, 0.2);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: var(--spacing-sm);
 }
+
+.banner-stat-value {
+  font-size: 34px;
+  font-weight: 700;
+  color: var(--color-accent);
+  line-height: 1;
+  text-shadow: 0 0 20px rgba(6, 214, 160, 0.45);
+}
+
 .banner-dots {
   position: absolute;
-  bottom: 12px;
+  bottom: 14px;
   left: 50%;
   transform: translateX(-50%);
   display: flex;
   gap: 6px;
   z-index: 20;
 }
+
 .swiper-dot {
   height: 6px;
   width: 6px;
   border-radius: var(--radius-full);
-  background: rgba(255, 255, 255, 0.5);
+  background: rgba(255, 255, 255, 0.35);
   cursor: pointer;
   transition: width 0.3s ease, background 0.3s ease;
 }
+
 .swiper-dot.active {
-  width: 16px;
-  background: rgba(255, 255, 255, 0.95);
+  width: 20px;
+  border-radius: var(--radius-full);
+  background: var(--color-accent);
 }
 
 /* ============ C. 医师团队 ============ */
@@ -575,76 +769,102 @@ onUnmounted(() => {
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
+
 .doctor-scroll::-webkit-scrollbar {
   display: none;
 }
+
 .doctor-card {
+  position: relative;
   background: var(--color-card);
-  border-radius: 16px;
+  border-radius: var(--radius-3xl);
   padding: var(--spacing-md);
   min-width: 140px;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.06);
+  border: 1.5px solid var(--color-border);
+  box-shadow: var(--shadow-sm);
   flex-shrink: 0;
   cursor: pointer;
-  transition: transform 0.12s ease, box-shadow 0.12s ease;
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+  overflow: hidden;
 }
+
+.doctor-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 46px;
+  background: var(--color-primary-light);
+  border-radius: var(--radius-3xl) var(--radius-3xl) 0 0;
+}
+
 .doctor-card:active {
-  transform: scale(0.97);
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
 }
+
 .doctor-avatar-wrap {
   position: relative;
   width: 64px;
   height: 64px;
   margin: 0 auto var(--spacing-sm);
+  z-index: 1;
 }
+
 .avatar-ring {
   width: 100%;
   height: 100%;
-  border-radius: var(--radius-full);
+  border-radius: 30%;
   padding: 2px;
-  background: linear-gradient(135deg, #4a90d9, #38bdf8);
-  box-shadow: 0 0 0 0 rgba(74, 144, 217, 0.4);
-  animation: avatarRing 2.4s ease-in-out infinite;
+  background: var(--color-primary);
 }
+
 .avatar-ring > .doctor-avatar {
   width: 100%;
   height: 100%;
   border: 2px solid #fff;
-  border-radius: var(--radius-full);
+  border-radius: 28%;
   object-fit: cover;
-  background: #f1f5f9;
+  background: var(--color-bg);
 }
-@keyframes avatarRing {
-  0%,
-  100% {
-    box-shadow: 0 0 0 0 rgba(74, 144, 217, 0.45);
-  }
-  50% {
-    box-shadow: 0 0 0 6px rgba(74, 144, 217, 0);
-  }
+
+.online-dot {
+  position: absolute;
+  bottom: 2px;
+  right: 2px;
+  width: 12px;
+  height: 12px;
+  border-radius: var(--radius-full);
+  background: var(--color-success);
+  border: 2px solid #fff;
+  animation: dataPulse 2s ease-in-out infinite;
 }
+
 .doctor-name {
   text-align: center;
   font-weight: 700;
-  font-size: 14px;
+  font-size: var(--font-size-body);
   color: var(--color-text-primary);
 }
+
 .doctor-dept {
   text-align: center;
-  font-size: 11px;
+  font-size: var(--font-size-xs);
   color: var(--color-text-secondary);
   margin-top: 2px;
 }
+
 .doctor-title {
   display: block;
   text-align: center;
-  font-size: 10px;
+  font-size: var(--font-size-xs);
   color: var(--color-primary);
   background: var(--color-primary-light);
-  padding: 2px var(--spacing-sm);
-  border-radius: var(--radius-full);
+  padding: 3px var(--spacing-sm);
+  border-radius: var(--radius-tag);
   margin-top: 6px;
+  font-weight: 600;
 }
 
 /* ============ D. 健康科普 ============ */
@@ -653,28 +873,45 @@ onUnmounted(() => {
   flex-direction: column;
   gap: var(--spacing-md);
 }
+
 .article-card {
+  position: relative;
   background: var(--color-card);
-  border-radius: 16px;
+  border-radius: var(--radius-xl);
   padding: var(--spacing-md);
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.06);
+  border: 1.5px solid var(--color-border);
+  box-shadow: var(--shadow-sm);
   display: flex;
   gap: var(--spacing-md);
   cursor: pointer;
-  transition: transform 0.12s ease, box-shadow 0.12s ease;
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+  overflow: hidden;
 }
+
 .article-card:active {
-  transform: scale(0.97);
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+  transform: scale(0.98);
+  box-shadow: var(--shadow-md);
 }
+
+.article-color-bar {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 5px;
+  background: var(--color-vivid);
+  border-radius: var(--radius-xl) 0 0 var(--radius-xl);
+}
+
 .article-cover {
-  width: 80px;
-  height: 80px;
-  border-radius: var(--radius-lg);
+  width: 88px;
+  height: 88px;
+  border-radius: var(--radius-md);
   object-fit: cover;
   flex-shrink: 0;
   background: var(--color-divider);
 }
+
 .article-body {
   flex: 1;
   min-width: 0;
@@ -682,28 +919,33 @@ onUnmounted(() => {
   flex-direction: column;
   justify-content: space-between;
 }
+
 .article-category {
-  font-size: 10px;
-  color: var(--color-primary);
-  background: var(--color-primary-light);
-  padding: 2px var(--spacing-sm);
-  border-radius: var(--radius-full);
+  font-size: var(--font-size-xs);
+  color: var(--color-vivid-dark);
+  background: var(--color-vivid-light);
+  padding: 2px 8px;
+  border-radius: var(--radius-tag);
   align-self: flex-start;
+  font-weight: 600;
 }
+
 .article-title {
-  font-size: 14px;
+  font-size: var(--font-size-body);
   font-weight: 700;
   color: var(--color-text-primary);
-  margin-top: 4px;
+  margin-top: 6px;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
-  line-height: 1.35;
+  line-height: 1.4;
+  letter-spacing: -0.01em;
 }
+
 .article-summary {
-  font-size: 11px;
-  color: #94a3b8;
+  font-size: var(--font-size-xs);
+  color: var(--color-text-tertiary);
   margin-top: 4px;
   margin-bottom: 4px;
   display: -webkit-box;
@@ -711,14 +953,17 @@ onUnmounted(() => {
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
+
 .article-meta {
   display: flex;
   align-items: center;
   gap: var(--spacing-md);
-  font-size: 11px;
-  color: #94a3b8;
+  font-size: var(--font-size-xs);
+  color: var(--color-text-tertiary);
+  font-family: var(--font-mono);
 }
-.article-meta i {
+
+.article-meta .app-icon {
   margin-right: 2px;
 }
 
@@ -728,61 +973,78 @@ onUnmounted(() => {
   grid-template-columns: repeat(2, 1fr);
   gap: var(--spacing-md);
 }
+
 .type-card {
+  position: relative;
   background: var(--color-card);
-  border-radius: 16px;
+  border-radius: var(--radius-asymmetric);
   overflow: hidden;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.06);
+  border: 1.5px solid var(--color-border);
+  box-shadow: var(--shadow-sm);
   cursor: pointer;
-  transition: transform 0.12s ease, box-shadow 0.12s ease;
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
 }
+
+.type-card:nth-child(even) {
+  border-radius: var(--radius-asymmetric-alt);
+}
+
 .type-card:active {
-  transform: scale(0.97);
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+  transform: translateY(-2px) scale(0.98);
+  box-shadow: var(--shadow-md);
 }
+
+.type-card::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 48px;
+  height: 48px;
+  background: var(--type-accent, var(--color-primary));
+  opacity: 0.1;
+  border-radius: 0 0 0 40px;
+}
+
 .type-cover-wrap {
-  height: 80px;
+  height: 88px;
   overflow: hidden;
   position: relative;
+  background: var(--type-accent, var(--color-primary));
 }
-/* 4 组渐变（对齐 prototype diabetesTypes color） */
-.type-grad-1 {
-  background: linear-gradient(135deg, #3b82f6, #6366f1);
-}
-.type-grad-2 {
-  background: linear-gradient(135deg, #0ea5e9, #06b6d4);
-}
-.type-grad-3 {
-  background: linear-gradient(135deg, #ec4899, #f43f5e);
-}
-.type-grad-4 {
-  background: linear-gradient(135deg, #8b5cf6, #a855f7);
-}
+
 .type-cover {
   width: 100%;
   height: 100%;
   object-fit: cover;
   display: block;
+  opacity: 0.9;
 }
+
 .type-cover-overlay {
   position: absolute;
   inset: 0;
-  background: linear-gradient(to top, rgba(0, 0, 0, 0.55), transparent);
+  background: linear-gradient(to top, rgba(26, 26, 46, 0.75), transparent);
 }
+
 .type-name {
   position: absolute;
   bottom: var(--spacing-sm);
   left: var(--spacing-md);
   color: #fff;
   font-weight: 700;
-  font-size: 14px;
+  font-size: var(--font-size-body);
   z-index: 2;
+  letter-spacing: -0.01em;
 }
+
 .type-brief-wrap {
   padding: 10px;
+  background: var(--color-card);
 }
+
 .type-brief {
-  font-size: 11px;
+  font-size: var(--font-size-xs);
   color: var(--color-text-secondary);
   line-height: 1.6;
   display: -webkit-box;
@@ -791,7 +1053,7 @@ onUnmounted(() => {
   overflow: hidden;
 }
 
-/* ============ 骨架屏（pulse 动画） ============ */
+/* ============ 骨架屏 ============ */
 .doctor-skeleton,
 .article-skeleton,
 .type-skeleton {
@@ -799,25 +1061,27 @@ onUnmounted(() => {
   border-radius: var(--radius-md);
   animation: skeletonPulse 1.4s ease-in-out infinite;
 }
+
 @keyframes skeletonPulse {
-  0%,
-  100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.5;
-  }
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
 }
+
 .doctor-skeleton {
   min-width: 140px;
   height: 180px;
   flex-shrink: 0;
+  border-radius: var(--radius-3xl);
 }
+
 .article-skeleton {
-  height: 96px;
+  height: 104px;
+  border-radius: var(--radius-xl);
 }
+
 .type-skeleton {
-  height: 130px;
+  height: 138px;
+  border-radius: var(--radius-asymmetric);
 }
 
 /* ============ 空态/错误态 ============ */
@@ -825,17 +1089,29 @@ onUnmounted(() => {
   padding: 32px 0;
   text-align: center;
 }
+
 .block-empty-text {
-  font-size: 13px;
+  font-size: var(--font-size-caption);
   color: var(--color-text-secondary);
   margin-bottom: var(--spacing-sm);
 }
+
 .retry-btn {
   color: var(--color-primary);
-  font-size: 12px;
+  font-size: var(--font-size-caption);
   text-decoration: underline;
   background: transparent;
   border: none;
   cursor: pointer;
+  font-weight: 600;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .online-dot,
+  .doctor-skeleton,
+  .article-skeleton,
+  .type-skeleton {
+    animation: none;
+  }
 }
 </style>

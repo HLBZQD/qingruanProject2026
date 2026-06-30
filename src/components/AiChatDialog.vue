@@ -3,6 +3,8 @@ import { ref, computed, nextTick, onMounted, onUnmounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useChatStore } from '@/stores/chatStore'
 import { useAuthStore } from '@/stores/authStore'
+import AppIcon from '@/components/icons/AppIcon.vue'
+import DiabetesIcon from '@/components/icons/DiabetesIcon.vue'
 import DisclaimerBar from './DisclaimerBar.vue'
 import { renderMarkdown } from '@/composables/useMarkdown'
 import { hasAcceptedDisclaimer, showDisclaimer, setDisclaimerAccepted } from '@/composables/useUI'
@@ -109,10 +111,13 @@ onUnmounted(() => {
       <div class="dialog-panel">
         <header class="dialog-header">
           <button class="btn-back" aria-label="关闭" @click="closeDialog">
-            <i class="fas fa-chevron-down" aria-hidden="true"></i>
+            <AppIcon name="chevron-right" :size="18" class="icon-rotate" />
           </button>
           <div class="dialog-title">
-            <i class="fas fa-robot title-icon" aria-hidden="true"></i>
+            <div class="title-icon">
+              <DiabetesIcon name="doctor-bag" :size="22" color="#fff" />
+              <span class="title-dot" aria-hidden="true"></span>
+            </div>
             <div>
               <h3>AI 智能助手</h3>
               <p class="title-sub">小糖 · 7×24 在线</p>
@@ -124,7 +129,7 @@ onUnmounted(() => {
             aria-label="清空对话"
             @click="chatStore.clearAssistantConversation(); chatStore.clearMessages()"
           >
-            <i class="fas fa-trash-alt" aria-hidden="true"></i>
+            <AppIcon name="trash" :size="18" />
           </button>
         </header>
 
@@ -133,7 +138,8 @@ onUnmounted(() => {
           <!-- 未登录引导 -->
           <div v-if="!isLoggedIn" id="fab-login-prompt" class="login-prompt">
             <div class="welcome-avatar">
-              <i class="fas fa-robot" aria-hidden="true"></i>
+              <DiabetesIcon name="doctor-bag" :size="34" color="#fff" />
+              <span class="welcome-dot" aria-hidden="true"></span>
             </div>
             <h3>欢迎使用 AI 智能助手</h3>
             <p>登录后即可享受个性化健康咨询、方案推荐与数据分析服务。</p>
@@ -144,7 +150,8 @@ onUnmounted(() => {
           <template v-else>
             <div v-if="messages.length === 0" id="fab-welcome-logged-in" class="welcome-area">
               <div class="welcome-avatar">
-                <i class="fas fa-robot" aria-hidden="true"></i>
+                <DiabetesIcon name="doctor-bag" :size="34" color="#fff" />
+                <span class="welcome-dot" aria-hidden="true"></span>
               </div>
               <h3>您好，我是小糖</h3>
               <p>我可以帮您查询健康记录、生成饮食运动方案、分析糖尿病风险等。</p>
@@ -161,7 +168,7 @@ onUnmounted(() => {
             </div>
 
             <div
-              v-for="msg in messages"
+              v-for="(msg, idx) in messages"
               :key="msg.id"
               :class="['message-bubble', msg.role === 'user' ? 'sent' : 'received']"
             >
@@ -199,7 +206,7 @@ onUnmounted(() => {
             aria-label="发送"
             @click="handleSend"
           >
-            <i class="fas fa-paper-plane" aria-hidden="true"></i>
+            <AppIcon name="send" :size="18" color="#fff" />
           </button>
         </div>
       </div>
@@ -220,7 +227,8 @@ onUnmounted(() => {
 .dialog-overlay {
   position: absolute;
   inset: 0;
-  background: rgba(0, 0, 0, 0.45);
+  background: rgba(26, 26, 46, 0.55);
+  backdrop-filter: blur(2px);
 }
 
 .dialog-panel {
@@ -232,11 +240,26 @@ onUnmounted(() => {
   height: 85vh;
   max-height: 720px;
   background: var(--color-bg);
-  border-radius: 20px 20px 0 0;
+  border-radius: 28px 28px 0 0;
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 -8px 32px rgba(26, 26, 46, 0.2);
+  border: 1.5px solid var(--color-border);
+  border-bottom: none;
+}
+
+.dialog-panel::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 64px;
+  height: 4px;
+  background: var(--color-divider);
+  border-radius: 0 0 var(--radius-full) var(--radius-full);
+  z-index: 10;
 }
 
 .dialog-header {
@@ -245,7 +268,7 @@ onUnmounted(() => {
   gap: var(--spacing-md);
   padding: var(--spacing-md) var(--spacing-lg);
   background: var(--color-card);
-  border-bottom: 1px solid var(--color-divider);
+  border-bottom: 1.5px solid var(--color-divider);
   flex-shrink: 0;
 }
 
@@ -260,20 +283,30 @@ onUnmounted(() => {
   border: none;
   color: var(--color-text-secondary);
   font-size: var(--font-size-body);
-  border-radius: var(--radius-full);
+  border-radius: 30%;
   cursor: pointer;
-  transition: background var(--transition-fast);
+  transition: background var(--transition-fast), color var(--transition-fast);
   flex-shrink: 0;
+}
+
+.btn-back:hover,
+.btn-clear:hover {
+  background: var(--color-primary-light);
+  color: var(--color-primary);
 }
 
 .btn-back:active,
 .btn-clear:active {
-  background: var(--color-bg);
+  background: var(--color-primary-light);
 }
 
 .btn-clear:disabled {
   opacity: 0.4;
   cursor: not-allowed;
+}
+
+.btn-back .icon-rotate {
+  transform: rotate(90deg);
 }
 
 .dialog-title {
@@ -285,16 +318,29 @@ onUnmounted(() => {
 }
 
 .title-icon {
-  width: 36px;
-  height: 36px;
-  border-radius: var(--radius-full);
-  background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark));
+  position: relative;
+  width: 42px;
+  height: 42px;
+  border-radius: 28%;
+  background: var(--color-primary);
   color: #fff;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 16px;
   flex-shrink: 0;
+  box-shadow: var(--shadow-primary);
+  transform: rotate(3deg);
+}
+
+.title-dot {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 6px;
+  height: 6px;
+  border-radius: var(--radius-full);
+  background: var(--color-accent);
+  animation: dataPulse 2s ease-in-out infinite;
 }
 
 .dialog-title h3 {
@@ -330,16 +376,29 @@ onUnmounted(() => {
 }
 
 .welcome-avatar {
-  width: 64px;
-  height: 64px;
-  border-radius: var(--radius-full);
-  background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark));
+  position: relative;
+  width: 72px;
+  height: 72px;
+  border-radius: 30%;
+  background: var(--color-primary);
   color: #fff;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 28px;
   margin-bottom: var(--spacing-md);
+  box-shadow: var(--shadow-primary);
+  transform: rotate(3deg);
+}
+
+.welcome-dot {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 8px;
+  height: 8px;
+  border-radius: var(--radius-full);
+  background: var(--color-accent);
+  animation: dataPulse 2s ease-in-out infinite;
 }
 
 .login-prompt h3,
@@ -360,19 +419,21 @@ onUnmounted(() => {
 }
 
 .btn-login {
-  padding: 10px 28px;
+  padding: 11px 30px;
   border-radius: var(--radius-button);
   background: var(--color-primary);
   color: #fff;
   font-size: var(--font-size-body);
-  font-weight: 600;
+  font-weight: 700;
   border: none;
   cursor: pointer;
-  transition: transform var(--transition-fast);
+  transition: background var(--transition-fast), transform var(--transition-fast);
+  box-shadow: var(--shadow-primary);
 }
 
 .btn-login:active {
-  transform: scale(0.96);
+  transform: scale(0.97);
+  box-shadow: var(--shadow-md);
 }
 
 .quick-questions {
@@ -385,18 +446,31 @@ onUnmounted(() => {
 
 .quick-chip {
   padding: 8px 14px;
-  border-radius: var(--radius-full);
+  border-radius: var(--radius-button);
   background: var(--color-card);
-  border: 1px solid var(--color-divider);
+  border: 1.5px solid var(--color-border);
   color: var(--color-primary);
-  font-size: 12px;
+  font-size: var(--font-size-caption);
+  font-weight: 600;
   cursor: pointer;
-  transition: background var(--transition-fast), transform var(--transition-fast);
+  transition: background var(--transition-fast), transform var(--transition-fast), border-color var(--transition-fast);
+}
+
+.quick-chip:nth-child(2) {
+  color: var(--color-accent-dark);
+  border-color: var(--color-accent-light);
+  background: var(--color-accent-light);
+}
+
+.quick-chip:nth-child(3) {
+  color: var(--color-vivid-dark);
+  border-color: var(--color-vivid-light);
+  background: var(--color-vivid-light);
 }
 
 .quick-chip:active {
-  background: var(--color-primary-light);
   transform: scale(0.97);
+  filter: brightness(0.97);
 }
 
 .message-bubble {
@@ -431,24 +505,28 @@ onUnmounted(() => {
 .msg-name {
   font-size: 11px;
   color: var(--color-text-secondary);
+  font-weight: 600;
 }
 
 .msg-time {
   font-size: 10px;
   color: var(--color-text-tertiary);
+  font-family: var(--font-mono);
 }
 
 .msg-content {
-  padding: 10px 14px;
+  padding: 11px 15px;
   font-size: var(--font-size-body);
-  line-height: 1.5;
+  line-height: 1.55;
   word-break: break-word;
-  border-radius: var(--radius-md);
 }
 
 /* G19: Markdown 子元素排版穿透 */
 .msg-content :deep(p) {
   margin-bottom: var(--spacing-sm);
+}
+.msg-content :deep(p):last-child {
+  margin-bottom: 0;
 }
 .msg-content :deep(ul),
 .msg-content :deep(ol) {
@@ -461,42 +539,44 @@ onUnmounted(() => {
 .msg-content :deep(code) {
   padding: 2px 6px;
   border-radius: var(--radius-sm);
-  background: var(--color-bg);
-  font-family: var(--font-family);
+  background: rgba(79, 70, 229, 0.08);
+  font-family: var(--font-mono);
   font-size: 13px;
 }
 .msg-content :deep(blockquote) {
-  border-left: 3px solid var(--color-primary-light);
+  border-left: 3px solid var(--color-accent);
   padding-left: var(--spacing-md);
   margin: var(--spacing-sm) 0;
   color: var(--color-text-secondary);
 }
 .msg-content :deep(strong) {
   color: var(--color-text-primary);
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .message-bubble.sent .msg-content {
   background: var(--color-primary);
   color: #fff;
-  border-radius: var(--radius-md) 4px var(--radius-md) var(--radius-md);
+  border-radius: 18px 6px 18px 18px;
 }
 
 .message-bubble.received .msg-content {
   background: var(--color-card);
   color: var(--color-text-primary);
-  border-radius: 4px var(--radius-md) var(--radius-md) var(--radius-md);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+  border-radius: 6px 18px 18px 18px;
+  box-shadow: var(--shadow-sm);
+  border: 1.5px solid var(--color-border);
 }
 
 .typing-indicator {
   display: flex;
   gap: 4px;
-  padding: 10px 14px;
+  padding: 11px 15px;
   align-self: flex-start;
   background: var(--color-card);
-  border-radius: 4px var(--radius-md) var(--radius-md) var(--radius-md);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+  border-radius: 6px 18px 18px 18px;
+  box-shadow: var(--shadow-sm);
+  border: 1.5px solid var(--color-border);
 }
 
 .typing-indicator span {
@@ -525,48 +605,54 @@ onUnmounted(() => {
   gap: var(--spacing-sm);
   padding: var(--spacing-md) var(--spacing-lg) calc(var(--spacing-md) + env(safe-area-inset-bottom));
   background: var(--color-card);
-  border-top: 1px solid var(--color-divider);
+  border-top: 1.5px solid var(--color-divider);
   flex-shrink: 0;
 }
 
 .dialog-input input {
   flex: 1;
-  padding: 11px 14px;
-  border: 1px solid var(--color-divider);
-  border-radius: var(--radius-full);
+  padding: 11px 16px;
+  border: 1.5px solid var(--color-border);
+  border-radius: 20px 8px 20px 8px;
   font-size: var(--font-size-body);
   outline: none;
   background: var(--color-bg);
   color: var(--color-text-primary);
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
 }
 
 .dialog-input input:focus {
   border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
 }
 
 .btn-send {
-  width: 42px;
-  height: 42px;
+  width: 46px;
+  height: 46px;
   display: flex;
   align-items: center;
   justify-content: center;
   background: var(--color-primary);
   color: #fff;
   border: none;
-  border-radius: var(--radius-full);
-  font-size: 16px;
+  border-radius: 28%;
   cursor: pointer;
   flex-shrink: 0;
-  transition: transform var(--transition-fast), opacity var(--transition-fast);
+  transition: transform var(--transition-fast), opacity var(--transition-fast), background var(--transition-fast);
+  box-shadow: var(--shadow-primary);
+  transform: rotate(3deg);
 }
 
 .btn-send:active:not(:disabled) {
-  transform: scale(0.94);
+  transform: rotate(0deg) scale(0.94);
+  box-shadow: var(--shadow-md);
 }
 
 .btn-send:disabled {
   background: var(--color-divider);
   cursor: not-allowed;
+  box-shadow: none;
+  transform: none;
 }
 
 /* 过渡动画 */
@@ -593,8 +679,15 @@ onUnmounted(() => {
 @media (min-width: 768px) {
   .dialog-panel {
     height: 70vh;
-    border-radius: 20px;
+    border-radius: 28px;
     margin-bottom: 24px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .title-dot,
+  .welcome-dot {
+    animation: none;
   }
 }
 </style>

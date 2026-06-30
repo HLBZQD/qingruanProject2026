@@ -9,6 +9,7 @@ import SkeletonLoader from '@/components/SkeletonLoader.vue'
 import ErrorRetry from '@/components/ErrorRetry.vue'
 import EmptyState from '@/components/EmptyState.vue'
 import DisclaimerBar from '@/components/DisclaimerBar.vue'
+import AppIcon from '@/components/icons/AppIcon.vue'
 
 const router = useRouter()
 const chatStore = useChatStore()
@@ -87,7 +88,7 @@ onMounted(() => {
   <div class="health-advice-container">
     <header class="top-bar">
       <button class="btn-back" aria-label="返回" @click="goBack">
-        <i class="fas fa-arrow-left" aria-hidden="true"></i>
+        <AppIcon name="arrow-left" :size="18" />
       </button>
       <h1>健康建议</h1>
       <div class="placeholder"></div>
@@ -108,7 +109,7 @@ onMounted(() => {
     <!-- 空态 -->
     <EmptyState
       v-else-if="adviceList.length === 0 && !loading"
-      icon="fa-lightbulb"
+      icon="lightbulb"
       title="还没有健康建议"
       description="去 AI 助手对话中获取您的个性化健康建议吧。"
       action-text="打开 AI 助手"
@@ -126,11 +127,12 @@ onMounted(() => {
         <div class="advice-header" @click="toggleExpand(item.id)">
           <div class="advice-title-row">
             <h3 class="advice-title">{{ item.title }}</h3>
-            <i
-              class="fas fa-chevron-down expand-icon"
-              :class="{ rotated: expandedId === item.id }"
-              aria-hidden="true"
-            ></i>
+          <AppIcon
+            name="chevron-down"
+            :size="12"
+            class="expand-icon"
+            :class="{ rotated: expandedId === item.id }"
+          />
           </div>
           <div class="advice-tags">
             <span v-for="(tag, idx) in item.tags" :key="idx" class="tag">{{ tag }}</span>
@@ -154,7 +156,7 @@ onMounted(() => {
           :disabled="loading"
           @click="loadMore"
         >
-          <i v-if="loading" class="fas fa-spinner fa-spin" aria-hidden="true"></i>
+          <AppIcon v-if="loading" name="spinner" :size="14" class="is-spinning" />
           {{ loading ? '加载中...' : '加载更多' }}
         </button>
         <p v-else class="no-more">已经到底啦</p>
@@ -330,6 +332,19 @@ onMounted(() => {
 
 .no-more {
   color: var(--color-text-disabled);
+}
+
+.is-spinning {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 /* 展开动画 */
