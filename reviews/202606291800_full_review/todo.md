@@ -436,3 +436,98 @@
 | **P1 本迭代** | 6 | S1（dead code）、S2（AiChatDialog综合）、S5（SQL注入）、S6（加密密钥）、S10（BC三缺陷）、S11（SSE 401无重定向） |
 | **P2 下迭代** | 8 | S4（DOM属性）、S3（DisclaimerBar）、S12（onUnmounted）、S7-S16等 |
 | **P3 后续优化** | 33 | 所有一般问题 |
+
+---
+
+## 实现计划与进度追踪
+
+> 审议式实现流程（deliberative-implementation）进行中
+> 实现分支：`202606301800_fix_review_issues`
+> 实现目录：`implements/202606301800_fix_review_issues/`
+
+### 批次 1 — P0 功能性断裂修复 ✅ 已完成
+
+- [x] **S7** ArticleDetailView.vue — `fetchArticle()` 在 `onMounted` 中调用
+- [x] **S8** DoctorChatView.vue — 补充 SkeletonLoader/ErrorRetry/EmptyState 组件导入 + ConversationHistoryItem 类型导入
+- [x] **S9** authStore.clearAuth() — 清理链补充 chatStore.clearAllConversations() + riskFormStore.reset()
+
+### 批次 2 — P1 设计合规修复 ✅ 已完成
+
+- [x] **S1** App.vue — 删除 handleStorageChange + storage 事件监听器
+- [x] **S2** AiChatDialog.vue — 4项综合修复（DOM id / XSS管道 / 免责声明 / Markdown 渲染）
+
+### 批次 3 — P1 后端安全缺陷 ✅ 已完成
+
+- [x] **S5** admin.js — SQL 注入修复（WHERE 子句参数化）
+- [x] **S6** encryption.js — JWT_SECRET 缺失时抛出启动错误
+
+### 批次 4 — P1 跨标签页认证修复 🔴 待实现
+
+- [ ] **S10** authStore BroadcastChannel 三缺陷修复
+  - 消息去重守卫（对比 token/role 是否一致）
+  - syncFromStorage() 末尾调用 getBcChannel()
+  - REQUEST_AUTH 消息机制支持新标签页
+- [ ] **S11** chatStore sendStreamRequest — 401 后添加 `router.push('/login')`
+
+### 批次 5 — P2 组件与DOM合规 🔴 待实现
+
+- [ ] **S3** DisclaimerBar — 6个页面统一使用：DoctorChatView / LifePlan / Risk / Punch / Admin → `<DisclaimerBar>`，ArticleDetailView 正文后添加
+- [ ] **S4** DOM id / data-* 属性 — 按优先级分批补充（优先 Risk.vue → Punch.vue → Home.vue → Profile.vue → Admin.vue → Login.vue → Consultation.vue → ArticleDetailView.vue）
+- [ ] **S12** AiChatDialog.vue — 添加 `onUnmounted(() => { chatStore.abortActiveConnection() })`
+- [ ] **S13** useAuth.ts — JwtPayload 字段名 `user_id` → `id`
+- [ ] **S14** sseProxy.js — Mock 模式生成唯一 conversation_id
+- [ ] **S15** chatStore — 添加 `clearMessages()` action，各处统一调用
+- [ ] **S16** NewsView.vue — highlightKeyword 输出额外调用 sanitizeHtml()
+- [ ] **S17** Home.vue — showDiabetesType 包裹 try-catch
+
+### 批次 6 — P3 一般问题（前端） 🔴 待实现
+
+- [ ] **G1** main.ts — 注释改为 `// 自动从 sessionStorage 恢复登录态`
+- [ ] **G3** useApi.ts — 401 处理添加 redirect 参数
+- [ ] **G4** enumLabels.ts — 重命名 LABELS → ENUM_LABELS 或添加注释
+- [ ] **G5** chatStore.ts — 统一至 sessionStorage 或标注保留原因
+- [ ] **G7** useAuth.ts — JwtPayload 索引签名 `any` → `unknown`
+- [ ] **G8** useMarkdown.ts — 修复 `as any` 类型断言
+- [ ] **G9** formatTime — 统一使用 helpers.ts 版本（清理 AiChatDialog/DoctorChatView 内联版本）
+- [ ] **G10** "请先登录" Toast — 在 useUI.ts 添加 `showLoginRequired()` 辅助函数
+- [ ] **G11** useApi.ts + chatStore.ts — SweetAlert2 改为静态导入
+- [ ] **G13** Consultation.vue — 4处 `(doctor as any)` 改为 `DoctorDetail` 类型
+- [ ] **G15** authStore.fetchProfile() — Profile.vue 改为调用 authStore.fetchProfile()
+- [ ] **G16** DoctorDetail.is_online — 从接口移除或在数据库新增该列
+- [ ] **G19** punchStore.requestId — 从 store return 移除公共导出
+- [ ] **G22** DoctorChatView — 清空按钮添加 `:disabled="chatStore.isStreaming"`
+- [ ] **G23** router/index.ts — `/change-password` 守卫使用 `replace: true`
+- [ ] **G24** LoginResponse — 重命名为 `LoginData`，添加 `RegisterData`
+- [ ] **G25** NewsView.vue — sessionStorage 恢复增加显式类型校验
+- [ ] **G28** useUI.ts — loadingCounter 移到 composable 内部或标注 SPA-only
+- [ ] **G32** helpers.ts — 泛型 `any[]` → `unknown[]`
+- [ ] **G33** Login.vue — catch 块使用 `getErrorMessage()` 工具函数
+
+### 批次 7 — P3 一般问题（后端） 🔴 待实现
+
+- [ ] **G2** server/routes/dify.js — 创建或在设计文档中标注废弃
+- [ ] **G6** admin.js — 表名白名单校验移至 `dispatchParameterizedQuery` 开头
+- [ ] **G12** plan.js — `checkIdempotent` 移至 `callWorkflowBlocking` 之前
+- [ ] **G14** punch.js — 更新 JSDoc 移除"AI"标注，长期接入 Dify 工作流
+- [ ] **G17** 缺少 useRiskApi.ts — 创建并遵循现有 API composable 模式
+- [ ] **G18** plan.js — LifePlan 接口添加 plan_id/is_active/created_at 可选字段
+- [ ] **G20** chatStore.ts — 向 readSSEStream 传入 AbortSignal，reader.cancel()
+- [ ] **G21** sseProxy.js — data handler 开头添加 `if (aborted || res.writableEnded) return;`
+- [ ] **G26** risk.js — 正则回退解析增加 console.warn 日志
+- [ ] **G27** sseProxy.js — 超时/错误处理增加 console.error 日志
+- [ ] **G29** upload.js — filename 回调添加 req.user 防御性检查
+- [ ] **G30** app.js — CORS 配置 origin 白名单 + 速率限制中间件
+- [ ] **G31** 多条路由 — :id 参数添加合法整数校验
+
+### 实现进度总览
+
+| 批次 | 优先级 | 问题数 | 状态 | 提交 |
+|------|:------:|:-----:|:----:|------|
+| 1 | P0 | 3 | ✅ 完成 | `fd16e3f` |
+| 2 | P1 | 2 | ✅ 完成 | `06d7db1` |
+| 3 | P1 | 2 | ✅ 完成 | `266f297` |
+| 4 | P1 | 2 | 🔴 待实现 | — |
+| 5 | P2 | 8 | 🔴 待实现 | — |
+| 6 | P3 前端 | 20 | 🔴 待实现 | — |
+| 7 | P3 后端 | 13 | 🔴 待实现 | — |
+| **合计** | — | **50** | **7/50** | **3 commits** |
