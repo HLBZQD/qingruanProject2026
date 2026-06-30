@@ -3,9 +3,10 @@ import { ref, computed, nextTick, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useChatStore } from '@/stores/chatStore'
 import { useAuthStore } from '@/stores/authStore'
-import { marked } from 'marked'
-import DOMPurify from 'dompurify'
 import DisclaimerBar from './DisclaimerBar.vue'
+import { renderMarkdown } from '@/composables/useMarkdown'
+import { hasAcceptedDisclaimer, showDisclaimer, setDisclaimerAccepted } from '@/composables/useUI'
+import { formatTime } from '@/utils/helpers'
 
 const router = useRouter()
 const chatStore = useChatStore()
@@ -18,34 +19,6 @@ const isOpen = computed(() => chatStore.fabOpen)
 const isLoggedIn = computed(() => !!authStore.token)
 const messages = computed(() => chatStore.conversations)
 
-function hasAcceptedDisclaimer(): boolean {
-  return localStorage.getItem('disclaimer_accepted') === 'true'
-}
-
-async function showDisclaimer(): Promise<boolean> {
-  const Swal = (await import('sweetalert2')).default
-  const result = await Swal.fire({
-    title: '医学免责声明',
-    html: '<p style="text-align:left;font-size:14px">本平台的 AI 健康建议、风险预测、方案生成等内容仅供健康参考，<b>不能替代专业医疗诊断、治疗或建议</b>。如有健康问题，请及时就医咨询专业医师。</p>',
-    icon: 'info',
-    showCancelButton: true,
-    confirmButtonText: '我已知晓并同意',
-    cancelButtonText: '不同意',
-    allowOutsideClick: false,
-  })
-  return result.isConfirmed
-}
-
-async function ensureDisclaimer(): Promise<boolean> {
-  if (hasAcceptedDisclaimer()) return true
-  const agreed = await showDisclaimer()
-  if (agreed) {
-    localStorage.setItem('disclaimer_accepted', 'true')
-    return true
-  }
-  return false
-}
-
 async function scrollToBottom() {
   await nextTick()
   if (messagesContainer.value) {
@@ -57,7 +30,11 @@ watch(messages, scrollToBottom, { deep: true })
 watch(isOpen, async (open) => {
   if (open) {
     if (isLoggedIn.value) {
-      const agreed = await ensureDisclaimer()
+      let agreed = hasAcceptedDisclaimer()
+      if (!agreed) {
+        agreed = await showDisclaimer()
+        if (agreed) setDisclaimerAccepted(true)
+      }
       if (!agreed) {
         chatStore.toggleFab()
         return
@@ -100,24 +77,6 @@ async function handleSend() {
   inputText.value = ''
   await chatStore.sendAssistantMessage(text, token)
   await scrollToBottom()
-}
-
-function formatTime(timestamp: number): string {
-  if (!timestamp) return ''
-  const d = new Date(timestamp)
-  if (isNaN(d.getTime())) return ''
-  return d.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })
-}
-
-function renderContent(content: string): string {
-  if (!content) return ''
-  try {
-    const html = marked.parse(content, { async: false })
-    if (typeof html !== 'string') return ''
-    return DOMPurify.sanitize(html)
-  } catch {
-    return DOMPurify.sanitize(content)
-  }
 }
 
 const quickQuestions = [
@@ -168,7 +127,7 @@ onMounted(() => {
         <!-- 消息区 -->
         <div ref="messagesContainer" class="dialog-messages">
           <!-- 未登录引导 -->
-          <div v-if="!isLoggedIn" class="login-prompt">
+          <div v-if="!isLoggedIn" id="fab-login-prompt" class="login-prompt">
             <div class="welcome-avatar">
               <i class="fas fa-robot" aria-hidden="true"></i>
             </div>
@@ -179,7 +138,7 @@ onMounted(() => {
 
           <!-- 已登录欢迎 -->
           <template v-else>
-            <div v-if="messages.length === 0" class="welcome-area">
+            <div v-if="messages.length === 0" id="fab-welcome-logged-in" class="welcome-area">
               <div class="welcome-avatar">
                 <i class="fas fa-robot" aria-hidden="true"></i>
               </div>
@@ -206,7 +165,7 @@ onMounted(() => {
                 <span class="msg-name">{{ msg.role === 'user' ? '我' : 'AI 小糖' }}</span>
                 <span class="msg-time">{{ formatTime(msg.timestamp) }}</span>
               </div>
-              <div class="msg-content" v-html="renderContent(msg.content)"></div>
+              <div class="msg-content" v-html="renderMarkdown(msg.content)"></div>
             </div>
 
             <div v-if="chatStore.isStreaming" class="typing-indicator">

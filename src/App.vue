@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted } from 'vue'
+import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
 import { useChatStore } from '@/stores/chatStore'
@@ -29,30 +29,9 @@ const showFab = computed(() => {
   return route.path !== '/login' && route.path !== '/change-password'
 })
 
-function handleStorageChange(e: StorageEvent) {
-  if (e.key === 'token' || e.key === 'role' || e.key === 'user') {
-    const newToken = localStorage.getItem('token')
-    const newRole = localStorage.getItem('role')
-    if (!newToken || (newRole !== 'user' && newRole !== 'admin')) {
-      authStore.clearAuth()
-      router.push('/login')
-    } else {
-      authStore.syncFromStorage()
-    }
-  }
-}
-
 function toggleFab() {
   chatStore.toggleFab()
 }
-
-onMounted(() => {
-  window.addEventListener('storage', handleStorageChange)
-})
-
-onUnmounted(() => {
-  window.removeEventListener('storage', handleStorageChange)
-})
 </script>
 
 <template>

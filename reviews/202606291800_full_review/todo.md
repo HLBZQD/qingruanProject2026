@@ -15,6 +15,7 @@
 - **来源**: Round 1 #S1 + Round 2 #S1（合并）
 - **描述**: `handleStorageChange` 监听 `window` 的 `storage` 事件，但其内部读取 `localStorage.getItem('token')` 和 `localStorage.getItem('role')`。v16 设计已将 token/role/user 全面迁移至 sessionStorage + BroadcastChannel。`StorageEvent` 仅对 localStorage 变更触发，此 handler 永不会被触发，是纯粹的死代码。`authStore.ts:17-37` 已正确实现 BroadcastChannel 跨标签页同步，此监听器遗留会造成 v16 迁移不彻底的误导。
 - **建议修复**: 删除 `handleStorageChange` 函数（第32-43行）、`onMounted` 中的 `addEventListener('storage', ...)`（第50行）和 `onUnmounted` 中的 `removeEventListener`（第53行）。
+- **已修复**: 2026-06-30, 批次 v2 (P1 设计合规修复), 删除 handleStorageChange + storage 事件监听器（v16 迁移残留死代码清理）
 
 ### S2. AiChatDialog.vue 综合设计合规缺陷（4项子问题合并）
 
@@ -30,6 +31,7 @@
   2. 将 `renderContent()` 改为调用 `renderMarkdown(content)` 从 `@/composables/useMarkdown` 导入
   3. 删除内联的三个免责声明函数，改为从 `@/composables/useUI` 导入并使用
   4. `formatTime` 改为从 `@/utils/helpers` 导入统一版本
+- **已修复**: 2026-06-30, 批次 v2 (P1 设计合规修复), 4项综合修复：添加 DOM id(fab-login-prompt/fab-welcome-logged-in)、切换 renderMarkdown 统一 XSS 管道、删除内联免责声明改用 useUI 函数、切换 formatTime 统一版本
 
 ### S3. DisclaimerBar 组件系统性未使用——6个AI内容页面中仅2个正确引用
 
