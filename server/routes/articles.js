@@ -1,5 +1,6 @@
 const express = require('express');
-const { db } = require('../db/database');
+const { getAdapter } = require('../db/database');
+const sql = require('../db/sql');
 const { success, error, AppError } = require('../utils/response');
 const { parsePagination, buildPagination } = require('../utils/pagination');
 const { parseTags, serializeTags } = require('../utils/jsonFields');
@@ -28,37 +29,59 @@ function buildMockArticle(category) {
   };
 }
 
-router.get('/collections', authMiddleware, (req, res) => {
-  const { page, pageSize, offset, limit } = parsePagination(req.query);
-  const { total } = db.prepare('SELECT COUNT(*) AS total FROM article_collections WHERE user_id = ?').get(req.user.user_id);
-  const rows = db.prepare('SELECT a.id, a.title, a.cover, a.author, a.category, a.tags, a.summary, a.views, a.created_at, ac.id AS collect_id FROM article_collections ac JOIN articles a ON ac.article_id = a.id WHERE ac.user_id = ? ORDER BY ac.created_at DESC LIMIT ? OFFSET ?').all(req.user.user_id, limit, offset);
-  rows.forEach(row => { row.tags = parseTags(row.tags); });
-  const pagination = buildPagination(page, pageSize, total);
-  res.status(200).json({ success: true, message: '查询成功', data: rows, pagination });
+router.get('/collections', authMiddleware, async (req, res, next) => {
+  try {
+    const adapter = getAdapter();
+    const { page, pageSize, offset, limit } = parsePagination(req.query);
+
+    const countRows = await adapter.query('SELECT COUNT(*) AS total FROM article_collections WHERE user_id = ?', [req.user.user_id]);
+    const total = countRows[0].total;
+
+    const rows = await adapter.query(
+      'SELECT a.id, a.title, a.cover, a.author, a.category, a.tags, a.summary, a.views, a.created_at, ac.id AS collect_id FROM article_collections ac JOIN articles a ON ac.article_id = a.id WHERE ac.user_id = ? ORDER BY ac.created_at DESC LIMIT ? OFFSET ?',
+      [req.user.user_id, limit, offset]
+    );
+    rows.forEach(row => { row.tags = parseTags(row.tags); });
+
+    const pagination = buildPagination(page, pageSize, total);
+    res.status(200).json({ success: true, message: '查询成功', data: rows, pagination });
+  } catch (e) {
+    next(e);
+  }
 });
 
-router.get('/', (req, res) => {
-  const { page, pageSize, offset, limit } = parsePagination(req.query);
-  const params = [];
-  let countSQL = 'SELECT COUNT(*) AS total FROM articles WHERE user_id IS NULL';
-  let dataSQL = 'SELECT id, title, cover, author, category, tags, summary, views, created_at FROM articles WHERE user_id IS NULL';
+router.get('/', async (req, res, next) => {
+  try {
+    const adapter = getAdapter();
+    const { page, pageSize, offset, limit } = parsePagination(req.query);
+    const params = [];
+    let countSQL = 'SELECT COUNT(*) AS total FROM articles WHERE user_id IS NULL';
+    let dataSQL = 'SELECT id, title, cover, author, category, tags, summary, views, created_at FROM articles WHERE user_id IS NULL';
 
-  if (req.query.category) {
-    countSQL += ' AND category = ?';
-    dataSQL += ' AND category = ?';
-    params.push(req.query.category);
+    if (req.query.category) {
+      countSQL += ' AND category = ?';
+      dataSQL += ' AND category = ?';
+      params.push(req.query.category);
+    }
+
+    const countRows = await adapter.query(countSQL, params);
+    const total = countRows[0].total;
+
+    dataSQL += ' ORDER BY created_at DESC LIMIT ? OFFSET ?';
+    const rows = await adapter.query(dataSQL, [...params, limit, offset]);
+    rows.forEach(row => { row.tags = parseTags(row.tags); });
+
+    const pagination = buildPagination(page, pageSize, total);
+    res.status(200).json({ success: true, message: '查询成功', data: rows, pagination });
+  } catch (e) {
+    next(e);
   }
-
-  const { total } = db.prepare(countSQL).get(...params);
-  dataSQL += ' ORDER BY created_at DESC LIMIT ? OFFSET ?';
-  const rows = db.prepare(dataSQL).all(...params, limit, offset);
-  rows.forEach(row => { row.tags = parseTags(row.tags); });
-  const pagination = buildPagination(page, pageSize, total);
-  res.status(200).json({ success: true, message: '查询成功', data: rows, pagination });
 });
 
 router.post('/generate', authMiddleware, async (req, res, next) => {
   try {
+    const adapter = getAdapter();
+
     const lastTime = recentGenerates.get(req.user.user_id);
     if (lastTime && Date.now() - lastTime < 30000) {
       return error(res, 'CONFLICT', '请求过于频繁，请30秒后再试', 409);
@@ -71,10 +94,10 @@ router.post('/generate', authMiddleware, async (req, res, next) => {
     }
 
     if (!req.body.category) {
-      const riskRow = db.prepare(`
-        SELECT weight / ((height / 100.0) * (height / 100.0)) AS bmi
-        FROM user_risk_info WHERE user_id = ? ORDER BY created_at DESC LIMIT 1
-      `).get(req.user.user_id);
+      const riskRow = await adapter.queryOne(
+        'SELECT weight / ((height / 100.0) * (height / 100.0)) AS bmi FROM user_risk_info WHERE user_id = ? ORDER BY created_at DESC LIMIT 1',
+        [req.user.user_id]
+      );
       const bmi = riskRow ? riskRow.bmi : null;
 
       const categories = DEFAULT_CATEGORIES.map(c => ({ ...c }));
@@ -128,24 +151,15 @@ router.post('/generate', authMiddleware, async (req, res, next) => {
       }
     }
 
-    const stmt = db.prepare(`
-      INSERT INTO articles (user_id, title, cover, author, content, category, tags, summary, created_at)
-      VALUES (?, ?, ?, 'AI健康助手', ?, ?, ?, ?, datetime('now', 'localtime'))
-    `);
-    const result = stmt.run(
-      req.user.user_id,
-      articleData.title,
-      articleData.cover,
-      articleData.content,
-      category,
-      serializeTags(articleData.tags),
-      articleData.summary
+    const result = await adapter.execute(
+      `INSERT INTO articles (user_id, title, cover, author, content, category, tags, summary, created_at) VALUES (?, ?, ?, 'AI健康助手', ?, ?, ?, ?, ${sql.now()})`,
+      [req.user.user_id, articleData.title, articleData.cover, articleData.content, category, serializeTags(articleData.tags), articleData.summary]
     );
 
-    const newArticle = db.prepare(`
-      SELECT id, title, cover, author, content, category, tags, summary, views, created_at
-      FROM articles WHERE id = ?
-    `).get(result.lastInsertRowid);
+    const newArticle = await adapter.queryOne(
+      'SELECT id, title, cover, author, content, category, tags, summary, views, created_at FROM articles WHERE id = ?',
+      [result.lastInsertId]
+    );
     newArticle.tags = parseTags(newArticle.tags);
     newArticle.is_collected = false;
 
@@ -155,33 +169,55 @@ router.post('/generate', authMiddleware, async (req, res, next) => {
   }
 });
 
-router.get('/:id', optionalAuth, (req, res) => {
-  const row = db.prepare('SELECT id, title, cover, author, content, category, tags, summary, views, created_at FROM articles WHERE id = ?').get(req.params.id);
-  if (!row) throw new AppError(404, 'NOT_FOUND', '文章不存在');
-  row.tags = parseTags(row.tags);
-  if (req.user) {
-    const exists = db.prepare('SELECT 1 FROM article_collections WHERE user_id = ? AND article_id = ?').get(req.user.user_id, req.params.id);
-    row.is_collected = !!exists;
-  } else {
-    row.is_collected = false;
+router.get('/:id', optionalAuth, async (req, res, next) => {
+  try {
+    const adapter = getAdapter();
+    const row = await adapter.queryOne(
+      'SELECT id, title, cover, author, content, category, tags, summary, views, created_at FROM articles WHERE id = ?',
+      [req.params.id]
+    );
+    if (!row) throw new AppError(404, 'NOT_FOUND', '文章不存在');
+    row.tags = parseTags(row.tags);
+
+    if (req.user) {
+      const exists = await adapter.queryOne('SELECT 1 FROM article_collections WHERE user_id = ? AND article_id = ?', [req.user.user_id, req.params.id]);
+      row.is_collected = !!exists;
+    } else {
+      row.is_collected = false;
+    }
+    success(res, row, '查询成功', 200);
+  } catch (e) {
+    next(e);
   }
-  success(res, row, '查询成功', 200);
 });
 
-router.post('/:id/collect', authMiddleware, (req, res) => {
-  const article = db.prepare('SELECT id FROM articles WHERE id = ?').get(req.params.id);
-  if (!article) throw new AppError(404, 'NOT_FOUND', '文章不存在');
-  const existing = db.prepare('SELECT id FROM article_collections WHERE user_id = ? AND article_id = ?').get(req.user.user_id, req.params.id);
-  if (existing) return success(res, null, '文章已收藏', 200);
-  db.prepare('INSERT INTO article_collections (user_id, article_id) VALUES (?, ?)').run(req.user.user_id, req.params.id);
-  success(res, null, '收藏成功', 200);
+router.post('/:id/collect', authMiddleware, async (req, res, next) => {
+  try {
+    const adapter = getAdapter();
+    const article = await adapter.queryOne('SELECT id FROM articles WHERE id = ?', [req.params.id]);
+    if (!article) throw new AppError(404, 'NOT_FOUND', '文章不存在');
+
+    const existing = await adapter.queryOne('SELECT id FROM article_collections WHERE user_id = ? AND article_id = ?', [req.user.user_id, req.params.id]);
+    if (existing) return success(res, null, '文章已收藏', 200);
+
+    await adapter.execute('INSERT INTO article_collections (user_id, article_id) VALUES (?, ?)', [req.user.user_id, req.params.id]);
+    success(res, null, '收藏成功', 200);
+  } catch (e) {
+    next(e);
+  }
 });
 
-router.delete('/:id/collect', authMiddleware, (req, res) => {
-  const existing = db.prepare('SELECT id FROM article_collections WHERE user_id = ? AND article_id = ?').get(req.user.user_id, req.params.id);
-  if (!existing) throw new AppError(404, 'NOT_FOUND', '未收藏该文章');
-  db.prepare('DELETE FROM article_collections WHERE user_id = ? AND article_id = ?').run(req.user.user_id, req.params.id);
-  success(res, null, '已取消收藏', 200);
+router.delete('/:id/collect', authMiddleware, async (req, res, next) => {
+  try {
+    const adapter = getAdapter();
+    const existing = await adapter.queryOne('SELECT id FROM article_collections WHERE user_id = ? AND article_id = ?', [req.user.user_id, req.params.id]);
+    if (!existing) throw new AppError(404, 'NOT_FOUND', '未收藏该文章');
+
+    await adapter.execute('DELETE FROM article_collections WHERE user_id = ? AND article_id = ?', [req.user.user_id, req.params.id]);
+    success(res, null, '已取消收藏', 200);
+  } catch (e) {
+    next(e);
+  }
 });
 
 module.exports = router;

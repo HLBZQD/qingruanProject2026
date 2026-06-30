@@ -1,5 +1,5 @@
 const express = require('express');
-const { db } = require('../db/database');
+const { getAdapter } = require('../db/database');
 const authMiddleware = require('../middleware/auth');
 const { AppError } = require('../middleware/errorHandler');
 const proxyDifySSE = require('../services/sseProxy');
@@ -8,7 +8,7 @@ const { callDifyGetConversations } = require('../services/difyService');
 
 const router = express.Router();
 
-router.post('/doctor/:id', authMiddleware, (req, res, next) => {
+router.post('/doctor/:id', authMiddleware, async (req, res, next) => {
   try {
     const { message, conversation_id } = req.body || {};
 
@@ -18,7 +18,8 @@ router.post('/doctor/:id', authMiddleware, (req, res, next) => {
       });
     }
 
-    const row = db.prepare('SELECT id, chat_token FROM doctor_information WHERE id = ?').get(req.params.id);
+    const adapter = getAdapter();
+    const row = await adapter.queryOne('SELECT id, chat_token FROM doctor_information WHERE id = ?', [req.params.id]);
     if (!row) throw new AppError(404, 'NOT_FOUND', '医生不存在');
     if (!row.chat_token) throw new AppError(502, 'DIFY_ERROR', '医生未配置对话服务');
 
@@ -39,7 +40,8 @@ router.post('/doctor/:id', authMiddleware, (req, res, next) => {
 
 router.get('/doctor/:id/conversations', authMiddleware, async (req, res, next) => {
   try {
-    const row = db.prepare('SELECT id, chat_token FROM doctor_information WHERE id = ?').get(req.params.id);
+    const adapter = getAdapter();
+    const row = await adapter.queryOne('SELECT id, chat_token FROM doctor_information WHERE id = ?', [req.params.id]);
     if (!row) throw new AppError(404, 'NOT_FOUND', '医生不存在');
     if (!row.chat_token) throw new AppError(502, 'DIFY_ERROR', '医生未配置对话服务');
 
