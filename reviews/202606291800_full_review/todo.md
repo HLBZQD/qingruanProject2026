@@ -461,13 +461,13 @@
 - [x] **S5** admin.js — SQL 注入修复（WHERE 子句参数化）
 - [x] **S6** encryption.js — JWT_SECRET 缺失时抛出启动错误
 
-### 批次 4 — P1 跨标签页认证修复 🔴 待实现
+### 批次 4 — P1 跨标签页认证修复 ✅ 已完成
 
-- [ ] **S10** authStore BroadcastChannel 三缺陷修复
+- [x] **S10** authStore BroadcastChannel 三缺陷修复
   - 消息去重守卫（对比 token/role 是否一致）
   - syncFromStorage() 末尾调用 getBcChannel()
   - REQUEST_AUTH 消息机制支持新标签页
-- [ ] **S11** chatStore sendStreamRequest — 401 后添加 `router.push('/login')`
+- [x] **S11** chatStore sendStreamRequest — 401 后添加 `router.push('/login')`
 
 ### 批次 5 — P2 组件与DOM合规 🔴 待实现
 
@@ -526,8 +526,8 @@
 | 1 | P0 | 3 | ✅ 完成 | `fd16e3f` |
 | 2 | P1 | 2 | ✅ 完成 | `06d7db1` |
 | 3 | P1 | 2 | ✅ 完成 | `266f297` |
-| 4 | P1 | 2 | 🔴 待实现 | — |
+| 4 | P1 | 2 | ✅ 完成 | — |
 | 5 | P2 | 8 | 🔴 待实现 | — |
 | 6 | P3 前端 | 20 | 🔴 待实现 | — |
 | 7 | P3 后端 | 13 | 🔴 待实现 | — |
-| **合计** | — | **50** | **7/50** | **3 commits** |
+| **合计** | — | **50** | **9/50** | **4 commits** |

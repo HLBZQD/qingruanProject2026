@@ -30,3 +30,10 @@
 ## R4 ALL_DONE
 结果：核心目标达成——todo.md 已转化为完整的可执行实现计划，包含50个问题的 checkbox 任务清单、7批次划分（批次1-3已完成，批次4-7已规划）、进度追踪表
 剩余43个问题（10严重+33一般）已通过批次4-7完整规划，后续实现由 implementer 按批次执行
+
+---
+
+## R5 NEW 修复P1跨标签页认证同步（S10/S11）
+任务：修复 S10（authStore BroadcastChannel 三缺陷：消息无限回环、已登录启动聋子、新标签页无auth）+ S11（chatStore SSE 401 无重定向）。两任务紧密相关（均涉及认证状态同步），合并为1个任务
+选择理由：P1批次4任务——S10三个BC子问题修复后解决跨标签页认证同步，S11修复401后完整登出流程闭环。两者共享 authStore/chatStore 上下文且 S11 clearAuth() 触发 S10 BC广播，存在执行耦合
+上下文：authStore.ts (182行) — getBcChannel/onmessage/syncFromStorage/setAuth/clearAuth；chatStore.ts (751行) — sendStreamRequest 401分支；router 已导入可用

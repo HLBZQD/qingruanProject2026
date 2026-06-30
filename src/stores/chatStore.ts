@@ -304,7 +304,8 @@ function handleSSEEvent(event: SSEEvent): void {
         const { useAuthStore } = await import('@/stores/authStore')
         useAuthStore().clearAuth()
         const Swal = await import('sweetalert2')
-        Swal.default.fire({
+        // await 等待 toast 自动关闭（timer: 2500ms），避免页面跳转中断 toast 显示
+        await Swal.default.fire({
           toast: true,
           position: 'top',
           icon: 'info',
@@ -314,6 +315,7 @@ function handleSSEEvent(event: SSEEvent): void {
           timerProgressBar: true,
         })
         isStreaming.value = false
+        router.push('/login')
         return
       }
 

@@ -24,11 +24,27 @@ export const useAuthStore = defineStore('auth', () => {
       bcChannel.onmessage = (e: MessageEvent) => {
         const d = e.data
         if (d?.type === 'AUTH_CHANGED') {
+          // 去重守卫：避免同标签页内 setAuth/clearAuth → postMessage → onmessage → setAuth/clearAuth 无限回环
+          if (d.token === token.value && d.role === role.value) {
+            return
+          }
           if (d.token) {
             setAuth(d.token, d.role, d.user)
           } else {
             clearAuth()
           }
+        } else if (d?.type === 'REQUEST_AUTH') {
+          // 新标签页请求认证数据：当前标签页已登录时回复 AUTH_CHANGED
+          if (token.value) {
+            bcChannel!.postMessage({
+              type: 'AUTH_CHANGED',
+              token: token.value,
+              role: role.value,
+              user: user.value,
+              timestamp: Date.now(),
+            })
+          }
+          // 未登录时不回复，请求方 500ms 超时后保持未登录状态
         }
       }
       return bcChannel
@@ -96,13 +112,45 @@ export const useAuthStore = defineStore('auth', () => {
     } catch { /* corrupted */ }
 
     if (!storedToken || !storedRole) {
-      clearAuth()
+      // 不调用 clearAuth()！否则新标签页打开时 BC 广播 null-token AUTH_CHANGED，
+      // 导致其他已登录标签页收到广播后也执行 clearAuth()——即新标签页登出所有标签页。
+      // 替代方案：通过 BC 请求其他标签页的认证数据（REQUEST_AUTH 协议）
+      const bc = getBcChannel()
+      if (bc) {
+        // 保存原有 onmessage 处理器，安装临时监听器等待 AUTH_CHANGED 回复
+        const originalOnmessage = bc.onmessage
+        const timeout = setTimeout(() => {
+          // 500ms 超时无回复：恢复原有 onmessage，保持未登录状态
+          bc.onmessage = originalOnmessage
+        }, 500)
+        bc.onmessage = (e: MessageEvent) => {
+          const d = e.data
+          if (d?.type === 'AUTH_CHANGED' && d.token) {
+            // 其他标签页回复了认证数据 → 同步登录
+            clearTimeout(timeout)
+            bc.onmessage = originalOnmessage
+            setAuth(d.token, d.role, d.user)
+          } else if (d?.type === 'AUTH_CHANGED' && !d.token) {
+            // 其他标签页也未登录 → 保持未登录
+            clearTimeout(timeout)
+            bc.onmessage = originalOnmessage
+          } else {
+            // 非 AUTH_CHANGED 消息（如 REQUEST_AUTH），交给原有处理器
+            if (typeof originalOnmessage === 'function') {
+              originalOnmessage.call(bc, e)
+            }
+          }
+        }
+        bc.postMessage({ type: 'REQUEST_AUTH' })
+      }
       return
     }
     token.value = storedToken
     role.value = storedRole
     user.value = storedUser
     mustChangePassword.value = localStorage.getItem('must_change_password') === 'true'
+    // 初始化 BC 监听，使本标签页可以接收其他标签页的认证变更广播
+    getBcChannel()
   }
 
   function clearAuth() {

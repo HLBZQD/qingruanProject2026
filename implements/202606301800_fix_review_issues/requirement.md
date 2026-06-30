@@ -1,28 +1,28 @@
-# 实现需求：修复全量代码审查发现的50个问题
+# 实现需求：批次4 — P1 跨标签页认证修复
 
 ## 来源
 
-审议式三轮代码审查（Round 1 设计合规性 + Round 2 代码质量 + Round 3 集成一致性），审查报告位于 `reviews/202606291800_full_review/todo.md`。
+审议式三轮代码审查报告 `reviews/202606291800_full_review/todo.md`
 
-## 审查范围
+## 本批次任务（2个问题）
 
-全部前端（src/）和后端（server/）代码，56+28=84个文件。
+### S10. authStore BroadcastChannel 三个缺陷叠加
 
-## 审查依据
+- **位置**: `src/stores/authStore.ts:23-31, 76-82, 85-104, 122-128`
+- **三个子问题**:
+  1. **消息无限回环**：`onmessage` 无条件调用 `setAuth()`/`clearAuth()`，两函数末尾 `postMessage` 重广播 → 无限 ping-pong
+  2. **已登录启动时聋子**：`syncFromStorage()` 恢复 token 后未调用 `getBcChannel()` 初始化监听
+  3. **站内新标签页无 auth 数据**：sessionStorage 按标签页隔离，新标签页打开站内链接时无认证数据
+- **修复要求**:
+  1. `onmessage` 添加去重守卫——比较收到的 token/role 与当前状态是否一致
+  2. `syncFromStorage()` 末尾显式调用 `getBcChannel()`
+  3. 通过 BC 发送 `REQUEST_AUTH` 消息从其他标签页获取认证状态
 
-`docs/2_detailed_design_v4.md` + `docs/prototype.html`
+### S11. sendStreamRequest 401 处理未重定向
 
-## 问题统计
-
-- 总计：50 个问题（17 严重 + 33 一般）
-- P0 立即修复：3 个（S7/S8/S9）
-- P1 本迭代：6 个（S1/S2/S5/S6/S10/S11）
-- P2 下迭代：8 个（S3/S4/S12/S14/S15/S16/S17/S13）
-- P3 后续优化：33 个（所有一般问题 G1-G33）
-
-## 目标
-
-将所有50个问题转化为可勾选、可追踪的实现任务，更新 `reviews/202606291800_full_review/todo.md` 使其成为完整的可执行实现计划。
+- **位置**: `src/stores/chatStore.ts:303-317`
+- **描述**: SSE fetch 返回 401 时调用 `useAuthStore().clearAuth()` 但未执行 `router.push('/login')`
+- **修复要求**: 在 return 之前添加 `router.push('/login')`
 
 ## 项目根目录
 
