@@ -50,8 +50,9 @@ function dateExpr() {
 
 /**
  * JSON 字段提取（单层路径）
- * @param {string} col - 列名
- * @param {string} path - JSON 路径（不含 $. 前缀）
+ * **安全警告：col/path 参数直接拼入 SQL 表达式，必须是硬编码字面量，不可来自用户输入。**
+ * @param {string} col - 列名（硬编码）
+ * @param {string} path - JSON 路径（硬编码，不含 $. 前缀）
  * @returns {string} SQL 表达式
  */
 function jsonField(col, path) {

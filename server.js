@@ -10,12 +10,14 @@ if (uploadRoutes.ensureUploadDir) {
   uploadRoutes.ensureUploadDir();
 }
 
+let httpServer = null;
+
 // async IIFE 启动：数据库初始化完成后才启动 HTTP 服务
 (async () => {
   try {
     await initDatabase();
 
-    app.listen(PORT, () => {
+    httpServer = app.listen(PORT, () => {
       console.log(`Server running on http://localhost:${PORT}`);
       console.log(`Health check: http://localhost:${PORT}/api/health`);
     });
@@ -25,10 +27,16 @@ if (uploadRoutes.ensureUploadDir) {
   }
 })();
 
-// 优雅关闭处理
+// 优雅关闭处理：先停止接收新连接 → 等待在途请求完成 → 关闭数据库
 const gracefulShutdown = async (signal) => {
   console.log(`[Server] 收到 ${signal} 信号，开始优雅关闭...`);
   try {
+    // 1. 停止 HTTP 服务器（不再接收新连接，等待在途请求完成）
+    if (httpServer) {
+      await new Promise((resolve) => httpServer.close(resolve));
+      console.log('[Server] HTTP 服务器已关闭');
+    }
+    // 2. 关闭数据库连接池
     const adapter = getAdapter();
     if (adapter && adapter.close) {
       await adapter.close();

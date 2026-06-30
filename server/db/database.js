@@ -82,4 +82,6 @@ function getAdapter() {
   return adapter;
 }
 
-module.exports = { getAdapter, initDatabase, db: null };
+// 初始导出不含 db —— db 在 initDatabase() 完成后通过 module.exports.db 动态挂载
+// 避免 const { db } = require(...) 在 init 之前解构捕获 null（§3.5.2 步骤 2）
+module.exports = { getAdapter, initDatabase };

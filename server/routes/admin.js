@@ -12,7 +12,7 @@ const proxyDifySSE = require('../services/sseProxy');
 
 const router = express.Router();
 
-// ========== 日志 ==========
+// ========== 操作日志 ==========
 
 router.get('/logs', authMiddleware, adminMiddleware, async (req, res, next) => {
   try {
@@ -41,6 +41,20 @@ router.get('/logs', authMiddleware, adminMiddleware, async (req, res, next) => {
 
 // ========== 执行 SQL ==========
 
+// WHERE 子句白名单校验（仅允许 column = value AND column = value 模式）
+function parseWhereClause(where) {
+  if (!where || typeof where !== 'string') return false;
+  const parts = where.split(/\s+AND\s+/i);
+  for (const part of parts) {
+    const trimmed = part.trim();
+    if (!/^[a-zA-Z_][a-zA-Z0-9_]*\s*=\s*['"][^'"]*['"]$/.test(trimmed) &&
+        !/^[a-zA-Z_][a-zA-Z0-9_]*\s*=\s*\d+$/.test(trimmed)) {
+      return false;
+    }
+  }
+  return true;
+}
+
 router.post('/execute', optionalAuth, difyAuthMiddleware, async (req, res, next) => {
   try {
     const adapter = getAdapter();
@@ -64,7 +78,6 @@ router.post('/execute', optionalAuth, difyAuthMiddleware, async (req, res, next)
       return error(res, 'AUTH_REQUIRED', '未认证', 401);
     }
 
-    // 参数化工具分发
     if (tool_name) {
       const result = await dispatchParameterizedQuery(adapter, tool_name, req.body, operatorId, operatorRole);
       if (result.error) {
@@ -76,9 +89,14 @@ router.post('/execute', optionalAuth, difyAuthMiddleware, async (req, res, next)
       });
     }
 
-    // 原始 SQL 路径（兜底）
     if (!sql) {
       return error(res, 'BAD_REQUEST', '请求体必须包含 tool_name 或 sql 字段', 400);
+    }
+
+    // KingbaseES 下禁用 sql 模式（迁移计划 §9.2 Phase 1 策略）
+    if (process.env.DB_TYPE === 'kingbase') {
+      return error(res, 'FORBIDDEN',
+        'KingbaseES 下仅支持 tool_name 参数化查询，不支持 sql 模式。请使用 tool_name 参数。', 400);
     }
 
     if (/^\s*(INSERT|UPDATE|DELETE)\b.*?\badmin_logs\b/i.test(sql)) {
@@ -106,8 +124,6 @@ router.post('/execute', optionalAuth, difyAuthMiddleware, async (req, res, next)
 
     const sqlType = sql.trim().substring(0, 6).toUpperCase();
     let result;
-
-    // 事务内执行
     result = await adapter.transaction(async (tx) => {
       const r = sqlType === 'SELECT'
         ? await tx.query(sql, [])
@@ -265,6 +281,14 @@ async function dispatchParameterizedQuery(adapter, toolName, params, operatorId,
       if (!validTables.includes(params.table)) {
         return { error: { code: 'VALIDATION_ERROR', message: '无效表名' }, httpStatus: 400 };
       }
+      // WHERE 子句安全校验
+      if (params.where && !parseWhereClause(params.where)) {
+        return { error: { code: 'VALIDATION_ERROR', message: 'WHERE 子句格式不合法，仅支持 column = value AND column = value 模式' }, httpStatus: 400 };
+      }
+      // ORDER BY 安全校验：仅允许字母、数字、下划线、逗号、空格、点号
+      if (params.order_by && !/^[a-zA-Z0-9_,.\s]+$/.test(params.order_by)) {
+        return { error: { code: 'VALIDATION_ERROR', message: 'ORDER BY 子句格式不合法' }, httpStatus: 400 };
+      }
       let sql = `SELECT * FROM ${params.table}`;
       if (params.where) sql += ` WHERE ${params.where}`;
       if (params.order_by) sql += ` ORDER BY ${params.order_by}`;
@@ -313,6 +337,9 @@ async function dispatchParameterizedQuery(adapter, toolName, params, operatorId,
       if (!validWriteTables.includes(params.table)) {
         return { error: { code: 'VALIDATION_ERROR', message: '无效表名或禁止修改审计日志' }, httpStatus: 400 };
       }
+      if (params.where && !parseWhereClause(params.where)) {
+        return { error: { code: 'VALIDATION_ERROR', message: 'WHERE 子句格式不合法' }, httpStatus: 400 };
+      }
       const fields = { ...params.fields };
       const keys = Object.keys(fields);
       if (keys.length === 0 || !params.where) {
@@ -343,6 +370,9 @@ async function dispatchParameterizedQuery(adapter, toolName, params, operatorId,
       }
       if (!params.where) {
         return { error: { code: 'VALIDATION_ERROR', message: '缺少条件' }, httpStatus: 400 };
+      }
+      if (!parseWhereClause(params.where)) {
+        return { error: { code: 'VALIDATION_ERROR', message: 'WHERE 子句格式不合法' }, httpStatus: 400 };
       }
       try {
         const info = await adapter.execute(`DELETE FROM ${params.table} WHERE ${params.where}`, []);

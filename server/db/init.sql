@@ -142,7 +142,7 @@ CREATE INDEX IF NOT EXISTS idx_risk_user ON user_risk_info(user_id);
 CREATE INDEX IF NOT EXISTS idx_risk_user_created ON user_risk_info(user_id, created_at);
 CREATE INDEX IF NOT EXISTS idx_plans_user ON life_plans(user_id);
 CREATE INDEX IF NOT EXISTS idx_plans_user_type ON life_plans(user_id, plan_type);
-CREATE INDEX IF NOT EXISTS idx_plans_user_plan ON life_plans(user_id, plan_id);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_plans_user_plan ON life_plans(user_id, plan_id);
 CREATE INDEX IF NOT EXISTS idx_advice_user ON life_advice(user_id);
 CREATE INDEX IF NOT EXISTS idx_punch_user ON punch_in(user_id);
 CREATE INDEX IF NOT EXISTS idx_punch_user_time ON punch_in(user_id, punch_time);

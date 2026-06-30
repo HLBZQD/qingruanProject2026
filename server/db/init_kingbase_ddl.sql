@@ -53,7 +53,7 @@ CREATE TABLE IF NOT EXISTS articles (
     author       VARCHAR(100) NOT NULL DEFAULT 'AI健康助手',
     content      TEXT NOT NULL,
     category     VARCHAR(50) NOT NULL DEFAULT '糖尿病知识科普',
-    tags         TEXT NOT NULL DEFAULT '[]',
+    tags         JSONB NOT NULL DEFAULT '[]',
     summary      TEXT NOT NULL DEFAULT '',
     views        INTEGER NOT NULL DEFAULT 0,
     created_at   TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -83,10 +83,10 @@ CREATE TABLE IF NOT EXISTS user_risk_info (
     waist            REAL,
     systolic_bp      REAL,
     pregnancy        INTEGER DEFAULT NULL CHECK(pregnancy IN (0, 1) OR pregnancy IS NULL),
-    raw_input        TEXT,
+    raw_input        JSONB,
     diabetes_history VARCHAR(20) NOT NULL CHECK(diabetes_history IN ('healthy', 'prediabetes', 'diagnosed')),
     diabetes_type    VARCHAR(20) CHECK(diabetes_type IN ('type1', 'type2', 'gestational', 'other') OR diabetes_type IS NULL),
-    result           TEXT,
+    result           JSONB,
     created_at       TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
@@ -112,7 +112,7 @@ CREATE TABLE IF NOT EXISTS life_advice (
     id         SERIAL PRIMARY KEY,
     user_id    INTEGER NOT NULL,
     title      VARCHAR(500) NOT NULL,
-    tags       TEXT NOT NULL DEFAULT '[]',
+    tags       JSONB NOT NULL DEFAULT '[]',
     content    TEXT NOT NULL,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
@@ -157,7 +157,7 @@ CREATE INDEX IF NOT EXISTS idx_risk_user ON user_risk_info(user_id);
 CREATE INDEX IF NOT EXISTS idx_risk_user_created ON user_risk_info(user_id, created_at);
 CREATE INDEX IF NOT EXISTS idx_plans_user ON life_plans(user_id);
 CREATE INDEX IF NOT EXISTS idx_plans_user_type ON life_plans(user_id, plan_type);
-CREATE INDEX IF NOT EXISTS idx_plans_user_plan ON life_plans(user_id, plan_id);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_plans_user_plan ON life_plans(user_id, plan_id);
 CREATE INDEX IF NOT EXISTS idx_advice_user ON life_advice(user_id);
 CREATE INDEX IF NOT EXISTS idx_punch_user ON punch_in(user_id);
 CREATE INDEX IF NOT EXISTS idx_punch_user_time ON punch_in(user_id, punch_time);

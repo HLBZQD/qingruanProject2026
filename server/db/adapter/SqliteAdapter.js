@@ -51,11 +51,7 @@ class SqliteAdapter {
       // 运行时生成 admin123 的 bcrypt 哈希，替换占位符
       const bcrypt = require('bcryptjs');
       const hash = bcrypt.hashSync('admin123', 10);
-      // 种子 SQL 中的占位符是一个完整的 bcrypt 哈希字符串（以 $2a$ 或 $2b$ 开头）
-      seedSql = seedSql.replace(
-        /\$2[ab]\$\d+\$[A-Za-z0-9./]+\$PLACEHOLDER_BCRYPT_HASH_GOES_HERE[A-Za-z0-9./]+/,
-        hash
-      );
+      seedSql = seedSql.replace('$2a$10$PLACEHOLDER_BCRYPT_HASH_GOES_HERE', hash);
 
       this.db.exec(seedSql);
       console.log('[SqliteAdapter] 种子数据已初始化');

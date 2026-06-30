@@ -196,12 +196,25 @@ class KingbaseAdapter {
         console.warn('[KingbaseAdapter] 种子 SQL 中未找到 __BCRYPT_HASH_PLACEHOLDER__ 占位符，admin 密码可能未正确设置');
       }
 
-      // 按分号分割种子 INSERT
-      const seedStmts = seedSql
+      // 按分号分割种子 INSERT（使用状态机跳过单引号字符串内的分号，与 DDL 分割一致 §3.4.5 步骤 8）
+      const cleanedSeed = seedSql
         .replace(/--[^\n]*/g, '')
-        .split(';')
-        .map((s) => s.trim())
-        .filter((s) => s.length > 0);
+        .replace(/\/\*[\s\S]*?\*\//g, '');
+      const seedStmts = [];
+      let curr = '';
+      let inStrSeed = false;
+      for (let i = 0; i < cleanedSeed.length; i++) {
+        const ch = cleanedSeed[i];
+        if (ch === "'" && !inStrSeed) {
+          inStrSeed = true; curr += ch;
+        } else if (ch === "'" && inStrSeed) {
+          if (cleanedSeed[i + 1] === "'") { curr += "''"; i++; }
+          else { inStrSeed = false; curr += ch; }
+        } else if (ch === ';' && !inStrSeed) {
+          const t = curr.trim(); if (t) seedStmts.push(t); curr = '';
+        } else { curr += ch; }
+      }
+      const t = curr.trim(); if (t) seedStmts.push(t);
 
       // 事务内执行种子数据
       const client = await this.pool.connect();
