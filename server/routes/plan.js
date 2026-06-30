@@ -1,5 +1,6 @@
 const express = require('express');
-const { db } = require('../db/database');
+const { getAdapter } = require('../db/database');
+const sql = require('../db/sql');
 const { success, AppError } = require('../utils/response');
 const { validatePlanGenerate, validatePlanAdjust } = require('../utils/validators');
 const { callWorkflowBlocking } = require('../services/difyService');
@@ -20,8 +21,12 @@ function checkIdempotent(userId) {
   return true;
 }
 
+// ========== 生成方案 ==========
+
 router.post('/generate', authMiddleware, async (req, res, next) => {
   try {
+    const adapter = getAdapter();
+
     const err = validatePlanGenerate(req.body);
     if (err) throw new AppError(422, 'VALIDATION_ERROR', err);
 
@@ -32,10 +37,7 @@ router.post('/generate', authMiddleware, async (req, res, next) => {
 
     const difyResponse = await callWorkflowBlocking(
       process.env.DIFY_PLAN_WORKFLOW_KEY,
-      {
-        health_info: req.body.health_info,
-        preferences: req.body.preferences
-      },
+      { health_info: req.body.health_info, preferences: req.body.preferences },
       'plan'
     );
 
@@ -46,43 +48,33 @@ router.post('/generate', authMiddleware, async (req, res, next) => {
       { health_info: req.body.health_info, preferences: req.body.preferences }
     );
 
-    const planData = db.transaction(() => {
-      db.prepare(`
-        UPDATE life_plans SET is_active = 0, updated_at = datetime('now','localtime')
-        WHERE user_id = ? AND is_active = 1
-      `).run(req.user.user_id);
+    // 事务内：停用旧方案 + FOR UPDATE 锁行 + 批量插入
+    const planData = await adapter.transaction(async (tx) => {
+      await tx.execute(
+        `UPDATE life_plans SET is_active = 0, updated_at = ${sql.now()} WHERE user_id = ? AND is_active = 1`,
+        [req.user.user_id]
+      );
 
-      const { maxId } = db.prepare(`
-        SELECT COALESCE(MAX(plan_id), 0) + 1 AS maxId
-        FROM life_plans WHERE user_id = ?
-      `).get(req.user.user_id);
-      const planId = maxId;
+      const rows = await tx.query(
+        'SELECT COALESCE(MAX(plan_id), 0) + 1 AS maxId FROM life_plans WHERE user_id = ? FOR UPDATE',
+        [req.user.user_id]
+      );
+      const planId = rows[0].maxId;
 
-      const insertStmt = db.prepare(`
-        INSERT INTO life_plans (user_id, plan_id, plan_type, order_num, time_desc, title, content, is_active)
-        VALUES (?, ?, ?, ?, ?, ?, ?, 1)
-      `);
       for (const item of items) {
-        insertStmt.run(
-          req.user.user_id,
-          planId,
-          item.plan_type,
-          item.order_num,
-          item.time_desc || '',
-          item.title,
-          item.content
+        await tx.execute(
+          `INSERT INTO life_plans (user_id, plan_id, plan_type, order_num, time_desc, title, content, is_active, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, 1, ${sql.now()}, ${sql.now()})`,
+          [req.user.user_id, planId, item.plan_type, item.order_num, item.time_desc || '', item.title, item.content]
         );
       }
 
       return { planId };
-    })();
+    });
 
-    const planRows = db.prepare(`
-      SELECT id, plan_type, order_num, time_desc, title, content
-      FROM life_plans
-      WHERE user_id = ? AND plan_id = ? AND is_active = 1
-      ORDER BY plan_type, order_num
-    `).all(req.user.user_id, planData.planId);
+    const planRows = await adapter.query(
+      'SELECT id, plan_type, order_num, time_desc, title, content FROM life_plans WHERE user_id = ? AND plan_id = ? AND is_active = 1 ORDER BY plan_type, order_num',
+      [req.user.user_id, planData.planId]
+    );
 
     const dietPlans = planRows.filter(r => r.plan_type === 'diet');
     const exercisePlans = planRows.filter(r => r.plan_type === 'exercise');
@@ -99,18 +91,22 @@ router.post('/generate', authMiddleware, async (req, res, next) => {
   }
 });
 
-router.get('/current', authMiddleware, (req, res, next) => {
+// ========== 当前方案 ==========
+
+router.get('/current', authMiddleware, async (req, res, next) => {
   try {
-    const rows = db.prepare(`
-      SELECT id, plan_id, plan_type, order_num, time_desc, title, content, is_active, created_at
-      FROM life_plans
-      WHERE user_id = ? AND is_active = 1
-        AND plan_id = (
-          SELECT MAX(plan_id) FROM life_plans
-          WHERE user_id = ? AND is_active = 1
-        )
-      ORDER BY plan_type, order_num
-    `).all(req.user.user_id, req.user.user_id);
+    const adapter = getAdapter();
+    const rows = await adapter.query(
+      `SELECT id, plan_id, plan_type, order_num, time_desc, title, content, is_active, created_at
+       FROM life_plans
+       WHERE user_id = ? AND is_active = 1
+         AND plan_id = (
+           SELECT MAX(plan_id) FROM life_plans
+           WHERE user_id = ? AND is_active = 1
+         )
+       ORDER BY plan_type, order_num`,
+      [req.user.user_id, req.user.user_id]
+    );
 
     if (rows.length === 0) {
       return res.status(200).json({
@@ -138,16 +134,19 @@ router.get('/current', authMiddleware, (req, res, next) => {
   }
 });
 
+// ========== 调整方案 ==========
+
 router.put('/adjust', authMiddleware, async (req, res, next) => {
   try {
+    const adapter = getAdapter();
+
     const err = validatePlanAdjust(req.body);
     if (err) throw new AppError(422, 'VALIDATION_ERROR', err);
 
-    const latest = db.prepare(`
-      SELECT age, gender, height, weight
-      FROM user_risk_info WHERE user_id = ?
-      ORDER BY created_at DESC LIMIT 1
-    `).get(req.user.user_id);
+    const latest = await adapter.queryOne(
+      'SELECT age, gender, height, weight FROM user_risk_info WHERE user_id = ? ORDER BY created_at DESC LIMIT 1',
+      [req.user.user_id]
+    );
     if (!latest) throw new AppError(422, 'VALIDATION_ERROR', '请先完成风险预测或提供健康信息');
 
     const healthInfo = {
@@ -159,11 +158,7 @@ router.put('/adjust', authMiddleware, async (req, res, next) => {
 
     const difyResponse = await callWorkflowBlocking(
       process.env.DIFY_PLAN_WORKFLOW_KEY,
-      {
-        health_info: healthInfo,
-        preferences: {},
-        feedback: req.body.feedback
-      },
+      { health_info: healthInfo, preferences: {}, feedback: req.body.feedback },
       'plan'
     );
 
@@ -174,42 +169,32 @@ router.put('/adjust', authMiddleware, async (req, res, next) => {
       { health_info: healthInfo, preferences: {}, feedback: req.body.feedback }
     );
 
-    const maxId = db.transaction(() => {
-      db.prepare(`
-        UPDATE life_plans SET is_active = 0, updated_at = datetime('now','localtime')
-        WHERE user_id = ? AND plan_id = ?
-      `).run(req.user.user_id, req.body.plan_id);
+    const maxId = await adapter.transaction(async (tx) => {
+      await tx.execute(
+        `UPDATE life_plans SET is_active = 0, updated_at = ${sql.now()} WHERE user_id = ? AND plan_id = ?`,
+        [req.user.user_id, req.body.plan_id]
+      );
 
-      const { maxId: nextId } = db.prepare(`
-        SELECT COALESCE(MAX(plan_id), 0) + 1 AS maxId
-        FROM life_plans WHERE user_id = ?
-      `).get(req.user.user_id);
+      const rows = await tx.query(
+        'SELECT COALESCE(MAX(plan_id), 0) + 1 AS maxId FROM life_plans WHERE user_id = ? FOR UPDATE',
+        [req.user.user_id]
+      );
+      const nextId = rows[0].maxId;
 
-      const insertStmt = db.prepare(`
-        INSERT INTO life_plans (user_id, plan_id, plan_type, order_num, time_desc, title, content, is_active)
-        VALUES (?, ?, ?, ?, ?, ?, ?, 1)
-      `);
       for (const item of items) {
-        insertStmt.run(
-          req.user.user_id,
-          nextId,
-          item.plan_type,
-          item.order_num,
-          item.time_desc || '',
-          item.title,
-          item.content
+        await tx.execute(
+          `INSERT INTO life_plans (user_id, plan_id, plan_type, order_num, time_desc, title, content, is_active, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, 1, ${sql.now()}, ${sql.now()})`,
+          [req.user.user_id, nextId, item.plan_type, item.order_num, item.time_desc || '', item.title, item.content]
         );
       }
 
       return nextId;
-    })();
+    });
 
-    const planRows = db.prepare(`
-      SELECT id, plan_type, order_num, time_desc, title, content
-      FROM life_plans
-      WHERE user_id = ? AND plan_id = ? AND is_active = 1
-      ORDER BY plan_type, order_num
-    `).all(req.user.user_id, maxId);
+    const planRows = await adapter.query(
+      'SELECT id, plan_type, order_num, time_desc, title, content FROM life_plans WHERE user_id = ? AND plan_id = ? AND is_active = 1 ORDER BY plan_type, order_num',
+      [req.user.user_id, maxId]
+    );
 
     success(res, {
       plan_id: maxId,

@@ -1,5 +1,5 @@
 const express = require('express');
-const { db } = require('../db/database');
+const { getAdapter } = require('../db/database');
 const authMiddleware = require('../middleware/auth');
 const { parsePagination, buildPagination } = require('../utils/pagination');
 const proxyDifySSE = require('../services/sseProxy');
@@ -30,17 +30,21 @@ router.post('/chat', authMiddleware, (req, res, next) => {
   }
 });
 
-router.get('/advice', authMiddleware, (req, res, next) => {
+router.get('/advice', authMiddleware, async (req, res, next) => {
   try {
+    const adapter = getAdapter();
     const { page, pageSize, offset, limit } = parsePagination(req.query);
 
-    const rows = db.prepare(
-      'SELECT id, title, tags, content, created_at FROM life_advice WHERE user_id = ? ORDER BY created_at DESC LIMIT ? OFFSET ?'
-    ).all(req.user.user_id, limit, offset);
+    const rows = await adapter.query(
+      'SELECT id, title, tags, content, created_at FROM life_advice WHERE user_id = ? ORDER BY created_at DESC LIMIT ? OFFSET ?',
+      [req.user.user_id, limit, offset]
+    );
 
-    const { total } = db.prepare(
-      'SELECT COUNT(*) AS total FROM life_advice WHERE user_id = ?'
-    ).get(req.user.user_id);
+    const countRows = await adapter.query(
+      'SELECT COUNT(*) AS total FROM life_advice WHERE user_id = ?',
+      [req.user.user_id]
+    );
+    const total = countRows[0].total;
 
     const data = rows.map((row) => {
       let tags = [];
