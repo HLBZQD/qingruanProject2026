@@ -1420,6 +1420,11 @@ const riskPercent = computed(() => {
   font-weight: 800;
   color: var(--color-text-primary);
   line-height: 1;
+  /* G14: gradient text */
+  background: linear-gradient(135deg, var(--color-primary), #0EA5E9);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
 }
 
 .gauge-total {

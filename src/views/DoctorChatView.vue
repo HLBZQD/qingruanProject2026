@@ -323,6 +323,23 @@ onUnmounted(() => {
         <button @click="goBack" class="btn-retry">返回医生列表</button>
       </div>
 
+      <!-- 空态欢迎 -->
+      <div
+        v-else-if="chatStore.conversations.length === 0 && !chatStore.isStreaming"
+        class="chat-welcome"
+      >
+        <div class="welcome-avatar">
+          <i class="fas fa-user-doctor" aria-hidden="true"></i>
+        </div>
+        <h3>{{ doctor?.name ? '您好，我是' + doctor.name + '医生' : '您好，我是您的AI医生' }}</h3>
+        <p>请问有什么可以帮您？您可以描述症状、用药情况或血糖数据。</p>
+        <div class="example-list">
+          <span class="example-chip">最近血糖控制得怎么样？</span>
+          <span class="example-chip">我的用药方案需要调整吗？</span>
+          <span class="example-chip">饮食上有什么建议？</span>
+        </div>
+      </div>
+
       <!-- 消息列表 -->
       <template v-else>
         <div
@@ -510,6 +527,36 @@ onUnmounted(() => {
   line-height: 1.5;
   word-break: break-word;
   grid-column: 2;
+}
+
+/* G19: Markdown 子元素排版穿透 */
+.msg-content :deep(p) {
+  margin-bottom: var(--spacing-sm);
+}
+.msg-content :deep(ul),
+.msg-content :deep(ol) {
+  padding-left: var(--spacing-lg);
+  margin-bottom: var(--spacing-sm);
+}
+.msg-content :deep(li) {
+  margin-bottom: var(--spacing-xs);
+}
+.msg-content :deep(code) {
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+  background: var(--color-bg);
+  font-family: var(--font-family);
+  font-size: 13px;
+}
+.msg-content :deep(blockquote) {
+  border-left: 3px solid var(--color-primary-light);
+  padding-left: var(--spacing-md);
+  margin: var(--spacing-sm) 0;
+  color: var(--color-text-secondary);
+}
+.msg-content :deep(strong) {
+  color: var(--color-text-primary);
+  font-weight: 600;
 }
 
 /* ===== 对方正在输入... ===== */
@@ -766,4 +813,56 @@ onUnmounted(() => {
   color: var(--color-text-tertiary);
   font-size: 12px;
 }
+/* ===== 空态欢迎（G3） ===== */
+.chat-welcome {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: var(--spacing-2xl) 0;
+}
+
+.chat-welcome .welcome-avatar {
+  width: 64px;
+  height: 64px;
+  border-radius: var(--radius-full);
+  background: linear-gradient(135deg, var(--color-primary), #0EA5E9);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+  margin-bottom: var(--spacing-md);
+}
+
+.chat-welcome h3 {
+  font-size: var(--font-size-h3);
+  font-weight: 700;
+  color: var(--color-text-primary);
+  margin-bottom: var(--spacing-sm);
+}
+
+.chat-welcome > p {
+  font-size: var(--font-size-body);
+  color: var(--color-text-secondary);
+  margin-bottom: var(--spacing-md);
+  max-width: 280px;
+  line-height: 1.5;
+}
+
+.example-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.example-chip {
+  padding: 8px 16px;
+  border-radius: var(--radius-full);
+  background: var(--color-card);
+  border: 1px solid var(--color-divider);
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-body);
+}
+
 </style>
