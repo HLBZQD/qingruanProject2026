@@ -19,7 +19,7 @@ function getSalt() {
 }
 
 function deriveKey(salt) {
-  const secret = process.env.JWT_SECRET || 'default_secret_change_me';
+  const secret = process.env.JWT_SECRET;
   return crypto.scryptSync(secret, salt, 32);
 }
 
@@ -58,6 +58,15 @@ function decryptChatToken(encryptedToken) {
   decrypted += decipher.final('utf-8');
 
   return decrypted;
+}
+
+// 启动时校验：JWT_SECRET 必须已设置，否则无法派生加密密钥
+if (!process.env.JWT_SECRET) {
+  throw new Error(
+    '[encryption] JWT_SECRET 环境变量未设置，无法派生 AES-256-GCM 加密密钥。\n' +
+    '请设置环境变量 JWT_SECRET 后重新启动服务。\n' +
+    '示例: JWT_SECRET=<至少32字符的随机字符串> node server/index.js'
+  );
 }
 
 module.exports = { encryptChatToken, decryptChatToken, deriveKey, getSalt };

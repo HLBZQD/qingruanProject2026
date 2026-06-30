@@ -16,7 +16,12 @@
 
 ---
 
-## R2 NEW 修复P1前端设计合规问题（S1/S2）
-任务：修复2个前端设计合规问题——App.vue 删除 localStorage StorageEvent 死代码（v16迁移残留），AiChatDialog.vue 修复4项综合设计合规缺陷（DOM id、XSS管道、免责声明复用、formatTime复用）
-选择理由：P1优先级，S1为死代码清理无依赖，S2为共享工具复用可消除约25行内联重复代码。两问题均为前端文件修改，不涉及后端，可在一个任务中安全处理
-上下文：审查报告已提供精确修复方案；S1仅需删除代码（12行），S2需对齐设计与实现：useMarkdown.ts 提供 renderMarkdown()，useUI.ts 提供 hasAcceptedDisclaimer()/showDisclaimer()/ensureDisclaimer()（但 ensureDisclaimer 仅在 AiChatDialog 中使用），helpers.ts 提供 formatTime()
+## R2 PASSED 修复P1前端设计合规问题（S1/S2）
+结果：2个P1问题全部修复——App.vue 删除 handleStorageChange + storage 事件监听器（死代码清理），AiChatDialog.vue 完成4项综合修复（DOM id添加、renderMarkdown统一XSS管道、useUI免责声明函数复用、formatTime共享版本复用）；todo.md 更新 S1/S2 为已完成
+测试：test_v2.md 验证通过（13个测试用例全部真实逻辑，无占位断言）；verify_v2.md 确认 4 文件修改通过
+
+---
+## R3 NEW 修复P1后端安全缺陷（S5/S6）
+任务：修复2个P1后端安全问题——admin.js Text2SQL功能SQL注入漏洞（S5），encryption.js 硬编码默认加密密钥（S6）
+选择理由：P1最高剩余优先级，两个问题均为后端安全缺陷，共享 server/ 上下文。S5（SQL注入）为功能性安全漏洞可导致数据破坏，S6（硬编码密钥）导致加密保护静默失效。两问题均位于 server/ 路径，独立于前端修改，可在同一任务中安全处理
+上下文：审查报告 todo.md 已提供精确位置和修复建议——S5 需修改 `server/routes/admin.js:241,301,320` 的 WHERE 子句拼接为参数化查询或语法校验；S6 需修改 `server/utils/encryption.js:22` 的密钥回退逻辑为启动时抛出错误

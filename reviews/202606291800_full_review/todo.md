@@ -53,6 +53,7 @@
 - **来源**: Round 2 #S11
 - **描述**: `dispatchParameterizedQuery` 函数在三个工具操作中将 `params.where`（来自用户请求体）直接拼接到 SQL 字符串，未使用参数化占位符：`query_table`（第241行）、`update_record`（第301行）、`delete_record`（第320行）。虽然 `params.table` 通过了白名单校验，但 `params.where` 是原始用户输入，可直接注入任意 WHERE 条件。攻击者需要 admin 凭证，但一旦认证通过即可用于大规模数据破坏。
 - **建议修复**: 将 `params.where` 解析为结构化条件后用参数化占位符重建，或对 WHERE 子句进行严格的语法校验（仅允许 `column = value AND ...` 模式）。
+- **已修复**: 2026-06-30, 批次 v3 (P1 后端安全缺陷), 新增 parseWhereClause() 私有函数，query_table/update_record/delete_record 三处 WHERE 子句改为参数化 ? 占位符重建
 
 ### S6. encryption.js 使用硬编码默认加密密钥
 
@@ -60,6 +61,7 @@
 - **来源**: Round 2 #S6
 - **描述**: `deriveKey()` 中，若 `process.env.JWT_SECRET` 未设置，回退到硬编码字符串 `'default_secret_change_me'`。代码不会报错或警告，静默使用可预测的密钥。若部署时忘记设置 JWT_SECRET，聊天 token 的 AES-256-GCM 加密将使用可预测的派生密钥，失去加密保护意义。
 - **建议修复**: 若 JWT_SECRET 未设置，抛出启动错误：`throw new Error('[encryption] JWT_SECRET 未设置，无法派生加密密钥。')`
+- **已修复**: 2026-06-30, 批次 v3 (P1 后端安全缺陷), 模块顶层添加 JWT_SECRET 环境变量启动校验，deriveKey() 移除硬编码默认密钥回退
 
 ### S7. ArticleDetailView.vue 功能性断裂——fetchArticle() 从未在 onMounted 中调用
 
