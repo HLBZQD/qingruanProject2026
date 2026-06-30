@@ -14,6 +14,8 @@ import type {
   CompletionStatus,
 } from '@/types/api'
 
+import DisclaimerBar from '@/components/DisclaimerBar.vue'
+
 const route = useRoute()
 const store = useLifePlanStore()
 const riskForm = useRiskFormStore()
@@ -578,9 +580,7 @@ onUnmounted(() => {
       </div>
 
       <!-- AI 免责提示条（恒显底部） -->
-      <div class="lp-disclaimer">
-        AI 生成内容仅供参考，不能替代专业医疗诊断，如有不适请及时就医
-      </div>
+      <DisclaimerBar />
     </div>
 
     <!-- 错误态（G2: 统一读 errorRef = generateError ?? error，区分 fetch/generate 失败来源） -->
@@ -1018,17 +1018,6 @@ onUnmounted(() => {
   margin: var(--spacing-lg);
 }
 
-/* AI 免责提示条（恒显底部） */
-.lp-disclaimer {
-  margin: var(--spacing-lg);
-  padding: 10px 12px;
-  background: var(--color-primary-light);
-  color: var(--color-text-secondary);
-  font-size: var(--font-size-caption);
-  border-radius: var(--radius-md);
-  text-align: center;
-  line-height: 1.5;
-}
 
 /* query 提示条 */
 .lp-query-hint {

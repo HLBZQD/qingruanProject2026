@@ -469,16 +469,16 @@
   - REQUEST_AUTH 消息机制支持新标签页
 - [x] **S11** chatStore sendStreamRequest — 401 后添加 `router.push('/login')`
 
-### 批次 5 — P2 组件与DOM合规 🔴 待实现
+### 批次 5 — P2 组件与DOM合规 ✅ 已完成
 
-- [ ] **S3** DisclaimerBar — 6个页面统一使用：DoctorChatView / LifePlan / Risk / Punch / Admin → `<DisclaimerBar>`，ArticleDetailView 正文后添加
-- [ ] **S4** DOM id / data-* 属性 — 按优先级分批补充（优先 Risk.vue → Punch.vue → Home.vue → Profile.vue → Admin.vue → Login.vue → Consultation.vue → ArticleDetailView.vue）
-- [ ] **S12** AiChatDialog.vue — 添加 `onUnmounted(() => { chatStore.abortActiveConnection() })`
-- [ ] **S13** useAuth.ts — JwtPayload 字段名 `user_id` → `id`
-- [ ] **S14** sseProxy.js — Mock 模式生成唯一 conversation_id
-- [ ] **S15** chatStore — 添加 `clearMessages()` action，各处统一调用
-- [ ] **S16** NewsView.vue — highlightKeyword 输出额外调用 sanitizeHtml()
-- [ ] **S17** Home.vue — showDiabetesType 包裹 try-catch
+- [x] **S3** DisclaimerBar — 6个页面统一使用：DoctorChatView / LifePlan / Risk / Punch / Admin → `<DisclaimerBar>`，ArticleDetailView 正文后添加
+- [x] **S4** DOM id / data-* 属性 — 按优先级分批补充（优先 Risk.vue → Punch.vue → Home.vue → Profile.vue → Admin.vue → Login.vue → Consultation.vue → ArticleDetailView.vue）
+- [x] **S12** AiChatDialog.vue — 添加 `onUnmounted(() => { chatStore.abortActiveConnection() })`
+- [x] **S13** useAuth.ts — JwtPayload 字段名 `user_id` → `id`
+- [x] **S14** sseProxy.js — Mock 模式生成唯一 conversation_id
+- [x] **S15** chatStore — 添加 `clearMessages()` action，各处统一调用
+- [x] **S16** NewsView.vue — highlightKeyword 输出额外调用 sanitizeHtml()
+- [x] **S17** Home.vue — showDiabetesType 包裹 try-catch
 
 ### 批次 6 — P3 一般问题（前端） 🔴 待实现
 
@@ -527,7 +527,7 @@
 | 2 | P1 | 2 | ✅ 完成 | `06d7db1` |
 | 3 | P1 | 2 | ✅ 完成 | `266f297` |
 | 4 | P1 | 2 | ✅ 完成 | — |
-| 5 | P2 | 8 | 🔴 待实现 | — |
+| 5 | P2 | 8 | ✅ 完成 | — |
 | 6 | P3 前端 | 20 | 🔴 待实现 | — |
 | 7 | P3 后端 | 13 | 🔴 待实现 | — |
-| **合计** | — | **50** | **9/50** | **4 commits** |
+| **合计** | — | **50** | **17/50** | **5 commits** |

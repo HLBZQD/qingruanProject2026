@@ -13,7 +13,7 @@ export interface JwtPayload {
   /** 用户名 */
   username?: string;
   /** 用户 ID */
-  user_id?: number;
+  id?: number;
   /** 角色 */
   role?: 'user' | 'admin';
   /** 过期时间（Unix 秒） */

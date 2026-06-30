@@ -623,6 +623,11 @@ function handleSSEEvent(event: SSEEvent): void {
     adminConversationId.value = null
   }
 
+  /** 清空当前消息列表（供外部组件调用，进入 Pinia action 追踪） */
+  function clearMessages(): void {
+    conversations.value = []
+  }
+
   // ===== [G4] UI 辅助 =====
 
   function toggleFab(): void {
@@ -739,6 +744,7 @@ function handleSSEEvent(event: SSEEvent): void {
     // actions — UI
     toggleFab,
     navigate,
+    clearMessages,
 
     // state — 历史会话
     conversationHistory,

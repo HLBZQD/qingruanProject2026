@@ -7,6 +7,7 @@ import { collectArticle, uncollectArticle, syncCollectedState, useCollectedMap }
 import { useAuthStore } from '@/stores/authStore'
 import { getErrorMessage } from '@/utils/errorMessage'
 import type { ArticleDetail } from '@/types/api'
+import DisclaimerBar from '@/components/DisclaimerBar.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -233,6 +234,7 @@ onMounted(() => { fetchArticle() })
         ></div>
         <p v-else class="article-empty-body">暂无正文内容</p>
       </section>
+      <DisclaimerBar />
     </template>
   </div>
 </template>

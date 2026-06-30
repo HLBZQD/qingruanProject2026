@@ -6,6 +6,7 @@ import { api } from '@/composables/useApi'
 import { renderMarkdown } from '@/composables/useMarkdown'
 import Swal from 'sweetalert2'
 import type { RiskPredictRequest, RiskPredictResponse, RiskHistoryItem } from '@/types/api'
+import DisclaimerBar from '@/components/DisclaimerBar.vue'
 
 const router = useRouter()
 const store = useRiskFormStore()
@@ -385,7 +386,7 @@ const riskPercent = computed(() => {
       </nav>
 
       <!-- 步骤1：病史状态 -->
-      <section v-show="currentStep === 1" class="step-panel" aria-labelledby="step1-title">
+      <section id="step-1" data-step="1" v-show="currentStep === 1" class="step-panel" aria-labelledby="step1-title">
         <div class="step-header">
           <span class="step-badge">步骤 1/3</span>
           <h2 id="step1-title" class="step-title">您的糖尿病病史状态是？</h2>
@@ -434,7 +435,7 @@ const riskPercent = computed(() => {
           </div>
         </transition>
 
-        <div v-if="fieldError" class="field-error" role="alert">
+        <div id="field-error-container-step1" v-if="fieldError" class="field-error" role="alert">
           <i class="fa-solid fa-circle-exclamation" aria-hidden="true"></i>
           {{ fieldError }}
         </div>
@@ -448,7 +449,7 @@ const riskPercent = computed(() => {
       </section>
 
       <!-- 步骤2：健康信息 -->
-      <section v-show="currentStep === 2" class="step-panel" aria-labelledby="step2-title">
+      <section id="step-2" data-step="2" v-show="currentStep === 2" class="step-panel" aria-labelledby="step2-title">
         <div class="step-header">
           <span class="step-badge">步骤 2/3</span>
           <h2 id="step2-title" class="step-title">请填写您的健康信息</h2>
@@ -599,7 +600,7 @@ const riskPercent = computed(() => {
           </transition>
         </div>
 
-        <div v-if="fieldError" class="field-error" role="alert">
+        <div id="field-error-container" v-if="fieldError" class="field-error" role="alert">
           <i class="fa-solid fa-circle-exclamation" aria-hidden="true"></i>
           {{ fieldError }}
         </div>
@@ -621,7 +622,7 @@ const riskPercent = computed(() => {
       </section>
 
       <!-- 步骤3：评估结果 -->
-      <section v-show="currentStep === 3" class="step-panel result-panel" aria-labelledby="step3-title">
+      <section id="step-3" data-step="3" v-show="currentStep === 3" class="step-panel result-panel" aria-labelledby="step3-title">
         <h2 id="step3-title" class="sr-only">评估结果</h2>
 
         <!-- 加载中 -->
@@ -662,14 +663,14 @@ const riskPercent = computed(() => {
                 <div class="gauge-fill" :style="{ transform: `rotate(${riskPercent * 1.8}deg)` }"></div>
               </div>
               <div class="gauge-center">
-                <span class="gauge-score">{{ Number(result.risk_score).toFixed(1) }}</span>
+                <span id="risk-score" class="gauge-score">{{ Number(result.risk_score).toFixed(1) }}</span>
                 <span class="gauge-total">/ 51</span>
               </div>
             </div>
 
-            <div class="risk-level-badge" :style="{ color: riskMeta.color, background: riskMeta.bg }">
+            <div id="risk-level-badge" class="risk-level-badge" :style="{ color: riskMeta.color, background: riskMeta.bg }">
               <i class="fa-solid" :class="riskMeta.icon" aria-hidden="true"></i>
-              {{ result.risk_level_label || riskMeta.label }}
+              <span id="risk-level-text">{{ result.risk_level_label || riskMeta.label }}</span>
             </div>
 
             <p class="result-hint">
@@ -679,17 +680,15 @@ const riskPercent = computed(() => {
             </p>
           </div>
 
-          <div class="advice-card">
+          <div id="suggestions-list" class="advice-card">
             <div class="advice-header">
               <i class="fa-solid fa-user-doctor" aria-hidden="true"></i>
               <h3>风险分析与建议</h3>
             </div>
-            <div class="markdown-body" v-html="safeAdviceHtml(result.advice)"></div>
+            <div id="risk-detail-text" class="markdown-body" v-html="safeAdviceHtml(result.advice)"></div>
           </div>
 
-          <p class="disclaimer-text">
-            本评估基于《中国2型糖尿病防治指南（2020版）》评分体系，仅供参考，不能替代专业医疗诊断。如有疑虑请及时就医。
-          </p>
+          <DisclaimerBar />
 
           <div class="step-actions split">
             <button class="btn-secondary press" @click="restart">
@@ -1513,14 +1512,6 @@ const riskPercent = computed(() => {
   color: var(--color-text-primary);
 }
 
-.disclaimer-text {
-  font-size: 11px;
-  color: var(--color-text-tertiary);
-  text-align: center;
-  line-height: 1.6;
-  padding: 0 var(--spacing-md);
-  margin-bottom: var(--spacing-lg);
-}
 
 /* ========== 辅助类 ========== */
 .sr-only {

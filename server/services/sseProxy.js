@@ -10,8 +10,9 @@ function proxyDifySSE({ apiKey, query, conversationId, userId, res, req }) {
   const baseUrl = process.env.DIFY_API_BASE;
 
   if (!baseUrl) {
-    const mockMessage = JSON.stringify({ event: 'message', answer: '您好，我是AI助手（Mock模式）。Dify服务未配置。', conversation_id: 'mock-001' });
-    const mockEnd = JSON.stringify({ event: 'message_end', conversation_id: 'mock-001', message_id: 'mock-msg-001' });
+    const mockConvId = `mock-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    const mockMessage = JSON.stringify({ event: 'message', answer: '您好，我是AI助手（Mock模式）。Dify服务未配置。', conversation_id: mockConvId });
+    const mockEnd = JSON.stringify({ event: 'message_end', conversation_id: mockConvId, message_id: `mock-msg-${Date.now()}` });
     res.write(`data: ${mockMessage}\n`);
     res.write(`data: ${mockEnd}\n`);
     res.end();

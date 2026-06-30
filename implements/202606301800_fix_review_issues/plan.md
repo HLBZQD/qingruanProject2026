@@ -33,7 +33,11 @@
 
 ---
 
-## R5 NEW 修复P1跨标签页认证同步（S10/S11）
-任务：修复 S10（authStore BroadcastChannel 三缺陷：消息无限回环、已登录启动聋子、新标签页无auth）+ S11（chatStore SSE 401 无重定向）。两任务紧密相关（均涉及认证状态同步），合并为1个任务
-选择理由：P1批次4任务——S10三个BC子问题修复后解决跨标签页认证同步，S11修复401后完整登出流程闭环。两者共享 authStore/chatStore 上下文且 S11 clearAuth() 触发 S10 BC广播，存在执行耦合
-上下文：authStore.ts (182行) — getBcChannel/onmessage/syncFromStorage/setAuth/clearAuth；chatStore.ts (751行) — sendStreamRequest 401分支；router 已导入可用
+## R5 PASSED 修复P1跨标签页认证同步（S10/S11）
+结果：2个P1问题全部修复——authStore.ts S10三缺陷修复（+50行：onmessage去重守卫、syncFromStorage BC初始化、REQUEST_AUTH新标签页机制）；chatStore.ts S11 401跳转修复（+4行：await toast + router.push('/login')）。todo.md 更新 S10/S11 为已完成
+测试：verify_v5.md 验证通过（5/5文件修改通过）
+
+## R6 NEW 修复P2组件与DOM合规（S12/S15/S13/S14/S16/S17 + S3/S4）
+任务：修复8个P2问题，拆分为两个子任务——子任务A（S12内存泄漏+S15 clearMessages+S13 JWT字段名+S14 Mock ID+S16 XSS+S17 Promise rejection）6个独立小修复；子任务B（S3 DisclaimerBar 6页面+S4 DOM属性 Risk+Punch）2个批量化修改
+选择理由：P2批次5问题，均为独立代码层面的合规修复，无跨文件依赖。子任务A为高优先级小修复（内存泄漏/数据一致性/安全），子任务B为批量化设计合规对齐（组件统一+DOM锚点补充）。8个问题之间无先后依赖，可并行执行
+上下文：验证报告 v5 PASSED。审查报告 todo.md 批次5（第472-481行）已列出所有8个问题的精确位置和修复建议。涉及文件：AiChatDialog.vue、chatStore.ts、DoctorChatView.vue、useAuth.ts、sseProxy.js、NewsView.vue、Home.vue、LifePlan.vue、Risk.vue、Punch.vue、Admin.vue、ArticleDetailView.vue

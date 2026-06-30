@@ -6,6 +6,7 @@ import { getErrorMessage } from '@/utils/errorMessage'
 import { usePunchStore } from '@/stores/punchStore'
 import { enumLabel } from '@/utils/enumLabels'
 import type { PunchType } from '@/types/api'
+import DisclaimerBar from '@/components/DisclaimerBar.vue'
 
 const router = useRouter()
 const route = useRoute()
@@ -252,7 +253,7 @@ onUnmounted(() => {
     </header>
 
     <!-- ===== 统计/AI 分析区（顶部） ===== -->
-    <section class="punch-analysis-section">
+    <section id="analysis-section" class="punch-analysis-section">
       <!-- AI 分析加载中：骨架屏 -->
       <div v-if="store.analysisLoading" class="punch-analysis-card">
         <div class="punch-analysis-skeleton">
@@ -277,19 +278,19 @@ onUnmounted(() => {
         <div class="punch-stats-row">
           <div class="punch-stat-card">
             <span class="punch-stat-label">饮食完成率</span>
-            <span class="punch-stat-value gradient-text">{{
+            <span id="diet-rate" class="punch-stat-value gradient-text">{{
               ratePercent(store.analysis.diet_completion_rate)
             }}</span>
           </div>
           <div class="punch-stat-card">
             <span class="punch-stat-label">运动完成率</span>
-            <span class="punch-stat-value gradient-text">{{
+            <span id="exercise-rate" class="punch-stat-value gradient-text">{{
               ratePercent(store.analysis.exercise_completion_rate)
             }}</span>
           </div>
           <div class="punch-stat-card">
             <span class="punch-stat-label">总打卡</span>
-            <span class="punch-stat-value">{{ store.analysis.total_punches }}</span>
+            <span id="total-punches" class="punch-stat-value">{{ store.analysis.total_punches }}</span>
           </div>
         </div>
 
@@ -337,7 +338,7 @@ onUnmounted(() => {
         <!-- 本周完成趋势柱状图（纯 CSS，7 列） -->
         <div class="punch-trend-card">
           <h2 class="punch-section-title">本周完成趋势</h2>
-          <div class="punch-trend-chart" v-if="trendData.length > 0">
+          <div id="trend-chart" class="punch-trend-chart" v-if="trendData.length > 0">
             <div
               v-for="(d, i) in trendData"
               :key="i"
@@ -392,9 +393,7 @@ onUnmounted(() => {
         </p>
 
         <!-- AI 免责提示条（恒显底部） -->
-        <div class="punch-disclaimer">
-          AI 分析内容仅供参考，不能替代专业医疗诊断，如有不适请及时就医
-        </div>
+        <DisclaimerBar text="AI 分析内容仅供参考，不能替代专业医疗诊断，如有不适请及时就医。" />
       </template>
     </section>
 
@@ -476,7 +475,7 @@ onUnmounted(() => {
       </div>
 
       <!-- 列表为空（空记录引导态） -->
-      <div v-else-if="store.records.length === 0" class="punch-empty">
+      <div id="empty-container" v-else-if="store.records.length === 0" class="punch-empty">
         <div class="punch-empty-card">
           <div class="punch-empty-icon">
             <i class="fa-solid fa-clipboard-check"></i>
@@ -502,7 +501,7 @@ onUnmounted(() => {
           <span>刷新中...</span>
         </div>
 
-        <div class="punch-record-list">
+        <div id="punch-list" class="punch-record-list">
           <div
             v-for="record in store.records"
             :key="record.id"
@@ -568,6 +567,7 @@ onUnmounted(() => {
         <!-- 还有更多：手动加载按钮 -->
         <button
           v-else-if="store.hasMore"
+          id="btn-load-more"
           class="punch-loadmore-btn press"
           @click="store.loadMore()"
         >
@@ -792,17 +792,6 @@ onUnmounted(() => {
   margin: 8px 0;
 }
 
-/* ===== AI 免责提示条（恒显底部，对齐 LifePlan lp-disclaimer 范式） ===== */
-.punch-disclaimer {
-  margin-bottom: var(--spacing-md);
-  padding: 10px 12px;
-  background: var(--color-primary-light);
-  color: var(--color-text-secondary);
-  font-size: var(--font-size-caption);
-  border-radius: var(--radius-md);
-  text-align: center;
-  line-height: 1.5;
-}
 
 /* ===== AI 分析降级提示条 ===== */
 .punch-analysis-fallback {

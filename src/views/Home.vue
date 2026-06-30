@@ -105,9 +105,14 @@ function onSearch(): void {
 // 列表项已含完整三段文本；按需拉详情（接口存在），失败回退列表项数据。
 // 单次 Swal.fire，不重弹、不 update。
 async function showDiabetesType(t: DiabetesType): Promise<void> {
-  const detail = await homeStore.fetchDiabetesTypeDetail(t.id)
-  const data: DiabetesTypeDetail = detail ?? t
-  openTypeSwal(data)
+  try {
+    const detail = await homeStore.fetchDiabetesTypeDetail(t.id)
+    const data: DiabetesTypeDetail = detail ?? t
+    openTypeSwal(data)
+  } catch {
+    // 接口失败回退到列表项数据（t 本身已含 pathogenesis/manifestation/treatment）
+    openTypeSwal(t)
+  }
 }
 
 function openTypeSwal(t: DiabetesTypeDetail): void {

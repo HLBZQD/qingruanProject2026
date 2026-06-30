@@ -11,6 +11,7 @@ import type { AdminLog } from '@/types/api'
 import SkeletonLoader from '@/components/SkeletonLoader.vue'
 import ErrorRetry from '@/components/ErrorRetry.vue'
 import EmptyState from '@/components/EmptyState.vue'
+import DisclaimerBar from '@/components/DisclaimerBar.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -169,9 +170,7 @@ onUnmounted(() => {
         </button>
       </header>
 
-      <div class="disclaimer-bar">
-        <p>本管理助手由 AI 驱动，所有数据操作将被记录审计日志。</p>
-      </div>
+      <DisclaimerBar text="本管理助手由 AI 驱动，所有数据操作将被记录审计日志。" />
 
       <div ref="messagesContainer" class="admin-messages">
         <!-- 空引导 -->
@@ -359,20 +358,6 @@ onUnmounted(() => {
 .admin-info-bar p {
   font-size: 11px;
   color: var(--color-text-tertiary);
-}
-
-.disclaimer-bar {
-  padding: 6px var(--spacing-lg);
-  background: rgba(250, 173, 20, 0.08);
-  border-bottom: 1px solid rgba(250, 173, 20, 0.15);
-  flex-shrink: 0;
-}
-
-.disclaimer-bar p {
-  font-size: 11px;
-  color: #8c6f00;
-  text-align: center;
-  margin: 0;
 }
 
 .admin-messages {

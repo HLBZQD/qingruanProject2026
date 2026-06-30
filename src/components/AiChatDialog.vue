@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, nextTick, onMounted, watch } from 'vue'
+import { ref, computed, nextTick, onMounted, onUnmounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useChatStore } from '@/stores/chatStore'
 import { useAuthStore } from '@/stores/authStore'
@@ -93,6 +93,10 @@ function askQuick(q: string) {
 onMounted(() => {
   if (isOpen.value) scrollToBottom()
 })
+
+onUnmounted(() => {
+  chatStore.abortActiveConnection()
+})
 </script>
 
 <template>
@@ -118,7 +122,7 @@ onMounted(() => {
             class="btn-clear"
             :disabled="messages.length === 0 || chatStore.isStreaming"
             aria-label="清空对话"
-            @click="chatStore.clearAssistantConversation(); chatStore.conversations.length = 0"
+            @click="chatStore.clearAssistantConversation(); chatStore.clearMessages()"
           >
             <i class="fas fa-trash-alt" aria-hidden="true"></i>
           </button>
