@@ -68,9 +68,9 @@ const articlesLoading = computed(() => homeStore.loading && articles.value.lengt
 const typesLoading = computed(() => homeStore.loading && diabetesTypes.value.length === 0 && !homeStore.typesError)
 
 // ===== 跳转 =====
-function goDoctor(): void {
-  // Consultation 页是否接受 ?doc=id query 未确认；本任务仅跳 tab，不带 query，不臆造对话页
-  router.push('/consultation')
+function goDoctor(doc: { id: number }): void {
+  // 设计 4.3 节：首页点击医生卡片直达对话页 /consultation/doctor/:id
+  router.push('/consultation/doctor/' + doc.id)
 }
 function goArticle(id: number): void {
   if (!id) return
@@ -231,7 +231,7 @@ onUnmounted(() => {
         <button class="retry-btn" @click="retryDoctors">点击重试</button>
       </div>
       <div v-else class="doctor-scroll">
-        <div v-for="doc in doctors" :key="doc.id" class="doctor-card" @click="goDoctor">
+        <div v-for="doc in doctors" :key="doc.id" class="doctor-card" @click="goDoctor(doc)">
           <div class="doctor-avatar-wrap">
             <div class="avatar-ring">
               <img
@@ -378,7 +378,7 @@ onUnmounted(() => {
 .home-logo {
   width: 36px;
   height: 36px;
-  background: linear-gradient(135deg, #2563eb, #0ea5e9);
+  background: linear-gradient(135deg, var(--color-primary-dark), var(--color-primary));
   border-radius: var(--radius-lg);
   display: flex;
   align-items: center;
@@ -482,13 +482,13 @@ onUnmounted(() => {
 }
 /* 3 组渐变（对齐 prototype banners） */
 .banner-grad-1 {
-  background: linear-gradient(135deg, #2563eb 0%, #3b82f6 50%, #0ea5e9 100%);
+  background: linear-gradient(135deg, var(--color-primary-dark) 0%, var(--color-primary) 50%, var(--color-primary) 100%);
 }
 .banner-grad-2 {
-  background: linear-gradient(135deg, #4f46e5 0%, #3b82f6 50%, #06b6d4 100%);
+  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 50%, var(--color-primary) 100%);
 }
 .banner-grad-3 {
-  background: linear-gradient(135deg, #06b6d4 0%, #0ea5e9 50%, #3b82f6 100%);
+  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary) 50%, var(--color-primary-dark) 100%);
 }
 .banner-glow {
   position: relative;

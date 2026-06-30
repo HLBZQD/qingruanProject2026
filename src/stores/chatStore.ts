@@ -315,7 +315,7 @@ function handleSSEEvent(event: SSEEvent): void {
           timerProgressBar: true,
         })
         isStreaming.value = false
-        router.push('/login')
+        // 设计 4.3 节要求：401 时保持对话窗口打开，不强制跳转
         return
       }
 
