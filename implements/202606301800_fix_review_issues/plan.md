@@ -41,3 +41,14 @@
 任务：修复8个P2问题，拆分为两个子任务——子任务A（S12内存泄漏+S15 clearMessages+S13 JWT字段名+S14 Mock ID+S16 XSS+S17 Promise rejection）6个独立小修复；子任务B（S3 DisclaimerBar 6页面+S4 DOM属性 Risk+Punch）2个批量化修改
 选择理由：P2批次5问题，均为独立代码层面的合规修复，无跨文件依赖。子任务A为高优先级小修复（内存泄漏/数据一致性/安全），子任务B为批量化设计合规对齐（组件统一+DOM锚点补充）。8个问题之间无先后依赖，可并行执行
 上下文：验证报告 v5 PASSED。审查报告 todo.md 批次5（第472-481行）已列出所有8个问题的精确位置和修复建议。涉及文件：AiChatDialog.vue、chatStore.ts、DoctorChatView.vue、useAuth.ts、sseProxy.js、NewsView.vue、Home.vue、LifePlan.vue、Risk.vue、Punch.vue、Admin.vue、ArticleDetailView.vue
+
+## R6 PASSED 修复P2组件与DOM合规（S12/S15/S13/S14/S16/S17 + S3/S4）
+结果：15文件修改全部通过——AiChatDialog.vue onUnmounted、chatStore clearMessages、useAuth JWT字段名修正、sseProxy Mock唯一ID、NewsView XSS二次净化、Home try-catch、6页面DisclaimerBar统一、Risk/Punch DOM属性补充。todo.md 标记S3/S4/S12-S17已修复
+测试：verify_v6.md PASSED (15/15通过)
+
+---
+
+## R7 NEW 修复P3一般问题—注释与命名（G1 + G4）
+任务：main.ts 第12行注释修正（localStorage→sessionStorage）+ enumLabels.ts 常量重命名 LABELS → ENUM_LABELS
+选择理由：P3第一批20个一般问题，按依赖最低优先启动。G1和G4均为单行文本修正，无跨文件依赖，作为20个P3问题的破冰任务。
+上下文：review todo.md 批次6（第483-504行）已列出全部20个问题的精确位置。G1在main.ts:12，G4在enumLabels.ts:1。无前后端依赖。

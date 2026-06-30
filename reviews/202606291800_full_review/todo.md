@@ -482,9 +482,9 @@
 
 ### 批次 6 — P3 一般问题（前端） 🔴 待实现
 
-- [ ] **G1** main.ts — 注释改为 `// 自动从 sessionStorage 恢复登录态`
+- [x] **G1** main.ts — 注释改为 `// 自动从 sessionStorage 恢复登录态`
 - [ ] **G3** useApi.ts — 401 处理添加 redirect 参数
-- [ ] **G4** enumLabels.ts — 重命名 LABELS → ENUM_LABELS 或添加注释
+- [x] **G4** enumLabels.ts — 重命名 LABELS → ENUM_LABELS 或添加注释
 - [ ] **G5** chatStore.ts — 统一至 sessionStorage 或标注保留原因
 - [ ] **G7** useAuth.ts — JwtPayload 索引签名 `any` → `unknown`
 - [ ] **G8** useMarkdown.ts — 修复 `as any` 类型断言

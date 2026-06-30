@@ -1,49 +1,40 @@
-# 实现需求：批次5 — P2 组件与DOM合规
+# 实现需求：批次6 — P3 前端一般问题
 
 ## 来源
 
 审议式三轮代码审查报告 `reviews/202606291800_full_review/todo.md`
 
-## 本批次任务（8个问题，按依赖关系和影响范围排序）
+## 本批次任务（20个一般问题）
 
-### S12. AiChatDialog.vue 缺少 onUnmounted（优先：内存泄漏）
+### 注释与命名
+- **G1**: main.ts:12 注释 localStorage → sessionStorage
+- **G4**: enumLabels.ts LABELS → ENUM_LABELS 或添加注释
 
-- **文件**: `src/components/AiChatDialog.vue`
-- **修复**: 添加 `onUnmounted(() => { chatStore.abortActiveConnection() })`
+### 类型安全
+- **G7**: useAuth.ts JwtPayload 索引签名 any → unknown
+- **G8**: useMarkdown.ts 修复 `as any` 类型断言
+- **G13**: Consultation.vue 4处 `(doctor as any)` → DoctorDetail
+- **G32**: helpers.ts 泛型 any[] → unknown[]
 
-### S15. chatStore 添加 clearMessages() action（优先：数据一致性）
+### 代码复用与架构
+- **G3**: useApi.ts 401 添加 redirect 参数
+- **G5**: chatStore localStorage → 统一至 sessionStorage 或标注原因
+- **G9**: formatTime 统一使用 helpers.ts 版本
+- **G10**: useUI.ts 添加 showLoginRequired() 辅助函数
+- **G11**: useApi.ts + chatStore.ts SweetAlert2 动态导入 → 静态导入
+- **G15**: Profile.vue 改为调用 authStore.fetchProfile()
+- **G16**: DoctorDetail.is_online 从接口移除或新增数据库列
+- **G19**: punchStore requestId 从公共导出移除
+- **G28**: useUI.ts loadingCounter 移到 composable 内部或标注 SPA-only
 
-- **文件**: `src/stores/chatStore.ts`
-- **修复**: 添加 `clearMessages()` action，DoctorChatView.vue 和 AiChatDialog.vue 统一调用，替换直接修改 `conversations.length = 0`
+### 错误处理与边界情况
+- **G22**: DoctorChatView 清空按钮添加 disabled
+- **G23**: router /change-password 守卫 replace: true
+- **G25**: NewsView sessionStorage 恢复增加类型校验
+- **G33**: Login.vue catch 使用 getErrorMessage()
 
-### S13. JWT Payload 字段名前后端不一致
-
-- **文件**: `src/composables/useAuth.ts:16`
-- **修复**: JwtPayload 接口 `user_id?: number` → `id?: number`
-
-### S14. sseProxy.js Mock 模式固定 conversation_id
-
-- **文件**: `server/services/sseProxy.js:13-15`
-- **修复**: 生成唯一 ID `` `mock-${Date.now()}-${Math.random().toString(36).slice(2,8)}` ``
-
-### S16. NewsView.vue 搜索高亮 XSS 边缘风险
-
-- **文件**: `src/views/NewsView.vue:394`
-- **修复**: highlightKeyword 输出额外调用 sanitizeHtml()
-
-### S17. Home.vue 未捕获的 Promise rejection
-
-- **文件**: `src/views/Home.vue:107-111`
-- **修复**: showDiabetesType 内部包裹 try-catch
-
-### S3. DisclaimerBar 组件系统性未使用（6个页面）
-
-- **文件**: DoctorChatView / LifePlan / Risk / Punch / Admin → `<DisclaimerBar>`, ArticleDetailView → 正文后添加 `<DisclaimerBar />`
-
-### S4. 前端视图 DOM id/data-* 属性（优先级：Risk.vue + Punch.vue 优先）
-
-- **文件**: 按优先级 Risk.vue(9个id) → Punch.vue(8个id) → Home.vue(3个section) → Profile.vue(7个id)
-- **修复**: 按设计文档 §4.1 补充 id 和 data-* 属性
+### 类型命名
+- **G24**: LoginResponse → LoginData，添加 RegisterData
 
 ## 项目根目录
 
