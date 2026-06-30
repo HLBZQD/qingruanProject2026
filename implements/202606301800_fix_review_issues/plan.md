@@ -21,7 +21,12 @@
 测试：test_v2.md 验证通过（13个测试用例全部真实逻辑，无占位断言）；verify_v2.md 确认 4 文件修改通过
 
 ---
-## R3 NEW 修复P1后端安全缺陷（S5/S6）
-任务：修复2个P1后端安全问题——admin.js Text2SQL功能SQL注入漏洞（S5），encryption.js 硬编码默认加密密钥（S6）
-选择理由：P1最高剩余优先级，两个问题均为后端安全缺陷，共享 server/ 上下文。S5（SQL注入）为功能性安全漏洞可导致数据破坏，S6（硬编码密钥）导致加密保护静默失效。两问题均位于 server/ 路径，独立于前端修改，可在同一任务中安全处理
-上下文：审查报告 todo.md 已提供精确位置和修复建议——S5 需修改 `server/routes/admin.js:241,301,320` 的 WHERE 子句拼接为参数化查询或语法校验；S6 需修改 `server/utils/encryption.js:22` 的密钥回退逻辑为启动时抛出错误
+## R3 PASSED 修复P1后端安全缺陷（S5/S6）
+结果：2个P1后端安全问题全部修复——admin.js 新增 parseWhereClause() 私有函数，query_table/update_record/delete_record 三处 WHERE 子句改为参数化 ? 占位符重建；encryption.js 模块顶层添加 JWT_SECRET 环境变量启动校验，deriveKey() 移除硬编码默认密钥回退；todo.md 更新 S5/S6 为已完成
+测试：批次3验证通过，提交 266f297
+
+---
+
+## R4 ALL_DONE
+结果：核心目标达成——todo.md 已转化为完整的可执行实现计划，包含50个问题的 checkbox 任务清单、7批次划分（批次1-3已完成，批次4-7已规划）、进度追踪表
+剩余43个问题（10严重+33一般）已通过批次4-7完整规划，后续实现由 implementer 按批次执行
