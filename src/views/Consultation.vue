@@ -38,26 +38,16 @@ onMounted(() => {
   <div class="consultation-list-container">
     <!-- 顶部导航栏 -->
     <header class="top-bar">
-      <div class="top-bar-grid" aria-hidden="true"></div>
-      <div class="top-bar-shapes" aria-hidden="true">
-        <span class="top-shape top-shape-1"></span>
-        <span class="top-shape top-shape-2"></span>
-      </div>
       <div class="top-bar-inner">
         <div class="top-bar-title-wrap">
           <span class="top-bar-icon">
-            <DiabetesIcon name="stethoscope" :size="22" color="#fff" />
+            <DiabetesIcon name="stethoscope" :size="20" color="var(--color-primary)" />
           </span>
           <div>
-            <h1>医师咨询</h1>
+            <h1 class="top-bar-title">医师咨询</h1>
             <p class="top-bar-sub">专业医师，随时为您解答健康问题</p>
           </div>
         </div>
-      </div>
-      <div class="top-bar-wave" aria-hidden="true">
-        <svg viewBox="0 0 400 28" preserveAspectRatio="none">
-          <path d="M0,0 L0,12 Q100,28 200,16 T400,12 L400,0 Z" fill="var(--color-bg)" />
-        </svg>
       </div>
     </header>
 
@@ -127,7 +117,7 @@ onMounted(() => {
   max-width: 480px;
   margin: 0 auto;
   min-height: 100vh;
-  background: var(--color-bg);
+  background: transparent;
   padding-bottom: calc(var(--tab-bar-height) + 8px);
 }
 
@@ -136,59 +126,17 @@ onMounted(() => {
   position: sticky;
   top: 0;
   z-index: 30;
-  background: var(--color-primary);
-  padding: 48px var(--spacing-lg) 0;
-  overflow: hidden;
-  box-shadow: var(--shadow-primary);
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  padding: 20px var(--spacing-lg) 12px;
+  border-bottom: 0.5px solid var(--color-divider);
   margin-bottom: var(--spacing-lg);
-}
-
-.top-bar-grid {
-  position: absolute;
-  inset: 0;
-  opacity: 0.08;
-  background-image:
-    linear-gradient(rgba(255, 255, 255, 0.5) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.5) 1px, transparent 1px);
-  background-size: 28px 28px;
-  pointer-events: none;
-}
-
-.top-bar-shapes {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-}
-
-.top-shape {
-  position: absolute;
-  border-radius: 24%;
-}
-
-.top-shape-1 {
-  width: 100px;
-  height: 100px;
-  background: var(--color-vivid);
-  opacity: 0.15;
-  top: -30px;
-  right: -20px;
-  transform: rotate(15deg);
-}
-
-.top-shape-2 {
-  width: 60px;
-  height: 60px;
-  background: var(--color-accent);
-  opacity: 0.2;
-  bottom: 50px;
-  right: 15%;
-  transform: rotate(-10deg);
 }
 
 .top-bar-inner {
   position: relative;
   z-index: 1;
-  padding-bottom: 16px;
 }
 
 .top-bar-title-wrap {
@@ -198,45 +146,28 @@ onMounted(() => {
 }
 
 .top-bar-icon {
-  width: 44px;
-  height: 44px;
-  border-radius: 24%;
-  background: rgba(255, 255, 255, 0.15);
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-md);
+  background: var(--color-primary-light);
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  transform: rotate(3deg);
 }
 
-.top-bar h1 {
-  font-size: var(--font-size-h2);
+.top-bar-title {
+  font-size: 17px;
   font-weight: 700;
-  color: #fff;
-  letter-spacing: -0.02em;
+  color: var(--color-text-primary);
+  line-height: 1.25;
 }
 
 .top-bar-sub {
-  font-size: var(--font-size-caption);
-  color: rgba(255, 255, 255, 0.75);
+  font-size: 11px;
+  color: var(--color-text-tertiary);
   margin-top: 2px;
   font-weight: 500;
-}
-
-.top-bar-wave {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: 26px;
-  transform: translateY(1px);
-}
-
-.top-bar-wave svg {
-  width: 100%;
-  height: 100%;
-  display: block;
 }
 
 /* ===== 医生列表 ===== */
@@ -254,7 +185,7 @@ onMounted(() => {
   gap: var(--spacing-md);
   padding: var(--spacing-lg);
   background: var(--color-card);
-  border-radius: 20px 8px 20px 8px;
+  border-radius: var(--radius-2xl);
   border: 1.5px solid var(--color-border);
   box-shadow: var(--shadow-sm);
   cursor: pointer;
@@ -262,9 +193,7 @@ onMounted(() => {
   overflow: hidden;
 }
 
-.doctor-card-detail:nth-child(even) {
-  border-radius: 8px 20px 8px 20px;
-}
+/* Alternating style overrides removed for geometric consistency */
 
 .doctor-card-detail:hover,
 .doctor-card-detail:active {
@@ -296,7 +225,7 @@ onMounted(() => {
 .doctor-avatar-large {
   width: 58px;
   height: 58px;
-  border-radius: 28%;
+  border-radius: 50%;
   object-fit: cover;
   border: 2px solid var(--color-primary-light);
   background: var(--color-bg);
@@ -358,7 +287,7 @@ onMounted(() => {
 .btn-chat {
   flex-shrink: 0;
   padding: 8px 18px;
-  border-radius: 20px 6px 20px 6px;
+  border-radius: var(--radius-button);
   background: var(--color-primary);
   color: #fff;
   font-size: var(--font-size-caption);
@@ -394,14 +323,14 @@ onMounted(() => {
   gap: var(--spacing-md);
   padding: var(--spacing-lg);
   background: var(--color-card);
-  border-radius: 20px 8px 20px 8px;
+  border-radius: var(--radius-2xl);
   border: 1.5px solid var(--color-border);
 }
 
 .skeleton-avatar {
   width: 58px;
   height: 58px;
-  border-radius: 28%;
+  border-radius: 50%;
   background: var(--color-divider);
   animation: skeletonPulse 1.5s ease-in-out infinite;
   flex-shrink: 0;

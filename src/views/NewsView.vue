@@ -493,7 +493,7 @@ onMounted(() => {
   max-width: 480px;
   margin: 0 auto;
   min-height: 100vh;
-  background: var(--color-bg);
+  background: transparent;
   padding-bottom: calc(var(--tab-bar-height) + 16px + env(safe-area-inset-bottom));
   position: relative;
 }
@@ -502,9 +502,11 @@ onMounted(() => {
   position: sticky;
   top: 0;
   z-index: 30;
-  background: var(--color-card);
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
   border-bottom: 1px solid var(--color-divider);
-  padding: var(--spacing-lg) var(--spacing-xl);
+  padding: 16px var(--spacing-lg);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -541,9 +543,11 @@ onMounted(() => {
 
 .category-tabs {
   position: sticky;
-  top: 49px;
+  top: 56px; /* offset top-bar height */
   z-index: 20;
-  background: var(--color-card);
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
   border-bottom: 1px solid var(--color-divider);
   padding: var(--spacing-sm) var(--spacing-lg);
   display: flex;
@@ -586,14 +590,20 @@ onMounted(() => {
 
 .article-card {
   background: var(--color-card);
-  border-radius: 16px;
+  border-radius: var(--radius-2xl); /* 8px */
+  border: 1px solid var(--color-border);
   padding: var(--spacing-md);
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.06);
+  box-shadow: var(--shadow-sm);
   display: flex;
   gap: var(--spacing-md);
   cursor: pointer;
   transition: transform var(--transition-fast), box-shadow var(--transition-fast);
   margin-bottom: var(--spacing-md);
+}
+
+.article-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 16px -6px rgba(0, 113, 227, 0.06);
 }
 
 .article-card:active {
@@ -604,7 +614,7 @@ onMounted(() => {
 .card-cover {
   width: 88px;
   height: 88px;
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-xl); /* 6px */
   object-fit: cover;
   flex-shrink: 0;
   background: var(--color-divider);
@@ -704,12 +714,12 @@ onMounted(() => {
   gap: 6px;
   padding: 10px 16px;
   border-radius: var(--radius-full);
-  background: linear-gradient(135deg, var(--color-accent), #73d13d);
+  background: linear-gradient(135deg, var(--color-primary), #5AC8FA);
   color: #fff;
   font-size: 13px;
   font-weight: 600;
   border: none;
-  box-shadow: 0 4px 12px rgba(82, 196, 26, 0.35);
+  box-shadow: 0 4px 14px rgba(0, 113, 227, 0.25);
   cursor: pointer;
   transition: transform var(--transition-fast), opacity var(--transition-fast);
 }
@@ -727,12 +737,9 @@ onMounted(() => {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: var(--spacing-sm) var(--spacing-lg);
-  background: var(--color-card);
+  padding: var(--spacing-md) var(--spacing-lg);
+  background: transparent;
   border-bottom: 1px solid var(--color-divider);
-  position: sticky;
-  top: 0;
-  z-index: 30;
 }
 
 .search-icon {

@@ -231,45 +231,35 @@ const menuItems = computed<MenuItem[]>(() => {
       label: '风险预测',
       icon: 'diagnose-heart',
       iconType: 'diabetes',
-      iconColor: '#4F46E5',
-      bgColor: '#EEF2FF',
+      iconColor: '#0071E3',
+      bgColor: '#F5F9FF',
       to: '/profile/risk',
     },
     {
       label: '打卡记录',
       icon: 'medical-note',
       iconType: 'diabetes',
-      iconColor: '#06D6A0',
-      bgColor: '#E0FDF6',
+      iconColor: '#30B0C7',
+      bgColor: '#F0FBFD',
       to: '/profile/punch',
     },
     {
       label: '健康建议',
       icon: 'lightbulb',
       iconType: 'app',
-      iconColor: '#FF6B6B',
-      bgColor: '#FFF0F0',
+      iconColor: '#FF9500',
+      bgColor: '#FFF9F0',
       to: '/profile/advice',
     },
     {
       label: '编辑资料',
       icon: 'doctor-notes',
       iconType: 'diabetes',
-      iconColor: '#4F46E5',
-      bgColor: '#EEF2FF',
+      iconColor: '#0071E3',
+      bgColor: '#F5F9FF',
       action: onEditProfile,
     },
   ]
-  if (authStore.isAdmin) {
-    items.push({
-      label: '智能管理',
-      icon: 'medical-sign',
-      iconType: 'diabetes',
-      iconColor: '#8B5CF6',
-      bgColor: '#EDE9FE',
-      to: '/admin',
-    })
-  }
   return items
 })
 
@@ -330,11 +320,9 @@ onUnmounted(() => {
       <!-- 正常内容 -->
       <template v-else>
         <header class="profile-hero">
-          <div class="hero-grid" aria-hidden="true"></div>
-          <div class="hero-shapes" aria-hidden="true">
-            <span class="hero-shape hero-shape-1"></span>
-            <span class="hero-shape hero-shape-2"></span>
-            <span class="hero-shape hero-shape-3"></span>
+          <div class="profile-hero-glow" aria-hidden="true"></div>
+          <div class="profile-hero-icon-bg" aria-hidden="true">
+            <DiabetesIcon name="doctor" :size="80" />
           </div>
           <div class="hero-content">
             <div class="avatar-wrapper" @click="triggerAvatarUpload">
@@ -345,7 +333,7 @@ onUnmounted(() => {
                 class="avatar-img"
               />
               <div class="avatar-overlay" aria-hidden="true">
-                <AppIcon name="camera" :size="24" color="#fff" />
+                <AppIcon name="camera" :size="20" color="#fff" />
               </div>
               <input
                 ref="avatarInput"
@@ -449,6 +437,18 @@ onUnmounted(() => {
         </main>
       </template>
     </div>
+
+    <!-- Admin Floating Button (智能管理悬浮按键，仅管理员可见) -->
+    <button
+      v-if="authStore.isAdmin && !isSubRouteActive"
+      class="admin-fab-button press"
+      aria-label="智能管理"
+      @click="router.push('/admin')"
+    >
+      <span class="admin-fab-glow" aria-hidden="true"></span>
+      <DiabetesIcon name="medical-sign" :size="26" color="#fff" />
+      <span class="admin-fab-pulse" aria-hidden="true"></span>
+    </button>
   </div>
 </template>
 
@@ -458,7 +458,7 @@ onUnmounted(() => {
   max-width: 480px;
   margin: 0 auto;
   min-height: 100vh;
-  background: var(--color-bg);
+  background: transparent;
   position: relative;
 }
 
@@ -484,74 +484,46 @@ onUnmounted(() => {
   }
 }
 
-/* ========== Hero 头部 ========== */
+/* ========== Hero 头部 (苹果暗色高级智能风格) ========== */
 .profile-hero {
   position: relative;
-  padding: 52px var(--spacing-lg) 36px;
+  padding: 36px var(--spacing-lg) 28px;
   overflow: hidden;
-  background: var(--color-primary);
-  box-shadow: var(--shadow-primary);
+  background: linear-gradient(135deg, #171825 0%, #0c0c14 100%);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  border-radius: 0 0 16px 16px;
 }
 
-.hero-grid {
+.profile-hero-glow {
   position: absolute;
-  inset: 0;
-  opacity: 0.08;
-  background-image:
-    linear-gradient(rgba(255, 255, 255, 0.5) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.5) 1px, transparent 1px);
-  background-size: 28px 28px;
-  pointer-events: none;
-}
-
-.hero-shapes {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-}
-
-.hero-shape {
-  position: absolute;
-  border-radius: 24%;
-}
-
-.hero-shape-1 {
-  width: 120px;
-  height: 120px;
-  background: var(--color-vivid);
-  opacity: 0.15;
-  top: -40px;
+  width: 160px;
+  height: 160px;
+  background: radial-gradient(circle, rgba(90, 200, 250, 0.15) 0%, transparent 70%);
   right: -20px;
-  transform: rotate(20deg);
+  top: -20px;
+  filter: blur(20px);
+  pointer-events: none;
+  z-index: 1;
 }
 
-.hero-shape-2 {
-  width: 80px;
-  height: 80px;
-  background: var(--color-accent);
-  opacity: 0.2;
-  bottom: 40px;
-  left: -20px;
-  transform: rotate(-15deg);
-}
-
-.hero-shape-3 {
-  width: 48px;
-  height: 48px;
-  background: var(--color-amber);
-  opacity: 0.2;
-  top: 30px;
-  right: 25%;
-  border-radius: 30%;
+.profile-hero-icon-bg {
+  position: absolute;
+  right: 24px;
+  bottom: -15px;
+  opacity: 0.06;
+  transform: rotate(-10deg);
+  z-index: 1;
+  color: #fff;
 }
 
 .hero-content {
   position: relative;
-  z-index: 1;
+  z-index: 2;
   display: flex;
-  flex-direction: column;
   align-items: center;
-  text-align: center;
+  gap: var(--spacing-lg);
+  text-align: left;
 }
 
 .hero-wave {
@@ -572,15 +544,15 @@ onUnmounted(() => {
 /* ========== 头像 ========== */
 .avatar-wrapper {
   position: relative;
-  width: 108px;
-  height: 108px;
-  border-radius: 30%;
+  width: 76px;
+  height: 76px;
+  border-radius: var(--radius-full);
   cursor: pointer;
   flex-shrink: 0;
-  padding: 4px;
-  background: rgba(255, 255, 255, 0.15);
-  border: 1px solid rgba(255, 255, 255, 0.25);
-  box-shadow: 0 0 0 4px rgba(6, 214, 160, 0.18);
+  padding: 2px;
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
   transition: transform var(--transition-fast);
   transform: rotate(2deg);
 }
@@ -592,17 +564,17 @@ onUnmounted(() => {
 .avatar-img {
   width: 100%;
   height: 100%;
-  border-radius: 28%;
+  border-radius: var(--radius-full);
   object-fit: cover;
-  border: 3px solid #fff;
+  border: 2px solid #fff;
   background: #fff;
 }
 
 .avatar-overlay {
   position: absolute;
-  inset: 4px;
-  border-radius: 28%;
-  background: rgba(26, 26, 46, 0.55);
+  inset: 3px;
+  border-radius: var(--radius-full);
+  background: rgba(15, 23, 42, 0.45);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -628,23 +600,26 @@ onUnmounted(() => {
 
 /* ========== 用户信息 ========== */
 .user-info {
-  margin-top: var(--spacing-md);
+  margin-top: 0;
   color: #fff;
+  flex: 1;
+  min-width: 0;
 }
 
 .user-name {
-  font-size: 22px;
-  font-weight: 700;
-  line-height: 1.3;
-  letter-spacing: -0.02em;
+  font-size: 20px;
+  font-weight: 800;
+  color: #fff;
+  line-height: 1.25;
+  letter-spacing: -0.015em;
 }
 
 .user-meta {
-  margin-top: var(--spacing-sm);
+  margin-top: 6px;
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: var(--spacing-sm);
+  justify-content: flex-start;
+  gap: 8px;
   flex-wrap: wrap;
 }
 
@@ -654,26 +629,28 @@ onUnmounted(() => {
   padding: 3px 10px;
   border-radius: var(--radius-tag);
   font-size: var(--font-size-xs);
-  font-weight: 600;
-  background: rgba(255, 255, 255, 0.18);
-  color: #fff;
-  border: 1px solid rgba(255, 255, 255, 0.3);
+  font-weight: 700;
+  background: rgba(255, 255, 255, 0.12);
+  color: rgba(255, 255, 255, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.16);
 }
 
 .role-badge.admin {
-  background: rgba(6, 214, 160, 0.25);
-  border-color: rgba(6, 214, 160, 0.45);
+  background: rgba(175, 82, 222, 0.15);
+  color: #AF52DE;
+  border-color: rgba(175, 82, 222, 0.25);
 }
 
 .join-date {
   font-size: var(--font-size-caption);
-  color: rgba(255, 255, 255, 0.8);
+  color: rgba(255, 255, 255, 0.5);
+  font-weight: 600;
 }
 
 /* ========== 页面主体 ========== */
 .profile-body {
   padding: 0 var(--spacing-lg);
-  margin-top: -20px;
+  margin-top: 24px;
   position: relative;
   z-index: 2;
 }
@@ -991,6 +968,76 @@ onUnmounted(() => {
   .skeleton-menu,
   .skeleton-logout {
     animation: none;
+  }
+}
+
+/* ===== Admin Panel Floating Button (Siri-symmetrical layout) ===== */
+.admin-fab-button {
+  position: fixed;
+  left: 16px;
+  bottom: calc(var(--tab-bar-height) + 16px + env(safe-area-inset-bottom));
+  width: 58px;
+  height: 58px;
+  border-radius: 30%;
+  background: linear-gradient(135deg, #5856D6, #AF52DE);
+  color: #fff;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 60;
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast), border-radius var(--transition-fast);
+  box-shadow: 0 4px 14px rgba(88, 86, 214, 0.35);
+  transform: rotate(-2deg);
+}
+
+.admin-fab-button::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 30%;
+  border: 1.5px solid #AF52DE;
+  opacity: 0;
+  transform: scale(1);
+  transition: opacity var(--transition-fast), transform var(--transition-slow);
+}
+
+.admin-fab-button:active {
+  transform: rotate(0deg) scale(0.94);
+  box-shadow: 0 2px 8px rgba(88, 86, 214, 0.25);
+}
+
+.admin-fab-glow {
+  position: absolute;
+  inset: 0;
+  border-radius: 30%;
+  background: radial-gradient(circle at center, rgba(175, 82, 222, 0.4), transparent 70%);
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+.admin-fab-pulse {
+  position: absolute;
+  inset: -4px;
+  border: 1px solid rgba(88, 86, 214, 0.4);
+  border-radius: 34%;
+  opacity: 0;
+  animation: pulse-ring-admin 2.5s cubic-bezier(0.215, 0.61, 0.355, 1) infinite;
+  pointer-events: none;
+}
+
+@keyframes pulse-ring-admin {
+  0% {
+    transform: scale(0.95);
+    opacity: 0.8;
+  }
+  50% {
+    opacity: 0.3;
+  }
+  100% {
+    transform: scale(1.15);
+    opacity: 0;
   }
 }
 </style>

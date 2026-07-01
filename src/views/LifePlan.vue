@@ -336,9 +336,14 @@ onUnmounted(() => {
 
 <template>
   <div class="life-plan page-enter">
-    <!-- Header（渐变圆角，复刻原型 623-633） -->
+    <!-- Header（苹果暗色高级智能 Banner 风格） -->
     <header class="lp-header">
+      <div class="lp-header-glow" aria-hidden="true"></div>
+      <div class="lp-header-icon-bg" aria-hidden="true">
+        <DiabetesIcon name="pills" :size="80" />
+      </div>
       <div class="lp-header-left">
+        <span class="lp-header-badge">AI PERSONALIZED</span>
         <h1 class="lp-title">生活方案</h1>
         <p class="lp-subtitle">个性化饮食与运动建议</p>
       </div>
@@ -598,55 +603,128 @@ onUnmounted(() => {
   margin: 0 auto;
   padding-bottom: calc(var(--tab-bar-height) + 8px);
   min-height: 100vh;
-  background: var(--color-bg);
+  background: transparent;
 }
 
-/* Header 渐变圆角（复刻原型 from-blue-600 to-sky-500） */
+/* Header 苹果暗色高级智能 Banner 风格 */
 .lp-header {
-  background: linear-gradient(135deg, #4A90D9, #38BDF8);
+  position: relative;
+  background: linear-gradient(135deg, #171825 0%, #0c0c14 100%);
   color: #fff;
-  padding: 48px var(--spacing-xl) var(--spacing-2xl);
-  border-radius: 0 0 24px 24px;
+  padding: 32px var(--spacing-xl) 28px;
+  border-radius: 0 0 16px 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   display: flex;
   justify-content: space-between;
   align-items: center;
+  overflow: hidden;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
 }
+
+.lp-header-glow {
+  position: absolute;
+  width: 150px;
+  height: 150px;
+  background: radial-gradient(circle, rgba(90, 200, 250, 0.18) 0%, transparent 70%);
+  right: -20px;
+  top: -30px;
+  filter: blur(20px);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.lp-header-icon-bg {
+  position: absolute;
+  right: 20px;
+  bottom: -10px;
+  opacity: 0.08;
+  transform: rotate(-15deg);
+  z-index: 1;
+  color: #fff;
+}
+
 .lp-header-left {
+  position: relative;
+  z-index: 2;
   flex: 1;
 }
-.lp-title {
-  font-size: var(--font-size-h1);
-  font-weight: 700;
-}
-.lp-subtitle {
-  font-size: var(--font-size-caption);
-  opacity: 0.85;
-  margin-top: 2px;
-}
-.lp-recustomize {
-  background: rgba(255, 255, 255, 0.2);
-  color: #fff;
-  font-size: var(--font-size-caption);
-  padding: 6px 12px;
+
+.lp-header-badge {
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  color: #5AC8FA;
+  background: rgba(90, 200, 250, 0.12);
+  padding: 2px 6px;
   border-radius: var(--radius-full);
-  border: none;
-  backdrop-filter: blur(4px);
+  display: inline-block;
+  margin-bottom: 6px;
+  border: 1px solid rgba(90, 200, 250, 0.15);
+}
+
+.lp-title {
+  font-size: 22px;
+  font-weight: 800;
+  color: #fff;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+}
+
+.lp-subtitle {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.6);
+  line-height: 1.3;
+  margin-top: 4px;
+}
+
+.lp-recustomize {
+  position: relative;
+  z-index: 2;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 7px 14px;
+  border-radius: var(--radius-full);
   cursor: pointer;
   white-space: nowrap;
   flex-shrink: 0;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  transition: background var(--transition-fast);
+}
+
+.lp-recustomize:active {
+  background: rgba(255, 255, 255, 0.16);
 }
 
 /* 通用卡片 */
 .lp-empty-card,
 .lp-form-card,
-.lp-item-card,
 .lp-gen-card,
 .lp-adjust-card {
   background: var(--color-card);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-md);
+  border-radius: var(--radius-2xl); /* 8px */
+  border: 1px solid var(--color-border);
+  box-shadow: var(--shadow-sm);
   padding: var(--spacing-xl);
   margin: var(--spacing-lg) var(--spacing-lg);
+}
+
+.lp-item-card {
+  background: var(--color-card);
+  border-radius: var(--radius-2xl); /* 8px */
+  border: 1px solid var(--color-border);
+  box-shadow: var(--shadow-sm);
+  padding: var(--spacing-xl);
+  margin: 0 var(--spacing-lg) var(--spacing-md);
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.lp-item-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 16px -6px rgba(0, 113, 227, 0.06);
 }
 
 /* 无方案引导态 */
@@ -763,35 +841,34 @@ onUnmounted(() => {
   gap: var(--spacing-sm);
 }
 
-/* gradient-text（复刻原型统计卡渐变文字） */
 .gradient-text {
   font-size: 24px;
-  font-weight: 700;
-  background: linear-gradient(135deg, #4A90D9, #38BDF8);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
+  font-weight: 800;
+  color: #fff;
 }
 
-/* 统计卡 */
+/* 统计卡 - 复刻主页暗色高档 Banner 风格 */
 .lp-stats {
-  background: var(--color-card);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-md);
+  background: linear-gradient(135deg, #171825 0%, #0c0c14 100%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: var(--radius-2xl); /* 8px */
+  box-shadow: var(--shadow-sm);
   padding: var(--spacing-lg);
   margin: var(--spacing-lg);
   display: flex;
   justify-content: space-around;
   text-align: center;
+  color: #fff;
 }
 .lp-stat-divider {
   width: 1px;
-  background: var(--color-divider);
+  background: rgba(255, 255, 255, 0.1);
 }
 .lp-stat-label {
   font-size: var(--font-size-caption);
-  color: var(--color-text-secondary);
+  color: rgba(255, 255, 255, 0.5);
   margin-top: 2px;
+  font-weight: 700;
 }
 
 /* 分组标题 */
@@ -848,8 +925,8 @@ onUnmounted(() => {
   color: var(--color-accent);
 }
 .lp-item-icon-other {
-  background: #F5F0FF;
-  color: #8B5CF6;
+  background: var(--color-lavender-light);
+  color: var(--color-lavender);
 }
 .lp-item-meta {
   display: flex;
@@ -871,7 +948,7 @@ onUnmounted(() => {
 /* 生成按钮（复刻原型 wand-magic-sparkles 渐变） */
 .lp-cta,
 .lp-generate-btn {
-  background: linear-gradient(135deg, #4A90D9, #38BDF8);
+  background: linear-gradient(135deg, var(--color-primary), #0EA5E9);
   color: #fff;
   border: none;
   border-radius: var(--radius-button);
@@ -980,7 +1057,7 @@ onUnmounted(() => {
 .lp-gen-progress-bar {
   height: 100%;
   width: 40%;
-  background: linear-gradient(135deg, #4A90D9, #38BDF8);
+  background: linear-gradient(135deg, var(--color-primary), #0EA5E9);
   border-radius: var(--radius-full);
   animation: lp-indeterminate 1.4s ease-in-out infinite;
 }
