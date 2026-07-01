@@ -66,6 +66,7 @@ export function sanitizeHtml(html: string): string {
       'table', 'thead', 'tbody', 'tr', 'th', 'td',
       'span', 'div',
       'img',
+      'details', 'summary',
     ],
 
     // —— 允许的属性（白名单）——

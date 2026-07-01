@@ -139,6 +139,10 @@ describe('proxyAgentSSE', () => {
 
   // ── 分支 (d): Mock 降级模式 ──
   describe('Mock 降级（DIFY_API_BASE 未配置）', () => {
+    beforeEach(() => {
+      delete process.env.DIFY_API_BASE
+    })
+
     it('返回 Mock SSE 消息，写入以 data: 开头的 message 事件', () => {
       const res = makeRes()
       const req = makeReq()
@@ -304,7 +308,7 @@ describe('proxyAgentSSE', () => {
       expect(body.response_mode).toBe('streaming')
     })
 
-    it('inputs 为空对象', () => {
+    it('未传入 inputs 时默认为空对象', () => {
       setBaseUrl('http://dify.example.com/v1')
       const res = makeRes()
       const req = makeReq()
@@ -313,6 +317,21 @@ describe('proxyAgentSSE', () => {
 
       const body = JSON.parse(mockReq._body)
       expect(body.inputs).toEqual({})
+    })
+
+    it('传入 inputs 时正确传递到请求体', () => {
+      setBaseUrl('http://dify.example.com/v1')
+      const res = makeRes()
+      const req = makeReq()
+
+      difyRouter.proxyAgentSSE({
+        apiKey: 'app-xxx', query: '你好', userId: 1,
+        inputs: { userId: '1', sex: 'male', age: '30', disease: 'healthy' },
+        res, req
+      })
+
+      const body = JSON.parse(mockReq._body)
+      expect(body.inputs).toEqual({ userId: '1', sex: 'male', age: '30', disease: 'healthy' })
     })
 
     it('传入 conversationId 时包含 conversation_id 字段', () => {

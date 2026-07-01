@@ -7,7 +7,7 @@ const { callDifyGetConversations } = require('../services/difyService');
 
 const router = express.Router();
 
-router.post('/chat', authMiddleware, (req, res, next) => {
+router.post('/chat', authMiddleware, async (req, res, next) => {
   try {
     const { message, conversation_id } = req.body || {};
 
@@ -15,6 +15,33 @@ router.post('/chat', authMiddleware, (req, res, next) => {
       return res.status(422).json({
         error: { code: 'VALIDATION_ERROR', message: '消息不能为空' }
       });
+    }
+
+    // 查询用户风险信息，填充 Dify Agent 的 Input Form 必填字段
+    // 查询失败或用户无风险信息时，inputs 为空 → Dify 使用默认值
+    const inputs = {};
+    try {
+      const adapter = getAdapter();
+      const riskRows = await adapter.query(
+        'SELECT age, gender, height, weight, family_history, waist, systolic_bp, diabetes_history FROM user_risk_info WHERE user_id = ? ORDER BY created_at DESC LIMIT 1',
+        [req.user.user_id]
+      );
+
+      if (riskRows.length > 0) {
+        const r = riskRows[0];
+        inputs.userId = String(req.user.user_id);
+        inputs.sex = r.gender || '';
+        inputs.age = r.age != null ? String(r.age) : '';
+        inputs.height = r.height != null ? String(r.height) : '';
+        inputs.weight = r.weight != null ? String(r.weight) : '';
+        inputs.familyHistory = r.family_history || 'no';
+        inputs.waistCircumference = r.waist != null ? String(r.waist) : '';
+        inputs.bloodPressure = r.systolic_bp != null ? String(r.systolic_bp) : '';
+        inputs.disease = r.diabetes_history || 'healthy';
+      }
+    } catch (dbErr) {
+      console.error('[assistant] 查询用户风险信息失败:', dbErr.message);
+      // inputs 保持为空，不阻断对话流程
     }
 
     // 注意：此处的 DIFY_ASSISTANT_APP_KEY 必须与 dify.js 中
@@ -27,6 +54,7 @@ router.post('/chat', authMiddleware, (req, res, next) => {
       query: message,
       conversationId: conversation_id,
       userId: req.user.user_id,
+      inputs,
       res,
       req
     });
