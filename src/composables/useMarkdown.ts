@@ -42,11 +42,27 @@ const _linkRenderer = {
 marked.use({ renderer: _linkRenderer as any })
 
 /**
+ * 提取并折叠 AI 思考过程。
+ *
+ * Dify Agent 在 answer 中内嵌 <think>...</think> 标签用于展示推理链。
+ * 此处将所有 <think> 块提取到 <details> 折叠面板中，
+ * 默认收起，用户可点击展开查看完整思考过程。
+ */
+function extractThinking(md: string): { thinking: string; main: string } {
+  const thinkBlocks: string[] = []
+  const main = md.replace(/<think>([\s\S]*?)<\/think>/gi, (_, content) => {
+    thinkBlocks.push(content.trim())
+    return ''
+  })
+  return { thinking: thinkBlocks.join('\n\n'), main }
+}
+
+/**
  * Markdown → 安全 HTML 渲染管道。
  *
  * 设计依据: docs/2_detailed_design_v3.md 1.3节（DOMPurify + marked 组合）
  *
- * 管道: markdown 文本 → marked.parse({ async: false }) → sanitizeHtml(白名单加固) → 安全 HTML 字符串
+ * 管道: markdown 文本 → 提取<think>思考 → marked.parse({ async: false }) → sanitizeHtml(白名单加固) → 安全 HTML 字符串
  *
  * @param markdown - Markdown 文本（类型为 unknown 以兼容 API 返回的任意类型字段）
  * @returns 净化后的安全 HTML 字符串。输入为 null/undefined/非字符串/空字符串时返回 ''。
@@ -57,8 +73,17 @@ export function renderMarkdown(markdown: unknown): string {
   const md = typeof markdown === 'string' ? markdown : String(markdown)
   if (md.trim() === '') return ''
 
+  // 提取 <think> 思考过程，剩余主体内容正常渲染
+  const { thinking, main } = extractThinking(md)
+
   // marked.parse() 当前使用同步模式（见文件顶部 G16 注释）
-  const rawHtml = marked.parse(md, { async: false }) as string
+  let rawHtml = marked.parse(main, { async: false }) as string
+
+  // 将思考过程以折叠面板形式插入到内容最前面
+  if (thinking) {
+    const thinkHtml = marked.parse(thinking, { async: false }) as string
+    rawHtml = `<details class="think-fold"><summary>思考过程</summary>${thinkHtml}</details>` + rawHtml
+  }
 
   // DOMPurify 安全净化 — 使用 G1 的 sanitizeHtml() 统一白名单配置
   return sanitizeHtml(rawHtml)

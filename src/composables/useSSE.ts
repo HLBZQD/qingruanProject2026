@@ -107,7 +107,7 @@ export async function readSSEStream(
 // ========== 分发 SSE 事件 ==========
 
 export interface SSEDispatchHandlers {
-  /** message 事件：AI 逐 token 生成 */
+  /** message / agent_message 事件：AI 逐 token 生成 */
   onMessage?: (event: SSEMessageEvent) => void
   /** message_end 事件：完整回复结束 */
   onMessageEnd?: (event: SSEMessageEndEvent) => void
@@ -128,7 +128,9 @@ export function dispatchSSEEvent(
   handlers: SSEDispatchHandlers = {},
 ): void {
   switch (event.event) {
-    case 'message': {
+    case 'message':
+    // Dify Agent 类型返回 agent_message 事件，结构与 message 一致，统一处理
+    case 'agent_message': {
       handlers.onMessage?.(event as SSEMessageEvent)
       break
     }
@@ -143,7 +145,6 @@ export function dispatchSSEEvent(
     // 以下事件类型静默忽略 (设计文档 3.3 节标注为可选/预扩展)
     case 'workflow_started':
     case 'workflow_finished':
-    case 'agent_message':
     case 'agent_thought':
       // 不渲染，不报错 — 容错处理
       break
