@@ -19,7 +19,7 @@ function proxyDifySSE({ apiKey, query, conversationId, userId, res, req }) {
     return;
   }
 
-  const url = baseUrl.replace(/\/$/, '') + '/v1/chat-messages';
+  const url = baseUrl.replace(/\/$/, '') + '/chat-messages';
 
   const body = {
     query,
@@ -82,6 +82,7 @@ function proxyDifySSE({ apiKey, query, conversationId, userId, res, req }) {
     });
 
     upstreamRes.on('end', () => {
+      if (aborted || res.writableEnded) return;
       if (buffer.length > 0) {
         res.write(buffer + '\n');
       }
@@ -91,14 +92,14 @@ function proxyDifySSE({ apiKey, query, conversationId, userId, res, req }) {
 
   upstreamReq.on('timeout', () => {
     // G27: 记录超时日志，便于运维定位 Dify SSE 代理超时
-    console.error('[sseProxy] 上游请求超时:', upstreamUrl);
+    console.error('[sseProxy] 上游请求超时:', url);
     if (aborted || res.writableEnded) return;
     writeErrorEvent('AI 服务响应超时，请稍后重试', 'UPSTREAM_ERROR');
   });
 
   upstreamReq.on('error', (err) => {
     // G27: 记录连接错误日志
-    console.error('[sseProxy] 上游连接错误:', upstreamUrl, err.message);
+    console.error('[sseProxy] 上游连接错误:', url, err.message);
     if (aborted || res.writableEnded) return;
     writeErrorEvent('AI 服务连接失败，请稍后重试', 'UPSTREAM_ERROR');
   });
