@@ -25,6 +25,7 @@ router.use('/risk', require('./risk'));
 router.use('/plan', require('./plan'));
 router.use('/punch', require('./punch'));
 router.use('/chat', require('./chat'));
+router.use('/dify', require('./dify'));
 router.use('/assistant', require('./assistant'));
 router.use('/admin', require('./admin'));
 router.use('/upload', require('./upload'));

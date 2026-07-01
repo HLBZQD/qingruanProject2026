@@ -2,7 +2,7 @@ const express = require('express');
 const { getAdapter } = require('../db/database');
 const authMiddleware = require('../middleware/auth');
 const { parsePagination, buildPagination } = require('../utils/pagination');
-const proxyDifySSE = require('../services/sseProxy');
+const { proxyAgentSSE } = require('./dify');
 const { callDifyGetConversations } = require('../services/difyService');
 
 const router = express.Router();
@@ -17,7 +17,12 @@ router.post('/chat', authMiddleware, (req, res, next) => {
       });
     }
 
-    proxyDifySSE({
+    // 注意：此处的 DIFY_ASSISTANT_APP_KEY 必须与 dify.js 中
+    // AGENT_KEYS['diabetes-assistant-agent'] 指向同一个环境变量。
+    // 若 AGENT_KEYS 的映射值变更（如改为 DIFY_NEW_KEY），
+    // 此处硬编码必须同步修改，否则 /chat 和 /agent/diabetes-assistant-agent
+    // 将使用不同的 API Key，产生行为分裂。
+    proxyAgentSSE({
       apiKey: process.env.DIFY_ASSISTANT_APP_KEY,
       query: message,
       conversationId: conversation_id,
