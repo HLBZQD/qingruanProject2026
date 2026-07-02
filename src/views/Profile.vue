@@ -129,7 +129,13 @@ async function handleAvatarChange(e: Event) {
     await api.put('/user/profile', { avatar: url })
     if (profile.value) profile.value.avatar = url
     authStore.setProfile({ avatar: url })
-    Swal.fire('上传成功', '', 'success')
+    window.dispatchEvent(new CustomEvent('avatar-splash'))
+    Swal.fire({
+      title: '修改头像成功',
+      text: '水花在屏幕中溅起！',
+      icon: 'success',
+      confirmButtonText: '确定'
+    })
   } catch (err: unknown) {
     if (err instanceof DOMException && err.name === 'AbortError') return
     Swal.fire('上传失败', '请稍后重试', 'error')

@@ -124,6 +124,22 @@ function onClick(path: string) {
   color: var(--color-primary);
 }
 
+@keyframes tabBreathe {
+  0%, 100% {
+    box-shadow: 0 0 4px rgba(0, 113, 227, 0.05);
+    background: rgba(0, 113, 227, 0.02);
+  }
+  50% {
+    box-shadow: 0 0 10px rgba(0, 113, 227, 0.2);
+    background: rgba(0, 113, 227, 0.08);
+  }
+}
+
+.tab-item:hover {
+  color: var(--color-primary);
+  animation: tabBreathe 1.6s infinite ease-in-out;
+}
+
 .tab-icon-wrap {
   position: relative;
   display: flex;

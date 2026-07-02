@@ -109,6 +109,17 @@ function formatDate(iso: string): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 }
 
+function getCatSlug(cat: string): string {
+  const mapping: Record<string, string> = {
+    '全部': 'all',
+    '饮食指导': 'diet',
+    '运动指南': 'sports',
+    '生活习惯': 'habits',
+    '知识科普': 'science'
+  }
+  return mapping[cat] || 'all'
+}
+
 function hasAcceptedDisclaimer(): boolean {
   return localStorage.getItem('disclaimer_accepted') === 'true'
 }
@@ -342,8 +353,11 @@ onMounted(() => {
         :key="cat"
         role="tab"
         :aria-selected="currentCategory === cat"
-        class="category-tab"
-        :class="{ active: currentCategory === cat }"
+        :class="[
+          'category-tab',
+          { active: currentCategory === cat },
+          `tab-cat-${getCatSlug(cat)}`
+        ]"
         @click="switchCategory(cat)"
       >
         {{ cat }}
@@ -393,7 +407,7 @@ onMounted(() => {
           />
           <div class="card-body">
             <div>
-              <span class="card-category">{{ item.category }}</span>
+              <span :class="['card-category', `tag-cat-${getCatSlug(item.category)}`]">{{ item.category }}</span>
               <h3 class="card-title" v-html="highlightKeyword(item.title, searchedKeyword)"></h3>
               <p v-if="item.summary" class="card-summary">{{ item.summary }}</p>
             </div>
@@ -446,7 +460,7 @@ onMounted(() => {
           />
           <div class="card-body">
             <div>
-              <span class="card-category">{{ item.category }}</span>
+              <span :class="['card-category', `tag-cat-${getCatSlug(item.category)}`]">{{ item.category }}</span>
               <h3 class="card-title">{{ item.title }}</h3>
               <p v-if="item.summary" class="card-summary">{{ item.summary }}</p>
             </div>
@@ -580,6 +594,55 @@ onMounted(() => {
   color: #fff;
 }
 
+/* 不同资讯标签分类激活色彩定义 */
+.category-tab.tab-cat-all.active {
+  background: var(--color-primary) !important;
+  border-color: var(--color-primary) !important;
+  color: #fff !important;
+}
+.category-tab.tab-cat-diet.active {
+  background: #78E0A0 !important;
+  border-color: #78E0A0 !important;
+  color: #1D1D1F !important;
+  box-shadow: 1.5px 1.5px 0px rgba(120, 224, 160, 0.25) !important;
+}
+.category-tab.tab-cat-sports.active {
+  background: #FF9500 !important;
+  border-color: #FF9500 !important;
+  color: #1D1D1F !important;
+  box-shadow: 1.5px 1.5px 0px rgba(255, 149, 0, 0.25) !important;
+}
+.category-tab.tab-cat-habits.active {
+  background: #FF8EAA !important;
+  border-color: #FF8EAA !important;
+  color: #1D1D1F !important;
+  box-shadow: 1.5px 1.5px 0px rgba(255, 142, 170, 0.25) !important;
+}
+.category-tab.tab-cat-science.active {
+  background: #D4B5FF !important;
+  border-color: #D4B5FF !important;
+  color: #1D1D1F !important;
+  box-shadow: 1.5px 1.5px 0px rgba(212, 181, 255, 0.25) !important;
+}
+
+/* 不同资讯标签分类悬停效果 */
+.category-tab.tab-cat-diet:hover {
+  border-color: #78E0A0 !important;
+  color: #78E0A0 !important;
+}
+.category-tab.tab-cat-sports:hover {
+  border-color: #FF9500 !important;
+  color: #FF9500 !important;
+}
+.category-tab.tab-cat-habits:hover {
+  border-color: #FF8EAA !important;
+  color: #FF8EAA !important;
+}
+.category-tab.tab-cat-science:hover {
+  border-color: #D4B5FF !important;
+  color: #D4B5FF !important;
+}
+
 .category-tab:active {
   transform: scale(0.96);
 }
@@ -635,6 +698,33 @@ onMounted(() => {
   padding: 2px var(--spacing-sm);
   border-radius: var(--radius-full);
   align-self: flex-start;
+}
+
+/* 资讯卡片不同分类标签配色 (可爱便签底色) */
+.card-category.tag-cat-diet {
+  background: #E8FDF0 !important;
+  border: 1px solid #78E0A0 !important;
+  color: #226E40 !important;
+}
+.card-category.tag-cat-sports {
+  background: #FFF5E6 !important;
+  border: 1px solid #FF9500 !important;
+  color: #B56000 !important;
+}
+.card-category.tag-cat-habits {
+  background: #FFEBF0 !important;
+  border: 1px solid #FF8EAA !important;
+  color: #C13D5E !important;
+}
+.card-category.tag-cat-science {
+  background: #F5EFFF !important;
+  border: 1px solid #D4B5FF !important;
+  color: #6D28D9 !important;
+}
+.card-category.tag-cat-all {
+  background: var(--color-primary-light) !important;
+  border: 1px solid var(--color-primary) !important;
+  color: var(--color-primary) !important;
 }
 
 .card-title {

@@ -36,11 +36,22 @@ const HABITS = ['久坐少动', '经常熬夜', '饮食不规律', '爱喝甜饮
 const selectedHabits = ref<string[]>([])
 const advice = ref('')
 
-// ===== 习惯多选 toggle（L4: 补齐实现） =====
 function toggleHabit(habit: string) {
   const idx = selectedHabits.value.indexOf(habit)
   if (idx >= 0) selectedHabits.value.splice(idx, 1)
   else selectedHabits.value.push(habit)
+}
+
+function getHabitSlug(habit: string): string {
+  const mapping: Record<string, string> = {
+    '久坐少动': 'sedentary',
+    '经常熬夜': 'late-night',
+    '饮食不规律': 'irregular-diet',
+    '爱喝甜饮': 'sweet-drinks',
+    '有吸烟习惯': 'smoking',
+    '有饮酒习惯': 'drinking'
+  }
+  return mapping[habit] || 'default'
 }
 
 // ===== BMI 派生（L4: 补齐实现，未填身高体重时显示「-」） =====
@@ -418,7 +429,11 @@ onUnmounted(() => {
             <button
               v-for="h in HABITS"
               :key="h"
-              :class="['lp-habit-chip press', selectedHabits.includes(h) ? 'active' : '']"
+              :class="[
+                'lp-habit-chip press',
+                selectedHabits.includes(h) ? 'active' : '',
+                `chip-habit-${getHabitSlug(h)}`
+              ]"
               @click="toggleHabit(h)"
             >
               {{ h }}
@@ -984,6 +999,44 @@ onUnmounted(() => {
 .lp-habit-chip.active {
   background: var(--color-primary);
   color: #fff;
+}
+
+/* 各有不同颜色的生活习惯标签 (便签纸拟物配色) */
+.lp-habit-chip.chip-habit-sedentary.active {
+  background: #E8FDF0 !important;
+  border: 1px solid #78E0A0 !important;
+  color: #226E40 !important;
+  box-shadow: 1.5px 1.5px 0px rgba(120, 224, 160, 0.3) !important;
+}
+.lp-habit-chip.chip-habit-late-night.active {
+  background: #F5EFFF !important;
+  border: 1px solid #D4B5FF !important;
+  color: #6D28D9 !important;
+  box-shadow: 1.5px 1.5px 0px rgba(212, 181, 255, 0.3) !important;
+}
+.lp-habit-chip.chip-habit-irregular-diet.active {
+  background: #FFF5E6 !important;
+  border: 1px solid #FF9500 !important;
+  color: #B56000 !important;
+  box-shadow: 1.5px 1.5px 0px rgba(255, 149, 0, 0.3) !important;
+}
+.lp-habit-chip.chip-habit-sweet-drinks.active {
+  background: #FFEBF0 !important;
+  border: 1px solid #FF8EAA !important;
+  color: #C13D5E !important;
+  box-shadow: 1.5px 1.5px 0px rgba(255, 142, 170, 0.3) !important;
+}
+.lp-habit-chip.chip-habit-smoking.active {
+  background: #EBF7FF !important;
+  border: 1px solid #5AC8FA !important;
+  color: #007AFF !important;
+  box-shadow: 1.5px 1.5px 0px rgba(90, 200, 250, 0.3) !important;
+}
+.lp-habit-chip.chip-habit-drinking.active {
+  background: #FFF0ED !important;
+  border: 1px solid #FFB7B2 !important;
+  color: #E57E77 !important;
+  box-shadow: 1.5px 1.5px 0px rgba(255, 183, 178, 0.3) !important;
 }
 
 /* textarea / input */

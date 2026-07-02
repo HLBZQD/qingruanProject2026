@@ -1,42 +1,42 @@
-@import url('https://fonts.googleapis.com/css2?family=Figtree:ital,wght@0,300..900;1,300..900&family=Noto+Sans+SC:wght@300;400;500;700;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Figtree:ital,wght@0,300..900;1,300..900&family=Noto+Sans+SC:wght@300;400;500;700;900&family=ZCOOL+KuaiLe&display=swap');
 
 :root {
-  /* ===== 主色：苹果皇家蓝（Apple Royal Blue） ===== */
-  --color-primary: #0071E3;
-  --color-primary-light: #F5F9FF;
-  --color-primary-soft: #C7E0F4;
-  --color-primary-dark: #0050A1;
+  /* ===== 主色：明艳大红（Vivid Crimson Red） ===== */
+  --color-primary: #FF3B30;
+  --color-primary-light: #FFF2F1;
+  --color-primary-soft: #FFC5C2;
+  --color-primary-dark: #D11A10;
 
-  /* ===== 强调色：苹果天蓝（Apple Sky Blue - no green） ===== */
-  --color-accent: #5AC8FA;
-  --color-accent-light: #F0FAFF;
-  --color-accent-dark: #007AFF;
-  --color-accent-glow: rgba(90, 200, 250, 0.15);
+  /* ===== 强调色：紫罗兰色（Vivid Violet Purple） ===== */
+  --color-accent: #AF52DE;
+  --color-accent-light: #FBF6FE;
+  --color-accent-dark: #8F2DCE;
+  --color-accent-glow: rgba(175, 82, 222, 0.15);
 
-  /* ===== 活力点缀：暖调活力橙（Vivid Orange - no red） ===== */
+  /* ===== 活力点缀：警示鲜橙（Vivid Warning Orange） ===== */
   --color-vivid: #FF9500;
   --color-vivid-light: #FFF9F0;
   --color-vivid-dark: #D66A00;
 
-  /* ===== 第三色：苹果金（Apple Gold） ===== */
+  /* ===== 第三色：明亮黄（Vivid Sunshine Yellow） ===== */
   --color-amber: #FFCC00;
   --color-amber-light: #FFFDF0;
   --color-amber-dark: #B28F00;
 
-  /* ===== 第四色：苹果蓝绿/青色（Apple Teal） ===== */
-  --color-lavender: #30B0C7;
-  --color-lavender-light: #F0FBFD;
-  --color-lavender-dark: #208090;
+  /* ===== 第四色：温柔玫瑰（Rose Pastel Pink） ===== */
+  --color-lavender: #FF8EAA;
+  --color-lavender-light: #FFF0F3;
+  --color-lavender-dark: #E55B7F;
 
   /* ===== 语义色 ===== */
-  --color-success: #30B0C7;
-  --color-success-light: #F0FBFD;
-  --color-danger: #FF9500;
-  --color-danger-light: #FFF9F0;
+  --color-success: #78E0A0;
+  --color-success-light: #E8FDF0;
+  --color-danger: #FF3B30;
+  --color-danger-light: #FFF2F1;
   --color-warning: #FF9500;
   --color-warning-light: #FFF9F0;
-  --color-info: #0071E3;
-  --color-info-light: #F5F9FF;
+  --color-info: #FF3B30;
+  --color-info-light: #FFF2F1;
 
   /* ===== 文本色：Apple HIG 经典 Slate 黑色 ===== */
   --color-text-primary: #1D1D1F;
@@ -48,14 +48,14 @@
   /* ===== 表面色：苹果标准浅灰背景 / 纯白卡片 ===== */
   --color-bg: #F5F5F7;
   --color-bg-elevated: #FFFFFF;
-  --color-card: #FFFFFF;
+  --color-card: #FFFDF8;
   --color-divider: #E5E5EA;
-  --color-border: #E5E5EA;
+  --color-border: var(--color-text-primary);
 
-  /* ===== 字体：Figtree（英数）+ Noto Sans SC（中文） ===== */
-  --font-display: 'Figtree', 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', sans-serif;
-  --font-body: 'Figtree', 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', sans-serif;
-  --font-mono: 'JetBrains Mono', 'SFMono-Regular', 'PingFang SC', monospace;
+  /* ===== 字体：ZCOOL KuaiLe (可爱手绘体) + Maple Mono NF CN ===== */
+  --font-display: 'ZCOOL KuaiLe', 'Maple Mono NF CN', 'Figtree', 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  --font-body: 'ZCOOL KuaiLe', 'Maple Mono NF CN', 'Figtree', 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  --font-mono: 'Maple Mono NF CN', 'JetBrains Mono', 'SFMono-Regular', 'PingFang SC', monospace;
 
   --font-size-h1: 28px;
   --font-size-h2: 22px;
@@ -77,30 +77,30 @@
 
   /* ===== 圆角 ===== */
   --radius-none: 0px;
-  --radius-sm: 2px;
-  --radius-md: 4px;
-  --radius-lg: 6px;
-  --radius-xl: 6px;
-  --radius-2xl: 8px;
-  --radius-3xl: 8px;
-  --radius-4xl: 8px;
-  --radius-button: 4px;
+  --radius-sm: 4px 6px 3px 5px / 5px 3px 6px 4px;
+  --radius-md: 6px 10px 5px 8px / 8px 5px 10px 6px;
+  --radius-lg: 12px 8px 14px 6px / 8px 12px 6px 10px;
+  --radius-xl: 12px 8px 14px 6px / 8px 12px 6px 10px;
+  --radius-2xl: 14px 8px 16px 6px / 8px 14px 6px 12px;
+  --radius-3xl: 14px 8px 16px 6px / 8px 14px 6px 12px;
+  --radius-4xl: 16px 10px 18px 8px / 10px 16px 8px 14px;
+  --radius-button: 6px 10px 5px 8px / 8px 5px 10px 6px;
   --radius-full: 9999px;
 
   /* ===== 异形圆角 ===== */
-  --radius-asymmetric: 20px 4px 20px 4px;
-  --radius-asymmetric-alt: 4px 20px 4px 20px;
+  --radius-asymmetric: 24px 6px 20px 8px / 8px 20px 6px 24px;
+  --radius-asymmetric-alt: 6px 24px 8px 20px / 20px 8px 24px 6px;
   --radius-pill-left: 9999px 0 0 9999px;
   --radius-pill-right: 0 9999px 9999px 0;
-  --radius-tag: 6px;
+  --radius-tag: 5px 8px 4px 6px / 6px 4px 8px 5px;
 
-  /* ===== 阴影：苹果标志性超轻淡阴影 ===== */
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04);
-  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.05);
-  --shadow-lg: 0 12px 24px rgba(0, 0, 0, 0.07);
+  /* ===== 阴影：酸性设计粗重偏移硬阴影 (Neo-Brutalism & Acid Shadows) ===== */
+  --shadow-sm: 3px 3px 0px rgba(29, 29, 31, 0.15);
+  --shadow-md: 5px 5px 0px rgba(29, 29, 31, 0.15);
+  --shadow-lg: 8px 8px 0px rgba(29, 29, 31, 0.15);
   --shadow-glow: 0 0 24px rgba(52, 199, 89, 0.1);
   --shadow-vivid: 0 8px 20px rgba(255, 59, 48, 0.1);
-  --shadow-primary: 0 8px 20px rgba(0, 113, 227, 0.12);
+  --shadow-primary: 3px 3px 0px rgba(29, 29, 31, 0.15);
 
   /* ===== 过渡 ===== */
   --transition-fast: 0.15s cubic-bezier(0.4, 0, 0.2, 1);
@@ -145,7 +145,7 @@ a {
 /* ===== 全局排版辅助 ===== */
 h1, h2, h3, h4 {
   font-family: var(--font-display);
-  font-weight: 700;
+  font-weight: 400; /* native weight, removes browser synthetic fake bolding */
   letter-spacing: -0.02em;
   line-height: 1.25;
 }
@@ -197,4 +197,316 @@ h1, h2, h3, h4 {
   content: '';
   position: absolute;
   border-radius: var(--radius-xl);
+}
+
+/* ==========================================================================
+   酸性粗犷与不对称设计全局覆盖 (Acid Graphics & Neo-Brutalism Overrides)
+   ========================================================================== */
+
+/* 核心容器与卡片厚重边框 + 粗重硬阴影 */
+.bento-card, 
+.lp-stats, 
+.lp-item-card, 
+.doctor-card-detail, 
+.article-card, 
+.stat-card, 
+.menu-card, 
+.welcome-banner, 
+.btn-chat, 
+.chat-input, 
+.search-input, 
+.lp-form-card, 
+.lp-empty-card, 
+.lp-gen-card, 
+.lp-adjust-card {
+  border: 1.5px solid var(--color-text-primary) !important;
+  box-shadow: 3px 3px 0px rgba(29, 29, 31, 0.15) !important;
+  transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.2s ease, background 0.2s ease, color 0.2s ease !important;
+}
+
+/* 交互悬停动效：向左上方微弹并加大偏移阴影 */
+.bento-card:hover, 
+.lp-item-card:hover, 
+.doctor-card-detail:hover, 
+.article-card:hover, 
+.stat-card:hover, 
+.menu-card:hover {
+  transform: translate(-2px, -2px) rotate(var(--acid-rotate, 0.5deg)) !important;
+  box-shadow: 4.5px 4.5px 0px rgba(29, 29, 31, 0.22) !important;
+}
+
+/* 持续微幅慢速悬浮漂流动画 (Acid Continuous Bobbing Float) */
+@keyframes acidCardFloat {
+  0%, 100% {
+    transform: translateY(0) rotate(var(--acid-rotate, 0deg));
+  }
+  50% {
+    transform: translateY(-3px) rotate(calc(var(--acid-rotate, 0deg) + 0.2deg));
+  }
+}
+
+/* 滚动与载入的 staggered reveal 渐次出现 */
+@keyframes acidStaggeredReveal {
+  0% {
+    opacity: 0;
+    transform: translateY(24px) scale(0.96) rotate(-2deg);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1) rotate(var(--acid-rotate, 0deg));
+  }
+}
+
+/* 随机旋转倾斜以体现不对称与混沌排版 (Asymmetric & Chaotic) */
+.bento-card:nth-child(odd), 
+.lp-item-card:nth-child(odd), 
+.doctor-card-detail:nth-child(odd), 
+.article-card:nth-child(odd), 
+.stat-card:nth-child(odd), 
+.menu-card:nth-child(odd) {
+  --acid-rotate: -0.8deg;
+  transform: rotate(-0.8deg);
+}
+
+.bento-card:nth-child(even), 
+.lp-item-card:nth-child(even), 
+.doctor-card-detail:nth-child(even), 
+.article-card:nth-child(even), 
+.stat-card:nth-child(even), 
+.menu-card:nth-child(even) {
+  --acid-rotate: 0.6deg;
+  transform: rotate(0.6deg);
+}
+
+/* 结合 staggered reveal 与 持续漂浮 */
+.bento-card, 
+.lp-item-card, 
+.doctor-card-detail, 
+.article-card, 
+.stat-card, 
+.menu-card {
+  animation: acidStaggeredReveal 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) both,
+             acidCardFloat 5s ease-in-out infinite alternate;
+}
+
+.bento-card:nth-child(1), .lp-item-card:nth-child(1), .doctor-card-detail:nth-child(1), .article-card:nth-child(1) { animation-delay: 0.04s; }
+.bento-card:nth-child(2), .lp-item-card:nth-child(2), .doctor-card-detail:nth-child(2), .article-card:nth-child(2) { animation-delay: 0.08s; }
+.bento-card:nth-child(3), .lp-item-card:nth-child(3), .doctor-card-detail:nth-child(3), .article-card:nth-child(3) { animation-delay: 0.12s; }
+.bento-card:nth-child(4), .lp-item-card:nth-child(4), .doctor-card-detail:nth-child(4), .article-card:nth-child(4) { animation-delay: 0.16s; }
+.bento-card:nth-child(5), .lp-item-card:nth-child(5), .doctor-card-detail:nth-child(5), .article-card:nth-child(5) { animation-delay: 0.2s; }
+
+/* 药丸徽章和次级控制键采用同样硬朗的粗框与影子 */
+.category-tab, 
+.btn-collections, 
+.lp-recustomize, 
+.btn-generate {
+  border: 1.5px solid var(--color-text-primary) !important;
+  box-shadow: 1.5px 1.5px 0px rgba(29, 29, 31, 0.15) !important;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+/* 小型按钮悬停交互：背景与前景色对调，阴影变霓虹色 */
+.category-tab:hover, 
+.btn-collections:hover, 
+.lp-recustomize:hover, 
+.btn-generate:hover {
+  background: var(--color-text-primary) !important;
+  color: #fff !important;
+  border-color: var(--color-text-primary) !important;
+  transform: translate(-1px, -1px) !important;
+  box-shadow: 2px 2px 0px var(--color-accent) !important;
+}
+
+.category-tab:active, 
+.btn-collections:active, 
+.lp-recustomize:active, 
+.btn-generate:active {
+  transform: translate(1px, 1px) !important;
+  box-shadow: 1px 1px 0px var(--color-text-primary) !important;
+}
+
+/* 带有不规则斜线和网格的手绘视觉分隔线 */
+.section-divider {
+  height: 2px;
+  border-bottom: 1.2px dashed var(--color-text-primary);
+  margin: var(--spacing-xl) 0;
+  opacity: 0.85;
+}
+
+/* 增加可爱卡片装饰（如手绘星星或小十字花） */
+.bento-card, .lp-item-card, .doctor-card-detail, .article-card, .stat-card, .menu-card {
+  position: relative;
+}
+.bento-card::after, .lp-item-card::after, .doctor-card-detail::after, .article-card::after, .stat-card::after, .menu-card::after {
+  content: '✦';
+  position: absolute;
+  top: 8px;
+  right: 10px;
+  font-size: 11px;
+  color: #78E0A0 !important;
+  opacity: 0.85;
+  pointer-events: none;
+  font-family: sans-serif;
+  animation: starPulse 2s infinite alternate ease-in-out;
+}
+
+@keyframes starPulse {
+  0% { transform: scale(0.9) rotate(0deg); opacity: 0.6; }
+  100% { transform: scale(1.1) rotate(15deg); opacity: 0.95; }
+}
+
+/* 便签本活页金属小银环 (银色立体感小圆环) */
+.bento-card::before, 
+.lp-item-card::before, 
+.doctor-card-detail::before, 
+.article-card::before, 
+.stat-card::before, 
+.menu-card::before,
+.lp-form-card::before, 
+.lp-gen-card::before, 
+.lp-adjust-card::before {
+  content: '';
+  position: absolute;
+  left: -7px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  /* 银白色金属光泽渐变，中心打孔透底，无粗硬描边，过渡自然 */
+  background: radial-gradient(circle, transparent 28%, #808080 30%, #e0e0e0 45%, #ffffff 55%, #a0a0a0 75%, #505050 100%) !important;
+  border: none !important;
+  box-shadow: 1px 1px 2px rgba(0, 0, 0, 0.25) !important;
+  z-index: 20;
+  pointer-events: none;
+}
+
+/* ===== 霓虹色字体定义 (Neon-Glow Text Effects) ===== */
+.neon-text-pink {
+  color: #FF8EAA !important;
+  text-shadow: 0 0 5px rgba(255, 142, 170, 0.5), 0 0 10px rgba(255, 142, 170, 0.25) !important;
+}
+.neon-text-purple {
+  color: #AF52DE !important;
+  text-shadow: 0 0 5px rgba(175, 82, 222, 0.5), 0 0 10px rgba(175, 82, 222, 0.25) !important;
+}
+.neon-text-teal {
+  color: #30B0C7 !important;
+  text-shadow: 0 0 5px rgba(48, 176, 199, 0.5), 0 0 10px rgba(48, 176, 199, 0.25) !important;
+}
+.neon-text-orange {
+  color: #FF9500 !important;
+  text-shadow: 0 0 5px rgba(255, 149, 0, 0.5), 0 0 10px rgba(255, 149, 0, 0.25) !important;
+}
+
+/* ===== 医师版面专享蓝绿色调重设 (避免红色名字/头像不吉利禁忌) ===== */
+.doctor-card-detail,
+.doctor-chat-view,
+.consultation-view,
+.doctor-card {
+  --color-primary: #30B0C7 !important;
+  --color-primary-light: #F0FBFD !important;
+  --color-primary-soft: #C8EFF4 !important;
+  --color-primary-dark: #208090 !important;
+  --color-accent: #30B0C7 !important;
+}
+
+/* 锁定人像名字文本色彩为安全的中性色与医学深蓝绿，去除红色 */
+.doctor-card-detail .doctor-name,
+.doctor-card-detail .name-text,
+.doctor-name-text,
+.doctor-info h4 {
+  color: #1D1D1F !important;
+  text-shadow: none !important;
+}
+.doctor-card-detail .doctor-dept,
+.doctor-card-detail .doctor-hosp {
+  color: #208090 !important;
+}
+
+/* 个人主页显示名称修改为橙黄色，避免与暗卡片底色冲突 (安全避忌) */
+.user-name,
+.profile-name,
+.username-text {
+  color: #FF9500 !important;
+  text-shadow: 0 0 4px rgba(255, 149, 0, 0.35) !important;
+}
+
+/* 让医师聊天按键采用医疗蓝绿配色 */
+.btn-chat {
+  background: #30B0C7 !important;
+  border-color: #30B0C7 !important;
+  color: #ffffff !important;
+  box-shadow: 1.5px 1.5px 0px rgba(48, 176, 199, 0.2) !important;
+}
+.btn-chat:hover {
+  background: #208090 !important;
+  border-color: #208090 !important;
+  color: #ffffff !important;
+  box-shadow: 2px 2px 0px rgba(48, 176, 199, 0.35) !important;
+}
+
+/* ===== 全局不同资讯分类标签配色 (可爱手账便签底色) ===== */
+.card-category.tag-cat-diet,
+.hero-category.tag-cat-diet,
+.sub-category.tag-cat-diet {
+  background: #E8FDF0 !important;
+  border: 1.5px solid #78E0A0 !important;
+  color: #226E40 !important;
+  align-self: flex-start !important;
+  padding: 2px 8px !important;
+  border-radius: var(--radius-full) !important;
+  display: inline-block !important;
+}
+.card-category.tag-cat-sports,
+.hero-category.tag-cat-sports,
+.sub-category.tag-cat-sports {
+  background: #FFF5E6 !important;
+  border: 1.5px solid #FF9500 !important;
+  color: #B56000 !important;
+  align-self: flex-start !important;
+  padding: 2px 8px !important;
+  border-radius: var(--radius-full) !important;
+  display: inline-block !important;
+}
+.card-category.tag-cat-habits,
+.hero-category.tag-cat-habits,
+.sub-category.tag-cat-habits {
+  background: #FFEBF0 !important;
+  border: 1.5px solid #FF8EAA !important;
+  color: #C13D5E !important;
+  align-self: flex-start !important;
+  padding: 2px 8px !important;
+  border-radius: var(--radius-full) !important;
+  display: inline-block !important;
+}
+.card-category.tag-cat-science,
+.hero-category.tag-cat-science,
+.sub-category.tag-cat-science {
+  background: #F5EFFF !important;
+  border: 1.5px solid #D4B5FF !important;
+  color: #6D28D9 !important;
+  align-self: flex-start !important;
+  padding: 2px 8px !important;
+  border-radius: var(--radius-full) !important;
+  display: inline-block !important;
+}
+.card-category.tag-cat-all,
+.hero-category.tag-cat-all,
+.sub-category.tag-cat-all {
+  background: var(--color-primary-light) !important;
+  border: 1.5px solid var(--color-primary) !important;
+  color: var(--color-primary) !important;
+  align-self: flex-start !important;
+  padding: 2px 8px !important;
+  border-radius: var(--radius-full) !important;
+  display: inline-block !important;
+}
+
+/* 主页专属分类标签配色覆盖 (避免主页卡片出现红字/粉红字，仅重置文本颜色，保留卡片及图标原本的红粉色背景和边框) */
+.hero-category {
+  color: #ffffff !important; /* 始终使用高清晰度白字，避免红/粉字 */
+}
+.sub-category {
+  color: #1D1D1F !important; /* 始终使用深炭黑色字，避免红/粉字 */
 }
