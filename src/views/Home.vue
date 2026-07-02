@@ -98,6 +98,27 @@ const latestGlucoseTime = computed(() => {
   return '08:30'
 })
 
+const glucoseStatus = computed(() => {
+  const val = parseFloat(latestGlucose.value)
+  if (isNaN(val)) return { text: '正常', isNormal: true }
+  if (val >= 3.9 && val <= 7.0) {
+    return { text: '正常', isNormal: true }
+  } else {
+    return { text: '异常', isNormal: false }
+  }
+})
+
+function getCatSlug(cat: string): string {
+  const mapping: Record<string, string> = {
+    '全部': 'all',
+    '饮食指导': 'diet',
+    '运动指南': 'sports',
+    '生活习惯': 'habits',
+    '知识科普': 'science'
+  }
+  return mapping[cat] || 'all'
+}
+
 // dynamic punch plan progress checklist
 const planProgressPercent = computed(() => {
   const plan = lifePlanStore.currentPlan
@@ -355,7 +376,7 @@ onUnmounted(() => {
             <DiabetesIcon name="diabetes" :size="22" color="#fff" />
           </div>
           <div class="greeting-wrap">
-            <h1 class="home-title-text">糖尿病预治智能助手</h1>
+            <h1 class="home-title-text neon-text-teal">糖尿病预治智能助手</h1>
             <p class="home-subtitle-text">科学控糖 · 智慧生活</p>
           </div>
         </div>
@@ -421,10 +442,12 @@ onUnmounted(() => {
           <div class="card-bg-light"></div>
           <div class="card-header">
             <span class="card-title">最近血糖</span>
-            <span class="card-indicator normal">正常</span>
+            <span :class="['card-indicator', glucoseStatus.isNormal ? 'normal' : 'abnormal']">
+              {{ glucoseStatus.text }}
+            </span>
           </div>
           <div class="glucose-val">
-            <span class="val-num font-mono">{{ latestGlucose }}</span>
+            <span class="val-num font-mono neon-text-teal">{{ latestGlucose }}</span>
             <span class="val-unit">mmol/L</span>
           </div>
           <!-- Miniature blood sugar SVG trend line (Apple Stock-style) -->
@@ -622,7 +645,7 @@ onUnmounted(() => {
           <div class="hero-cover-wrap">
             <img class="hero-cover" :src="articleCover(articles[0])" :alt="articles[0].title" @error="hideImg" />
             <div class="hero-cover-overlay"></div>
-            <span class="hero-category">{{ articles[0].category }}</span>
+            <span :class="['hero-category', `tag-cat-${getCatSlug(articles[0].category)}`]">{{ articles[0].category }}</span>
           </div>
           <div class="hero-body">
             <h3 class="hero-title">{{ articles[0].title }}</h3>
@@ -642,7 +665,7 @@ onUnmounted(() => {
               <div class="sub-cover-overlay"></div>
             </div>
             <div class="sub-body">
-              <span class="sub-category">{{ a.category }}</span>
+              <span :class="['sub-category', `tag-cat-${getCatSlug(a.category)}`]">{{ a.category }}</span>
               <h3 class="sub-title">{{ a.title }}</h3>
               <div class="sub-meta">
                 <span><AppIcon name="eye" :size="10" />{{ articleViews(a) }}</span>
@@ -984,8 +1007,15 @@ onUnmounted(() => {
 }
 
 .card-indicator.normal {
-  background: var(--color-primary-light);
-  color: var(--color-primary);
+  background: var(--color-success-light) !important;
+  color: var(--color-success) !important;
+  border: 1px solid var(--color-success) !important;
+}
+
+.card-indicator.abnormal {
+  background: var(--color-danger-light) !important;
+  color: var(--color-danger) !important;
+  border: 1px solid var(--color-danger) !important;
 }
 
 /* Glucose Values */

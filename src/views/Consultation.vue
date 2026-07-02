@@ -38,12 +38,24 @@ onMounted(() => {
   <div class="consultation-list-container">
     <!-- 顶部导航栏 -->
     <header class="top-bar">
+      <div class="ai-glow-overlay" aria-hidden="true"></div>
+      <div class="ai-vector-bg" aria-hidden="true">
+        <svg viewBox="0 0 200 100" preserveAspectRatio="none">
+          <path d="M0,50 Q40,20 80,80 T160,30 T200,50" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="2" />
+          <path d="M0,60 Q30,80 70,30 T150,70 T200,40" fill="none" stroke="rgba(90,200,250,0.06)" stroke-width="1.5" />
+        </svg>
+      </div>
+
       <div class="top-bar-inner">
         <div class="top-bar-title-wrap">
           <span class="top-bar-icon">
-            <DiabetesIcon name="stethoscope" :size="20" color="var(--color-primary)" />
+            <DiabetesIcon name="stethoscope" :size="20" color="#30B0C7" />
           </span>
           <div>
+            <div class="top-bar-header-meta">
+              <span class="top-bar-badge">CLINIC CENTER</span>
+              <span class="top-bar-status">在线</span>
+            </div>
             <h1 class="top-bar-title">医师咨询</h1>
             <p class="top-bar-sub">专业医师，随时为您解答健康问题</p>
           </div>
@@ -123,51 +135,115 @@ onMounted(() => {
 
 /* ===== 顶部导航栏 ===== */
 .top-bar {
-  position: sticky;
-  top: 0;
-  z-index: 30;
-  background: rgba(255, 255, 255, 0.85);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  padding: 20px var(--spacing-lg) 12px;
-  border-bottom: 0.5px solid var(--color-divider);
-  margin-bottom: var(--spacing-lg);
+  position: relative;
+  margin: 16px var(--spacing-lg) var(--spacing-lg);
+  padding: 24px 20px;
+  background: linear-gradient(135deg, #0c0c14 0%, #171825 100%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: var(--radius-2xl);
+  box-shadow: 0 12px 30px -10px rgba(0, 113, 227, 0.25);
+  color: #fff;
+  overflow: hidden;
 }
 
 .top-bar-inner {
   position: relative;
-  z-index: 1;
+  z-index: 10;
 }
 
 .top-bar-title-wrap {
   display: flex;
-  align-items: center;
-  gap: 12px;
+  align-items: flex-start;
+  gap: 14px;
 }
 
 .top-bar-icon {
-  width: 36px;
-  height: 36px;
-  border-radius: var(--radius-md);
-  background: var(--color-primary-light);
+  width: 42px;
+  height: 42px;
+  border-radius: var(--radius-lg);
+  background: rgba(90, 200, 250, 0.15);
+  border: 1px solid rgba(90, 200, 250, 0.2);
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
 }
 
-.top-bar-title {
-  font-size: 17px;
+.top-bar-header-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.top-bar-badge {
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  background: rgba(90, 200, 250, 0.15);
+  color: var(--color-accent);
+  padding: 1px 5px;
+  border-radius: var(--radius-full);
+  border: 1px solid rgba(90, 200, 250, 0.2);
+  text-transform: uppercase;
+}
+
+.top-bar-status {
+  font-size: 9px;
+  color: rgba(255, 255, 255, 0.5);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
   font-weight: 700;
-  color: var(--color-text-primary);
-  line-height: 1.25;
+}
+
+.top-bar-status::before {
+  content: '';
+  width: 5px;
+  height: 5px;
+  background: #78E0A0;
+  border-radius: 50%;
+  display: inline-block;
+  box-shadow: 0 0 6px #78E0A0;
+}
+
+.top-bar-title {
+  font-size: 19px;
+  font-weight: 800;
+  color: #ffffff !important;
+  line-height: 1.2;
 }
 
 .top-bar-sub {
   font-size: 11px;
-  color: var(--color-text-tertiary);
-  margin-top: 2px;
-  font-weight: 500;
+  color: rgba(255, 255, 255, 0.65) !important;
+  margin-top: 4px;
+  font-weight: 400;
+}
+
+.ai-glow-overlay {
+  position: absolute;
+  width: 140px;
+  height: 140px;
+  background: radial-gradient(circle, rgba(90, 200, 250, 0.18) 0%, transparent 70%);
+  right: -30px;
+  top: -30px;
+  filter: blur(20px);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.ai-vector-bg {
+  position: absolute;
+  inset: 0;
+  opacity: 0.85;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.ai-vector-bg svg {
+  width: 100%;
+  height: 100%;
 }
 
 /* ===== 医生列表 ===== */
