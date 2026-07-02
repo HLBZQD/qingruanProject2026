@@ -59,40 +59,20 @@ function proxyDifySSE({ apiKey, query, conversationId, userId, res, req }) {
         res.end();
       });
     }
-
-    let buffer = '';
-    upstreamRes.on('data', (chunk) => {
-      // G21: 客户端断开后停止写入，防止向已关闭响应写入数据
-      if (aborted || res.writableEnded) return;
-      buffer += chunk.toString();
-      const lines = buffer.split('\n');
-      buffer = lines.pop();
-      for (const line of lines) {
-        res.write(line + '\n');
-      }
-    });
-
-    upstreamRes.on('end', () => {
-      if (aborted || res.writableEnded) return;
-      if (buffer.length > 0) {
-        res.write(buffer + '\n');
-      }
-      res.end();
-    });
-  });
+  );
 
   upstreamReq.on('timeout', () => {
-    // G27: 记录超时日志，便于运维定位 Dify SSE 代理超时
     console.error('[sseProxy] 上游请求超时:', url);
-    if (aborted || res.writableEnded) return;
-    writeErrorEvent('AI 服务响应超时，请稍后重试', 'UPSTREAM_ERROR');
+    if (res.writableEnded) return;
+    res.write(`data: ${JSON.stringify({ event: 'error', message: 'AI 服务响应超时，请稍后重试', code: 'UPSTREAM_ERROR' })}\n`);
+    res.end();
   });
 
   upstreamReq.on('error', (err) => {
-    // G27: 记录连接错误日志
     console.error('[sseProxy] 上游连接错误:', url, err.message);
-    if (aborted || res.writableEnded) return;
-    writeErrorEvent('AI 服务连接失败，请稍后重试', 'UPSTREAM_ERROR');
+    if (res.writableEnded) return;
+    res.write(`data: ${JSON.stringify({ event: 'error', message: 'AI 服务连接失败，请稍后重试', code: 'UPSTREAM_ERROR' })}\n`);
+    res.end();
   });
 
   req.on('close', () => {
