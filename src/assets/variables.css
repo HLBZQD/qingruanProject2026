@@ -1,58 +1,60 @@
+@import url('https://fonts.googleapis.com/css2?family=Figtree:ital,wght@0,300..900;1,300..900&family=Noto+Sans+SC:wght@300;400;500;700;900&display=swap');
+
 :root {
-  /* ===== 主色：鲜明靛蓝（Vivid Indigo） ===== */
-  --color-primary: #4F46E5;
-  --color-primary-light: #EEF2FF;
-  --color-primary-soft: #C7D2FE;
-  --color-primary-dark: #3730A3;
+  /* ===== 主色：苹果皇家蓝（Apple Royal Blue） ===== */
+  --color-primary: #0071E3;
+  --color-primary-light: #F5F9FF;
+  --color-primary-soft: #C7E0F4;
+  --color-primary-dark: #0050A1;
 
-  /* ===== 强调色：鲜明薄荷青（Signature Mint） ===== */
-  --color-accent: #06D6A0;
-  --color-accent-light: #E0FDF6;
-  --color-accent-dark: #059669;
-  --color-accent-glow: rgba(6, 214, 160, 0.45);
+  /* ===== 强调色：苹果天蓝（Apple Sky Blue - no green） ===== */
+  --color-accent: #5AC8FA;
+  --color-accent-light: #F0FAFF;
+  --color-accent-dark: #007AFF;
+  --color-accent-glow: rgba(90, 200, 250, 0.15);
 
-  /* ===== 活力点缀：珊瑚橙（Energy Coral） ===== */
-  --color-vivid: #FF6B6B;
-  --color-vivid-light: #FFF0F0;
-  --color-vivid-dark: #E85555;
+  /* ===== 活力点缀：暖调活力橙（Vivid Orange - no red） ===== */
+  --color-vivid: #FF9500;
+  --color-vivid-light: #FFF9F0;
+  --color-vivid-dark: #D66A00;
 
-  /* ===== 第三色：琥珀金（Amber） ===== */
-  --color-amber: #F59E0B;
-  --color-amber-light: #FEF3C7;
-  --color-amber-dark: #D97706;
+  /* ===== 第三色：苹果金（Apple Gold） ===== */
+  --color-amber: #FFCC00;
+  --color-amber-light: #FFFDF0;
+  --color-amber-dark: #B28F00;
 
-  /* ===== 第四色：薰衣草紫（Soft Lavender） ===== */
-  --color-lavender: #8B5CF6;
-  --color-lavender-light: #EDE9FE;
-  --color-lavender-dark: #7C3AED;
+  /* ===== 第四色：苹果蓝绿/青色（Apple Teal） ===== */
+  --color-lavender: #30B0C7;
+  --color-lavender-light: #F0FBFD;
+  --color-lavender-dark: #208090;
 
-  /* ===== 语义色：更鲜明 ===== */
-  --color-success: #10B981;
-  --color-success-light: #D1FAE5;
-  --color-danger: #EF4444;
-  --color-danger-light: #FEE2E2;
-  --color-warning: #F59E0B;
-  --color-warning-light: #FEF3C7;
-  --color-info: #3B82F6;
-  --color-info-light: #DBEAFE;
+  /* ===== 语义色 ===== */
+  --color-success: #30B0C7;
+  --color-success-light: #F0FBFD;
+  --color-danger: #FF9500;
+  --color-danger-light: #FFF9F0;
+  --color-warning: #FF9500;
+  --color-warning-light: #FFF9F0;
+  --color-info: #0071E3;
+  --color-info-light: #F5F9FF;
 
-  /* ===== 文本色：暖调深色 ===== */
-  --color-text-primary: #1A1A2E;
-  --color-text-secondary: #4B5563;
-  --color-text-tertiary: #9CA3AF;
-  --color-text-disabled: #D1D5DB;
+  /* ===== 文本色：Apple HIG 经典 Slate 黑色 ===== */
+  --color-text-primary: #1D1D1F;
+  --color-text-secondary: #48484A;
+  --color-text-tertiary: #86868B;
+  --color-text-disabled: #AEAEB2;
   --color-text-inverse: #FFFFFF;
 
-  /* ===== 表面色：温暖奶油调 ===== */
-  --color-bg: #F7F5F2;
-  --color-bg-elevated: #FEFDFB;
+  /* ===== 表面色：苹果标准浅灰背景 / 纯白卡片 ===== */
+  --color-bg: #F5F5F7;
+  --color-bg-elevated: #FFFFFF;
   --color-card: #FFFFFF;
-  --color-divider: #E8E4DF;
-  --color-border: #E5E0DB;
+  --color-divider: #E5E5EA;
+  --color-border: #E5E5EA;
 
-  /* ===== 字体：中文 Noto Sans SC + 数据 JetBrains Mono ===== */
-  --font-display: 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', sans-serif;
-  --font-body: 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  /* ===== 字体：Figtree（英数）+ Noto Sans SC（中文） ===== */
+  --font-display: 'Figtree', 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  --font-body: 'Figtree', 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', sans-serif;
   --font-mono: 'JetBrains Mono', 'SFMono-Regular', 'PingFang SC', monospace;
 
   --font-size-h1: 28px;
@@ -73,32 +75,32 @@
   --spacing-3xl: 32px;
   --spacing-4xl: 48px;
 
-  /* ===== 圆角：多样化几何 ===== */
+  /* ===== 圆角 ===== */
   --radius-none: 0px;
-  --radius-sm: 4px;
-  --radius-md: 8px;
-  --radius-lg: 12px;
-  --radius-xl: 16px;
-  --radius-2xl: 20px;
-  --radius-3xl: 28px;
-  --radius-4xl: 32px;
-  --radius-button: 12px;
+  --radius-sm: 2px;
+  --radius-md: 4px;
+  --radius-lg: 6px;
+  --radius-xl: 6px;
+  --radius-2xl: 8px;
+  --radius-3xl: 8px;
+  --radius-4xl: 8px;
+  --radius-button: 4px;
   --radius-full: 9999px;
 
-  /* ===== 异形圆角：打破千篇一律 ===== */
+  /* ===== 异形圆角 ===== */
   --radius-asymmetric: 20px 4px 20px 4px;
   --radius-asymmetric-alt: 4px 20px 4px 20px;
   --radius-pill-left: 9999px 0 0 9999px;
   --radius-pill-right: 0 9999px 9999px 0;
   --radius-tag: 6px;
 
-  /* ===== 阴影：柔和多层次 ===== */
-  --shadow-sm: 0 1px 3px rgba(26, 26, 46, 0.04), 0 1px 2px rgba(26, 26, 46, 0.02);
-  --shadow-md: 0 4px 8px -2px rgba(26, 26, 46, 0.08), 0 2px 4px -2px rgba(26, 26, 46, 0.04);
-  --shadow-lg: 0 12px 20px -4px rgba(26, 26, 46, 0.12), 0 4px 8px -4px rgba(26, 26, 46, 0.06);
-  --shadow-glow: 0 0 24px rgba(6, 214, 160, 0.35);
-  --shadow-vivid: 0 8px 24px rgba(255, 107, 107, 0.25);
-  --shadow-primary: 0 8px 20px rgba(79, 70, 229, 0.25);
+  /* ===== 阴影：苹果标志性超轻淡阴影 ===== */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.05);
+  --shadow-lg: 0 12px 24px rgba(0, 0, 0, 0.07);
+  --shadow-glow: 0 0 24px rgba(52, 199, 89, 0.1);
+  --shadow-vivid: 0 8px 20px rgba(255, 59, 48, 0.1);
+  --shadow-primary: 0 8px 20px rgba(0, 113, 227, 0.12);
 
   /* ===== 过渡 ===== */
   --transition-fast: 0.15s cubic-bezier(0.4, 0, 0.2, 1);

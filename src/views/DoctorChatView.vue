@@ -330,7 +330,13 @@ onUnmounted(() => {
         class="chat-welcome"
       >
           <div class="welcome-avatar">
-            <AppIcon name="doctor" :size="28" />
+            <img
+              v-if="doctor?.avatar"
+              :src="doctor.avatar"
+              :alt="doctor.name"
+              class="welcome-avatar-img"
+            />
+            <AppIcon v-else name="doctor" :size="28" />
           </div>
         <h3>{{ doctor?.name ? '您好，我是' + doctor.name + '医生' : '您好，我是您的AI医生' }}</h3>
         <p>请问有什么可以帮您？您可以描述症状、用药情况或血糖数据。</p>
@@ -405,7 +411,7 @@ onUnmounted(() => {
   display: flex;
   flex-direction: column;
   height: 100vh;
-  max-width: 768px;
+  max-width: 480px;
   margin: 0 auto;
   background: var(--color-bg);
 }
@@ -590,6 +596,7 @@ onUnmounted(() => {
   background: var(--color-card);
   border-top: 1px solid var(--color-divider);
   flex-shrink: 0;
+  margin-bottom: calc(var(--tab-bar-height) + env(safe-area-inset-bottom, 0px));
 }
 .chat-input input {
   flex: 1;
@@ -834,6 +841,16 @@ onUnmounted(() => {
   justify-content: center;
   font-size: 28px;
   margin-bottom: var(--spacing-md);
+  overflow: hidden;
+}
+
+.welcome-avatar-img {
+  width: 100%;
+  height: 100%;
+  border-radius: var(--radius-full);
+  object-fit: cover;
+  border: 2px solid #fff;
+  box-shadow: 0 4px 10px rgba(0, 113, 227, 0.12);
 }
 
 .chat-welcome h3 {

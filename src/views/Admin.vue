@@ -28,7 +28,7 @@ const logsLoading = ref(false)
 const logsError = ref('')
 const logsPage = ref(1)
 const logsPageSize = 15
-const logsHasMore = ref(true)
+const logsTotalPages = ref(0)
 
 /** 过滤 admin 模式消息，隔离 doctor/assistant 对话 */
 const adminMessages = computed(() =>
@@ -87,12 +87,15 @@ function getOpTypeClass(type: string): string {
   return 'type-select'
 }
 
-async function fetchLogs(reset = false) {
-  if (reset) {
-    logsPage.value = 1
-    logs.value = []
-    logsHasMore.value = true
+const pages = computed(() => {
+  const arr: number[] = []
+  for (let i = 1; i <= logsTotalPages.value; i++) {
+    arr.push(i)
   }
+  return arr
+})
+
+async function fetchLogs() {
   if (logsLoading.value) return
 
   logsLoading.value = true
@@ -100,12 +103,8 @@ async function fetchLogs(reset = false) {
 
   try {
     const { list, pagination } = await getAdminLogs(logsPage.value, logsPageSize)
-    if (reset) {
-      logs.value = list
-    } else {
-      logs.value.push(...list)
-    }
-    logsHasMore.value = logsPage.value < pagination.totalPages
+    logs.value = list
+    logsTotalPages.value = pagination.totalPages
   } catch (err: unknown) {
     logsError.value = (err as { message?: string }).message || '获取操作日志失败，请检查网络后重试'
   } finally {
@@ -113,9 +112,9 @@ async function fetchLogs(reset = false) {
   }
 }
 
-function loadMoreLogs() {
-  if (!logsHasMore.value || logsLoading.value) return
-  logsPage.value++
+function goToPage(page: number) {
+  if (page < 1 || page > logsTotalPages.value || page === logsPage.value || logsLoading.value) return
+  logsPage.value = page
   fetchLogs()
 }
 
@@ -126,7 +125,8 @@ function switchView(target: 'chat' | 'logs') {
   }
   view.value = target
   if (target === 'logs' && logs.value.length === 0) {
-    fetchLogs(true)
+    logsPage.value = 1
+    fetchLogs()
   }
   router.replace({ query: target === 'logs' ? { view: 'logs' } : {} })
 }
@@ -139,7 +139,8 @@ function goBack() {
 onMounted(() => {
   if (route.query.view === 'logs') {
     view.value = 'logs'
-    fetchLogs(true)
+    logsPage.value = 1
+    fetchLogs()
   }
 })
 
@@ -241,7 +242,7 @@ onUnmounted(() => {
       <ErrorRetry
         v-else-if="logsError && logs.length === 0"
         :message="logsError"
-        @retry="fetchLogs(true)"
+        @retry="logsPage = 1; fetchLogs()"
       />
 
       <EmptyState
@@ -263,17 +264,29 @@ onUnmounted(() => {
           <span class="log-operator">{{ log.operator_username }}</span>
         </div>
 
-        <div class="load-more-wrap">
+        <div v-if="logsTotalPages > 1" class="pagination-wrap">
           <button
-            v-if="logsHasMore"
-            class="btn-load-more"
-            :disabled="logsLoading"
-            @click="loadMoreLogs"
+            class="page-btn"
+            :disabled="logsPage <= 1"
+            @click="goToPage(logsPage - 1)"
           >
-            <AppIcon v-if="logsLoading" class="is-spinning" name="spinner" :size="13" />
-            {{ logsLoading ? '加载中...' : '加载更多' }}
+            上一页
           </button>
-          <p v-else class="no-more">已经到底啦</p>
+          <button
+            v-for="p in pages"
+            :key="p"
+            :class="['page-btn', { active: p === logsPage }]"
+            @click="goToPage(p)"
+          >
+            {{ p }}
+          </button>
+          <button
+            class="page-btn"
+            :disabled="logsPage >= logsTotalPages"
+            @click="goToPage(logsPage + 1)"
+          >
+            下一页
+          </button>
         </div>
       </div>
     </div>
@@ -663,31 +676,44 @@ onUnmounted(() => {
   border-radius: var(--radius-full);
 }
 
-.load-more-wrap {
+.pagination-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-xs);
   padding: var(--spacing-md) 0 var(--spacing-lg);
-  text-align: center;
 }
 
-.btn-load-more,
-.no-more {
+.page-btn {
+  min-width: 36px;
+  height: 36px;
+  padding: 0 var(--spacing-sm);
   font-size: 13px;
   color: var(--color-text-secondary);
-}
-
-.btn-load-more {
-  background: transparent;
-  border: none;
+  background: var(--color-card);
+  border: 1px solid var(--color-divider);
+  border-radius: var(--radius-sm);
   cursor: pointer;
-  padding: var(--spacing-sm) var(--spacing-lg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s;
 }
 
-.btn-load-more:disabled {
-  opacity: 0.6;
+.page-btn:hover:not(:disabled):not(.active) {
+  color: var(--color-primary);
+  border-color: var(--color-primary);
+}
+
+.page-btn.active {
+  color: #fff;
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+}
+
+.page-btn:disabled {
+  opacity: 0.4;
   cursor: not-allowed;
-}
-
-.no-more {
-  color: var(--color-text-disabled);
 }
 
 .is-spinning {

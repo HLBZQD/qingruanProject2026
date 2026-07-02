@@ -234,7 +234,8 @@ function handleSSEEvent(event: SSEEvent): void {
           id: event.message_id || `assistant_${Date.now()}`,
           role: 'assistant',
           content: event.answer,
-          timestamp: (event.created_at || 0) * 1000, // Unix秒 → 毫秒
+          timestamp: (event.created_at || 0) * 1000,
+          mode: activeChatMode.value,
         }
         conversations.value.push(assistantMsg)
       }

@@ -47,5 +47,11 @@ function toggleFab() {
 .app-root {
   min-height: 100vh;
   background: var(--color-bg);
+  background-image: 
+    linear-gradient(rgba(0, 113, 227, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 113, 227, 0.05) 1px, transparent 1px),
+    repeating-linear-gradient(45deg, rgba(0, 113, 227, 0.024) 0px, rgba(0, 113, 227, 0.024) 1.5px, transparent 1.5px, transparent 16px);
+  background-size: 24px 24px, 24px 24px, 16px 16px;
+  background-position: center top;
 }
 </style>

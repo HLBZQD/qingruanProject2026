@@ -79,7 +79,13 @@ router.post('/execute', optionalAuth, difyAuthMiddleware, async (req, res, next)
     }
 
     if (tool_name) {
+      if (tool_name === 'insert_record' || tool_name === 'update_record') {
+        console.log(`[${tool_name}] table:`, req.body.table, 'fields_type:', typeof req.body.fields, 'fields:', JSON.stringify(req.body.fields).slice(0, 200));
+      }
       const result = await dispatchParameterizedQuery(adapter, tool_name, req.body, operatorId, operatorRole);
+      if (tool_name === 'insert_record' || tool_name === 'update_record') {
+        console.log(`[${tool_name}] result:`, JSON.stringify(result).slice(0, 200));
+      }
       if (result.error) {
         return error(res, result.error.code || 'FORBIDDEN', result.error.message, result.httpStatus || 403);
       }
@@ -325,6 +331,7 @@ async function dispatchParameterizedQuery(adapter, toolName, params, operatorId,
         'INSERT INTO life_advice (user_id, title, tags, content) VALUES (?, ?, ?, ?)',
         [targetUserId, params.title, tagsJson, params.content]
       );
+      insertAdminLog(adapter, operatorId, 'INSERT', `[write_health_advice] 为user_id=${targetUserId}写入健康建议: ${params.title}`, '成功');
       return { rows: [{ id: info.lastInsertId }], operation_type: 'INSERT' };
     }
 
@@ -340,6 +347,7 @@ async function dispatchParameterizedQuery(adapter, toolName, params, operatorId,
       const args = keys.map(k => fields[k]);
       args.push(targetUserId);
       const info = await adapter.execute(`UPDATE users SET ${setClause} WHERE id = ?`, args);
+      insertAdminLog(adapter, operatorId, 'UPDATE', `[update_user_profile] 更新user_id=${targetUserId}资料: ${keys.join(', ')}`, '成功');
       return { rows: [{ changes: info.changes }], operation_type: 'UPDATE' };
     }
 
@@ -375,6 +383,7 @@ async function dispatchParameterizedQuery(adapter, toolName, params, operatorId,
       queryArgs.push(params.limit || 20, params.offset || 0);
       try {
         const rows = await adapter.query(sql, queryArgs);
+        insertAdminLog(adapter, operatorId, 'SELECT', `[query_table] 查询表${params.table}`, '成功');
         return { rows };
       } catch (e) {
         return { error: { code: 'BAD_REQUEST', message: e.message }, httpStatus: 400 };
@@ -389,7 +398,11 @@ async function dispatchParameterizedQuery(adapter, toolName, params, operatorId,
       if (!validWriteTables.includes(params.table)) {
         return { error: { code: 'VALIDATION_ERROR', message: '无效表名或禁止修改审计日志' }, httpStatus: 400 };
       }
-      const fields = { ...params.fields };
+      let fields = params.fields;
+      if (typeof fields === 'string') {
+        try { fields = JSON.parse(fields); } catch { return { error: { code: 'VALIDATION_ERROR', message: 'fields 格式无效' }, httpStatus: 400 }; }
+      }
+      fields = { ...fields };
       const keys = Object.keys(fields);
       if (keys.length === 0) {
         return { error: { code: 'VALIDATION_ERROR', message: '缺少字段' }, httpStatus: 400 };
@@ -403,6 +416,7 @@ async function dispatchParameterizedQuery(adapter, toolName, params, operatorId,
       const args = keys.map(k => fields[k]);
       try {
         const info = await adapter.execute(`INSERT INTO ${params.table} (${keys.join(', ')}) VALUES (${placeholders})`, args);
+        insertAdminLog(adapter, operatorId, 'INSERT', `[insert_record] 向${params.table}表插入记录`, '成功');
         return { rows: [{ id: info.lastInsertId }], operation_type: 'INSERT' };
       } catch (e) {
         return { error: { code: 'BAD_REQUEST', message: e.message }, httpStatus: 400 };
@@ -420,7 +434,7 @@ async function dispatchParameterizedQuery(adapter, toolName, params, operatorId,
       if (params.where && !parseWhereClause(params.where)) {
         return { error: { code: 'VALIDATION_ERROR', message: 'WHERE 子句格式不合法' }, httpStatus: 400 };
       }
-      const fields = { ...params.fields };
+      const fields = { ...(typeof params.fields === 'string' ? (() => { try { return JSON.parse(params.fields); } catch { return {}; } })() : params.fields) };
       const keys = Object.keys(fields);
       if (keys.length === 0 || !params.where) {
         return { error: { code: 'VALIDATION_ERROR', message: '缺少字段或条件' }, httpStatus: 400 };
@@ -442,6 +456,7 @@ async function dispatchParameterizedQuery(adapter, toolName, params, operatorId,
 
       try {
         const info = await adapter.execute(`UPDATE ${params.table} SET ${setClause} WHERE ${whereClauses.join(' AND ')}`, args);
+        insertAdminLog(adapter, operatorId, 'UPDATE', `[update_record] 更新${params.table}表记录`, '成功');
         return { rows: [{ changes: info.changes }], operation_type: 'UPDATE' };
       } catch (e) {
         return { error: { code: 'BAD_REQUEST', message: e.message }, httpStatus: 400 };
@@ -467,6 +482,7 @@ async function dispatchParameterizedQuery(adapter, toolName, params, operatorId,
       const whereArgs = whereParsed.conditions.map(c => c.value);
       try {
         const info = await adapter.execute(`DELETE FROM ${params.table} WHERE ${whereClauses.join(' AND ')}`, whereArgs);
+        insertAdminLog(adapter, operatorId, 'DELETE', `[delete_record] 从${params.table}表删除记录`, '成功');
         return { rows: [{ changes: info.changes }], operation_type: 'DELETE' };
       } catch (e) {
         return { error: { code: 'BAD_REQUEST', message: e.message }, httpStatus: 400 };
@@ -479,6 +495,7 @@ async function dispatchParameterizedQuery(adapter, toolName, params, operatorId,
       }
       try {
         const rows = await adapter.tableInfo(params.table);
+        insertAdminLog(adapter, operatorId, 'SELECT', `[get_table_schema] 获取${params.table}表结构`, '成功');
         return { rows };
       } catch (e) {
         return { error: { code: 'BAD_REQUEST', message: e.message }, httpStatus: 400 };

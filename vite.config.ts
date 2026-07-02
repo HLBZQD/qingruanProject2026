@@ -10,12 +10,14 @@ export default defineConfig({
     },
   },
   server: {
-    port: 5173,
+    port: 51258,
     host: '0.0.0.0',
     proxy: {
       '/api': {
         target: 'http://localhost:3000',
         changeOrigin: true,
+        proxyTimeout: 300000,
+        timeout: 300000,
       },
       '/static': {
         target: 'http://localhost:3000',

@@ -311,7 +311,7 @@ onUnmounted(() => {
               <circle
                 cx="50" cy="50" r="40"
                 fill="none"
-                stroke="var(--color-primary, #4A90D9)"
+                stroke="var(--color-primary, #0071E3)"
                 stroke-width="8"
                 stroke-linecap="round"
                 :stroke-dasharray="CIRCLE_LENGTH"
@@ -591,7 +591,7 @@ onUnmounted(() => {
   margin: 0 auto;
   padding-bottom: calc(var(--tab-bar-height) + 8px);
   min-height: 100vh;
-  background: var(--color-bg);
+  background: transparent;
 }
 
 /* ===== Header 白色粘性顶栏（复刻原型 1250-1253） ===== */
@@ -673,7 +673,7 @@ onUnmounted(() => {
 
 /* gradient-text（复刻原型统计卡渐变文字） */
 .gradient-text {
-  background: linear-gradient(135deg, #4A90D9, #38BDF8);
+  background: linear-gradient(135deg, var(--color-primary), var(--color-lavender));
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
@@ -725,10 +725,10 @@ onUnmounted(() => {
   transition: height var(--transition-fast);
 }
 .punch-trend-diet {
-  background: linear-gradient(to top, #4A90D9, #38BDF8);
+  background: linear-gradient(to top, var(--color-primary), var(--color-lavender));
 }
 .punch-trend-exercise {
-  background: linear-gradient(to top, #52C41A, #73D13D);
+  background: linear-gradient(to top, var(--color-lavender), var(--color-lavender-light));
 }
 .punch-trend-label {
   font-size: 10px;
@@ -738,8 +738,8 @@ onUnmounted(() => {
 
 /* ===== AI 分析评语卡片（复刻原型 1289-1297） ===== */
 .punch-comment-card {
-  background: linear-gradient(135deg, #E8F1FB, #E0F2FE);
-  border: 1px solid rgba(74, 144, 217, 0.15);
+  background: linear-gradient(135deg, var(--color-primary-light), var(--color-lavender-light));
+  border: 1px solid rgba(8, 145, 178, 0.15);
   border-radius: var(--radius-lg);
   padding: var(--spacing-lg);
   margin-bottom: var(--spacing-md);
@@ -904,12 +904,12 @@ onUnmounted(() => {
   font-size: 16px;
 }
 .punch-type-diet {
-  background: #E8F1FB;
-  color: #4A90D9;
+  background: var(--color-primary-light);
+  color: var(--color-primary);
 }
 .punch-type-exercise {
-  background: #E6F7EE;
-  color: #52C41A;
+  background: var(--color-lavender-light);
+  color: var(--color-lavender);
 }
 .punch-record-info {
   flex: 1;
@@ -952,8 +952,8 @@ onUnmounted(() => {
   flex-shrink: 0;
 }
 .punch-status-done {
-  background: #E6F7EE;
-  color: #52C41A;
+  background: var(--color-lavender-light);
+  color: var(--color-lavender);
 }
 .punch-status-undone {
   background: var(--color-bg);
@@ -993,7 +993,7 @@ onUnmounted(() => {
   text-align: center;
 }
 .punch-cta {
-  background: linear-gradient(135deg, #4A90D9, #38BDF8);
+  background: linear-gradient(135deg, var(--color-primary), var(--color-lavender));
   color: #fff;
   border: none;
   border-radius: var(--radius-button);
@@ -1212,7 +1212,7 @@ onUnmounted(() => {
 
 #btn-refresh:hover:not(:disabled) {
   background: var(--color-bg, #f5f5f5);
-  color: var(--color-primary, #4A90D9);
+  color: var(--color-primary, #0071E3);
 }
 
 #btn-refresh:disabled {

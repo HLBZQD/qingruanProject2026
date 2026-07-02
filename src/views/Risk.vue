@@ -346,11 +346,11 @@ const riskMeta = computed(() => {
   if (!result.value) return null
   switch (result.value.risk_level) {
     case 'low':
-      return { label: '低风险', color: '#52C41A', bg: '#F0F9EB', icon: 'heart', iconType: 'diabetes' as const }
+      return { label: '低风险', color: '#0071E3', bg: '#F5F9FF', icon: 'heart', iconType: 'diabetes' as const }
     case 'medium':
       return { label: '中风险', color: '#FAAD14', bg: '#FFFBE6', icon: 'blood-drop', iconType: 'diabetes' as const }
     case 'high':
-      return { label: '高风险', color: '#FF4D4F', bg: '#FFF1F0', icon: 'heart-cross', iconType: 'diabetes' as const }
+      return { label: '高风险', color: '#FF9500', bg: '#FFF9F0', icon: 'heart-cross', iconType: 'diabetes' as const }
     default:
       return { label: '未知风险', color: '#999999', bg: '#F5F5F5', icon: 'question-circle', iconType: 'app' as const }
   }
@@ -908,13 +908,13 @@ const riskPercent = computed(() => {
 
 .option-card:hover,
 .option-card:focus-within {
-  border-color: #bfdbfb;
+  border-color: var(--color-primary-soft);
 }
 
 .option-card.selected {
   border-color: var(--color-primary);
   background: var(--color-primary-light);
-  box-shadow: 0 2px 8px rgba(74, 144, 217, 0.12);
+  box-shadow: 0 2px 8px rgba(0, 113, 227, 0.12);
 }
 
 .option-icon-wrap {
