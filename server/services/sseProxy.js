@@ -6,6 +6,7 @@ function proxyDifySSE({ apiKey, query, conversationId, userId, res, req }) {
   res.setHeader('Cache-Control', 'no-cache');
   res.setHeader('Connection', 'keep-alive');
   res.setHeader('X-Accel-Buffering', 'no');
+  res.write(':ok\n\n');
 
   const baseUrl = process.env.DIFY_API_BASE;
 
@@ -21,97 +22,64 @@ function proxyDifySSE({ apiKey, query, conversationId, userId, res, req }) {
 
   const url = baseUrl.replace(/\/$/, '') + '/chat-messages';
 
-  const body = {
+  const bodyObj = {
     query,
-    user: `user-${userId}`,
+    user: String(userId),
     inputs: {},
     response_mode: 'streaming'
   };
   if (conversationId) {
-    body.conversation_id = conversationId;
+    bodyObj.conversation_id = conversationId;
   }
 
+  const bodyStr = JSON.stringify(bodyObj);
   const parsedUrl = new URL(url);
   const mod = parsedUrl.protocol === 'https:' ? https : http;
 
-  const upstreamReqOptions = {
-    hostname: parsedUrl.hostname,
-    port: parsedUrl.port || (parsedUrl.protocol === 'https:' ? 443 : 80),
-    path: parsedUrl.pathname + parsedUrl.search,
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${apiKey}`,
-      'Content-Type': 'application/json'
-    },
-    timeout: 120000
-  };
-
-  let aborted = false;
-
-  function writeErrorEvent(message, code) {
-    if (res.writableEnded) return;
-    res.write(`data: ${JSON.stringify({ event: 'error', message, code })}\n`);
-    res.end();
-  }
-
-  const upstreamReq = mod.request(upstreamReqOptions, (upstreamRes) => {
-    if (upstreamRes.statusCode < 200 || upstreamRes.statusCode >= 300) {
-      let errorBody = '';
-      upstreamRes.on('data', (chunk) => { errorBody += chunk.toString(); });
-      upstreamRes.on('end', () => {
-        let message = 'AI 服务返回错误';
-        try {
-          const parsed = JSON.parse(errorBody);
-          message = parsed.message || message;
-        } catch (e) { /* use default message */ }
-        writeErrorEvent(message, 'DIFY_ERROR');
+  const upstreamReq = mod.request(
+    parsedUrl.port
+      ? { hostname: parsedUrl.hostname, port: parsedUrl.port, path: parsedUrl.pathname + parsedUrl.search, method: 'POST',
+          headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(bodyStr) },
+          timeout: 120000 }
+      : url,
+    (upstreamRes) => {
+      let buffer = '';
+      upstreamRes.on('data', (chunk) => {
+        if (res.writableEnded) return;
+        buffer += chunk.toString();
+        const lines = buffer.split('\n');
+        buffer = lines.pop();
+        for (const line of lines) {
+          res.write(line + '\n');
+        }
       });
-      return;
+      upstreamRes.on('end', () => {
+        if (res.writableEnded) return;
+        if (buffer.length > 0) res.write(buffer + '\n');
+        res.end();
+      });
     }
-
-    let buffer = '';
-    upstreamRes.on('data', (chunk) => {
-      // G21: 客户端断开后停止写入，防止向已关闭响应写入数据
-      if (aborted || res.writableEnded) return;
-      buffer += chunk.toString();
-      const lines = buffer.split('\n');
-      buffer = lines.pop();
-      for (const line of lines) {
-        res.write(line + '\n');
-      }
-    });
-
-    upstreamRes.on('end', () => {
-      if (aborted || res.writableEnded) return;
-      if (buffer.length > 0) {
-        res.write(buffer + '\n');
-      }
-      res.end();
-    });
-  });
+  );
 
   upstreamReq.on('timeout', () => {
-    // G27: 记录超时日志，便于运维定位 Dify SSE 代理超时
     console.error('[sseProxy] 上游请求超时:', url);
-    if (aborted || res.writableEnded) return;
-    writeErrorEvent('AI 服务响应超时，请稍后重试', 'UPSTREAM_ERROR');
+    if (res.writableEnded) return;
+    res.write(`data: ${JSON.stringify({ event: 'error', message: 'AI 服务响应超时，请稍后重试', code: 'UPSTREAM_ERROR' })}\n`);
+    res.end();
   });
 
   upstreamReq.on('error', (err) => {
-    // G27: 记录连接错误日志
     console.error('[sseProxy] 上游连接错误:', url, err.message);
-    if (aborted || res.writableEnded) return;
-    writeErrorEvent('AI 服务连接失败，请稍后重试', 'UPSTREAM_ERROR');
+    if (res.writableEnded) return;
+    res.write(`data: ${JSON.stringify({ event: 'error', message: 'AI 服务连接失败，请稍后重试', code: 'UPSTREAM_ERROR' })}\n`);
+    res.end();
   });
 
   req.on('close', () => {
-    aborted = true;
-    if (upstreamReq && !upstreamReq.destroyed) {
-      upstreamReq.destroy();
-    }
+    console.log('[sseProxy] 客户端连接关闭');
   });
 
-  upstreamReq.write(JSON.stringify(body));
+  upstreamReq.write(bodyStr);
   upstreamReq.end();
 }
 
