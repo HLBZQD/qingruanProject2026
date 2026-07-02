@@ -3,6 +3,7 @@ const crypto = require('crypto')
 const path = require('path')
 
 const MODULE_PATH = path.resolve(__dirname, '../../server/utils/encryption.js')
+const TEST_AES_SALT = '0123456789abcdef0123456789abcdef' // 32 位 hex = 16 字节
 
 // 辅助：清除模块缓存
 function clearEncryptionCache() {
@@ -18,17 +19,20 @@ function loadEncryptionModule() {
 describe('encryption 模块 — S6 硬编码密钥修复验证', () => {
   // 保存原始环境变量，测试结束后恢复
   const savedJwtSecret = process.env.JWT_SECRET
+  const savedAesSalt = process.env.AES_SALT
 
   afterAll(() => {
     process.env.JWT_SECRET = savedJwtSecret
+    process.env.AES_SALT = savedAesSalt
   })
 
   // ---------------------------------------------------------------
-  // 行为契约 1: JWT_SECRET 已设置 → 模块正常加载
+  // 行为契约 1: JWT_SECRET 与 AES_SALT 均已设置 → 模块正常加载
   // ---------------------------------------------------------------
-  describe('模块加载 — JWT_SECRET 已设置', () => {
+  describe('模块加载 — JWT_SECRET 与 AES_SALT 已设置', () => {
     beforeEach(() => {
       process.env.JWT_SECRET = 'test-load-secret-at-least-32-chars!!!'
+      process.env.AES_SALT = TEST_AES_SALT
       clearEncryptionCache()
     })
 
@@ -55,6 +59,7 @@ describe('encryption 模块 — S6 硬编码密钥修复验证', () => {
 
     it('JWT_SECRET 为 undefined → throw Error 包含 [encryption] 标识', () => {
       delete process.env.JWT_SECRET
+      process.env.AES_SALT = TEST_AES_SALT
       try {
         expect(() => require(MODULE_PATH)).toThrow('[encryption]')
       } finally {
@@ -64,6 +69,7 @@ describe('encryption 模块 — S6 硬编码密钥修复验证', () => {
 
     it('JWT_SECRET 为空字符串 → throw Error（falsy 值被视为未设置）', () => {
       process.env.JWT_SECRET = ''
+      process.env.AES_SALT = TEST_AES_SALT
       try {
         expect(() => require(MODULE_PATH)).toThrow('[encryption]')
       } finally {
@@ -73,6 +79,7 @@ describe('encryption 模块 — S6 硬编码密钥修复验证', () => {
 
     it('错误消息明确指向 JWT_SECRET 环境变量', () => {
       delete process.env.JWT_SECRET
+      process.env.AES_SALT = TEST_AES_SALT
       try {
         expect(() => require(MODULE_PATH)).toThrow(/JWT_SECRET/)
       } finally {
@@ -82,11 +89,64 @@ describe('encryption 模块 — S6 硬编码密钥修复验证', () => {
   })
 
   // ---------------------------------------------------------------
+  // 行为契约 2b: AES_SALT 未设置 → 模块加载时抛出明确错误（fail-fast）
+  //   此前 AES_SALT 未设置时会静默随机生成 salt，每次进程重启都会变化，
+  //   导致数据库中用旧 salt 加密的 chat_token 无法解密。改为 fail-fast
+  //   以在启动时即暴露配置问题，杜绝静默数据损坏。
+  // ---------------------------------------------------------------
+  describe('模块加载 — AES_SALT 未设置（fail-fast）', () => {
+    beforeEach(() => {
+      process.env.JWT_SECRET = 'test-load-secret-at-least-32-chars!!!'
+      clearEncryptionCache()
+    })
+
+    afterAll(() => {
+      process.env.AES_SALT = TEST_AES_SALT
+    })
+
+    it('AES_SALT 为 undefined → throw Error 包含 [encryption] 标识', () => {
+      delete process.env.AES_SALT
+      try {
+        expect(() => require(MODULE_PATH)).toThrow('[encryption]')
+      } finally {
+        process.env.AES_SALT = TEST_AES_SALT
+      }
+    })
+
+    it('AES_SALT 为空字符串 → throw Error（falsy 值被视为未设置）', () => {
+      process.env.AES_SALT = ''
+      try {
+        expect(() => require(MODULE_PATH)).toThrow('[encryption]')
+      } finally {
+        process.env.AES_SALT = TEST_AES_SALT
+      }
+    })
+
+    it('错误消息明确指向 AES_SALT 环境变量', () => {
+      delete process.env.AES_SALT
+      try {
+        expect(() => require(MODULE_PATH)).toThrow(/AES_SALT/)
+      } finally {
+        process.env.AES_SALT = TEST_AES_SALT
+      }
+    })
+
+    it('源码中不再含随机生成 salt 的回退逻辑（getSalt 不调用 randomBytes）', () => {
+      const fs = require('fs')
+      const source = fs.readFileSync(MODULE_PATH, 'utf-8')
+      // IV 仍需随机生成，但 getSalt 不应再随机生成 salt
+      expect(source).not.toContain('已自动生成 salt')
+      expect(source).not.toMatch(/cachedSalt\s*=\s*crypto\.randomBytes/)
+    })
+  })
+
+  // ---------------------------------------------------------------
   // 行为契约 3: deriveKey() 移除硬编码回退
   // ---------------------------------------------------------------
   describe('deriveKey() — 无硬编码默认密钥', () => {
     beforeAll(() => {
       process.env.JWT_SECRET = 'test-derivekey-secret-at-least-32-chars!!'
+      process.env.AES_SALT = TEST_AES_SALT
     })
 
     it('相同 salt 产生确定性的相同派生密钥', () => {
@@ -129,6 +189,7 @@ describe('encryption 模块 — S6 硬编码密钥修复验证', () => {
   describe('encryptChatToken / decryptChatToken 往返', () => {
     beforeAll(() => {
       process.env.JWT_SECRET = 'test-crypto-secret-at-least-32-chars-ok!!'
+      process.env.AES_SALT = TEST_AES_SALT
     })
 
     it('加密后解密应恢复原始 ASCII token', () => {
@@ -185,11 +246,20 @@ describe('encryption 模块 — S6 硬编码密钥修复验证', () => {
   })
 
   // ---------------------------------------------------------------
-  // 行为契约 5: getSalt() 行为不变（自动生成 + 警告）
+  // 行为契约 5: getSalt() 读取固定的 AES_SALT 环境变量（不再随机生成）
   // ---------------------------------------------------------------
-  describe('getSalt() — 行为保持不变', () => {
+  describe('getSalt() — 读取固定的 AES_SALT 环境变量', () => {
     beforeAll(() => {
       process.env.JWT_SECRET = 'test-salt-secret-at-least-32-chars-here!!'
+      process.env.AES_SALT = TEST_AES_SALT
+    })
+
+    it('返回与 AES_SALT 环境变量一致的 16 字节 Buffer', () => {
+      const { getSalt } = loadEncryptionModule()
+      const salt = getSalt()
+      expect(Buffer.isBuffer(salt)).toBe(true)
+      expect(salt.length).toBe(16)
+      expect(salt.toString('hex')).toBe(TEST_AES_SALT)
     })
 
     it('在同一模块实例中返回一致的 salt', () => {
@@ -199,11 +269,12 @@ describe('encryption 模块 — S6 硬编码密钥修复验证', () => {
       expect(salt1.equals(salt2)).toBe(true)
     })
 
-    it('返回 16 字节 Buffer', () => {
-      const { getSalt } = loadEncryptionModule()
-      const salt = getSalt()
-      expect(Buffer.isBuffer(salt)).toBe(true)
-      expect(salt.length).toBe(16)
+    it('跨模块重载返回一致的 salt（持久化于环境变量，非随机）', () => {
+      const mod1 = loadEncryptionModule()
+      const s1 = mod1.getSalt()
+      const mod2 = loadEncryptionModule()
+      const s2 = mod2.getSalt()
+      expect(s1.equals(s2)).toBe(true)
     })
   })
 })

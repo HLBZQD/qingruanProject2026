@@ -12,10 +12,12 @@ const AUDIT_LOG_TABLES = new Set(['admin_logs']);
 const FORBIDDEN_TABLES = new Set(['users']);
 
 function validateRowLevelPermission(sql, operatorId) {
+  const dialect = process.env.DB_TYPE === 'kingbase' ? 'PostgreSQL' : 'sqlite';
   let ast;
   try {
-    ast = parser.astify(sql, { database: 'sqlite' });
+    ast = parser.astify(sql, { database: dialect });
   } catch (e) {
+    // SQL 语法解析失败，直接拒绝，避免漏校验
     return false;
   }
 
@@ -73,9 +75,7 @@ function extractTableNames(stmt) {
       return;
     }
 
-    if (node.db && node.table) {
-      tables.add(node.table);
-    } else if (node.table) {
+    if (typeof node.table === 'string') {
       tables.add(node.table);
     }
 
@@ -100,6 +100,28 @@ function extractTableNames(stmt) {
   return [...tables];
 }
 
+function getColumnName(colRef) {
+  if (!colRef) return null;
+  if (typeof colRef === 'string') return colRef;
+  if (typeof colRef === 'object') {
+    if (typeof colRef.value === 'string') return colRef.value;
+    if (colRef.expr && typeof colRef.expr.value === 'string') return colRef.expr.value;
+    if (typeof colRef.column === 'string') return colRef.column;
+  }
+  return null;
+}
+
+function getValueRows(stmt) {
+  if (!stmt.values) return [];
+  if (stmt.values.type === 'values' && Array.isArray(stmt.values.values)) {
+    return stmt.values.values.map(r => (r && Array.isArray(r.value)) ? r.value : []);
+  }
+  if (Array.isArray(stmt.values)) {
+    return stmt.values.map(r => Array.isArray(r) ? r : (r && Array.isArray(r.value) ? r.value : [r]));
+  }
+  return [];
+}
+
 function containsUserIdConstraint(stmt, operatorId, userTables) {
   let found = false;
 
@@ -111,8 +133,12 @@ function containsUserIdConstraint(stmt, operatorId, userTables) {
     }
 
     if (node.type === 'binary_expr' && node.operator === '=') {
-      if (node.left && node.left.type === 'column_ref' && node.left.column === 'user_id') {
+      if (node.left && node.left.type === 'column_ref' && getColumnName(node.left.column) === 'user_id') {
         if (node.right && node.right.type === 'number' && node.right.value === operatorId) {
+          found = true;
+          return;
+        }
+        if (node.right && (node.right.type === 'single_quote_string' || node.right.type === 'double_quote_string') && Number(node.right.value) === operatorId) {
           found = true;
           return;
         }
@@ -137,22 +163,23 @@ function containsUserIdConstraint(stmt, operatorId, userTables) {
 function insertContainsUserId(stmt, operatorId) {
   if (!stmt.columns || !stmt.values) return false;
 
-  let colIndex = -1;
   const colList = Array.isArray(stmt.columns) ? stmt.columns : [];
+  let colIndex = -1;
   for (let i = 0; i < colList.length; i++) {
     const col = Array.isArray(colList[i]) ? colList[i][0] : colList[i];
-    if (col && col.expr && col.expr.column === 'user_id') {
+    if (getColumnName(col) === 'user_id') {
       colIndex = i;
       break;
     }
   }
   if (colIndex === -1) return false;
 
-  const firstRow = Array.isArray(stmt.values[0]) ? stmt.values[0] : stmt.values;
+  const rows = getValueRows(stmt);
+  const firstRow = rows[0] || [];
   if (colIndex >= firstRow.length) return false;
   const val = firstRow[colIndex];
   if (val && val.type === 'number' && val.value === operatorId) return true;
-  if (val && val.type === 'single_quote_string' && Number(val.value) === operatorId) return true;
+  if (val && (val.type === 'single_quote_string' || val.type === 'double_quote_string') && Number(val.value) === operatorId) return true;
 
   return false;
 }

@@ -33,6 +33,11 @@ const userAvatar = computed(() => {
   return (authStore.user as any)?.avatar || '/default-avatar.png'
 })
 
+/** 过滤 doctor 模式消息，隔离 assistant/admin 对话，避免跨 agent 串扰 */
+const doctorMessages = computed(() =>
+  chatStore.conversations.filter(m => m.mode === 'doctor')
+)
+
 // ===== 加载医生信息 =====
 async function loadDoctor() {
   const id = Number(route.params.id)
@@ -100,7 +105,7 @@ function goBack() {
 function clearChat() {
   const id = Number(route.params.id)
   chatStore.clearDoctorConversation(id)
-  chatStore.clearMessages()
+  chatStore.clearMessages('doctor')
 }
 
 // ===== 自动滚动到底部 =====
@@ -165,7 +170,7 @@ function selectHistorySession(item: ConversationHistoryItem): void {
   const doctorId = Number(route.params.id)
   chatStore.setDoctorConversation(doctorId, item.conversation_id)
   // 清空当前消息列表以展示新会话上下文
-  chatStore.clearMessages()
+  chatStore.clearMessages('doctor')
   showHistoryPanel.value = false
   chatStore.clearConversationHistory()
 }
@@ -195,7 +200,7 @@ watch(
   (newId, oldId) => {
     if (newId !== oldId && oldId !== undefined) {
       chatStore.abortActiveConnection()
-      chatStore.clearMessages()
+      chatStore.clearMessages('doctor')
       loadDoctor()
     }
   },
@@ -326,7 +331,7 @@ onUnmounted(() => {
 
       <!-- 空态欢迎 -->
       <div
-        v-else-if="chatStore.conversations.length === 0 && !chatStore.isStreaming"
+        v-else-if="doctorMessages.length === 0 && !chatStore.isStreaming"
         class="chat-welcome"
       >
           <div class="welcome-avatar">
@@ -350,7 +355,7 @@ onUnmounted(() => {
       <!-- 消息列表 -->
       <template v-else>
         <div
-          v-for="msg in chatStore.conversations"
+          v-for="msg in doctorMessages"
           :key="msg.id"
           :class="[
             'message-bubble',

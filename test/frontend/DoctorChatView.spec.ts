@@ -91,7 +91,7 @@ let mockAuth: {
   user: { avatar: string } | null
 }
 let mockChat: {
-  conversations: Array<{ id: number; role: string; content: string; timestamp: number }>
+  conversations: Array<{ id: number; role: string; content: string; timestamp: number; mode?: string }>
   isStreaming: boolean
   conversationHistory: Array<unknown>
   historyLoading: boolean
@@ -116,7 +116,7 @@ beforeEach(() => {
   })
 
   mockChat = reactive({
-    conversations: [] as Array<{ id: number; role: string; content: string; timestamp: number }>,
+    conversations: [] as Array<{ id: number; role: string; content: string; timestamp: number; mode?: string }>,
     isStreaming: false,
     conversationHistory: [] as Array<unknown>,
     historyLoading: false,
@@ -247,7 +247,7 @@ describe('DoctorChatView.vue G3 — 空态欢迎语验证', () => {
   describe('BC-G3-2: 有消息时渲染消息列表，不渲染欢迎语', () => {
     it('conversations 非空时 .chat-welcome 不存在', async () => {
       mockChat.conversations = [
-        { id: 1, role: 'user', content: '你好', timestamp: Date.now() },
+        { id: 1, role: 'user', content: '你好', timestamp: Date.now(), mode: 'doctor' },
       ]
       mockChat.isStreaming = false
 
@@ -258,7 +258,7 @@ describe('DoctorChatView.vue G3 — 空态欢迎语验证', () => {
 
     it('conversations 非空时 .message-bubble 存在', async () => {
       mockChat.conversations = [
-        { id: 1, role: 'user', content: '你好', timestamp: Date.now() },
+        { id: 1, role: 'user', content: '你好', timestamp: Date.now(), mode: 'doctor' },
       ]
       mockChat.isStreaming = false
 
@@ -269,7 +269,7 @@ describe('DoctorChatView.vue G3 — 空态欢迎语验证', () => {
 
     it('conversations 非空时消息列表使用 v-else 分支（非 welcome 分支）', async () => {
       mockChat.conversations = [
-        { id: 1, role: 'user', content: '你好', timestamp: Date.now() },
+        { id: 1, role: 'user', content: '你好', timestamp: Date.now(), mode: 'doctor' },
       ]
       mockChat.isStreaming = false
 

@@ -74,7 +74,7 @@ let mockAuth: {
 }
 let mockChat: {
   fabOpen: boolean
-  conversations: Array<{ id: number; role: string; content: string; timestamp: number }>
+  conversations: Array<{ id: number; role: string; content: string; timestamp: number; mode?: string }>
   isStreaming: boolean
   toggleFab: ReturnType<typeof vi.fn>
   abortActiveConnection: ReturnType<typeof vi.fn>
@@ -154,6 +154,7 @@ describe('AiChatDialog.vue S2 — 设计合规修复验证', () => {
           role: 'assistant',
           content: '**粗体文本**',
           timestamp: 1700000000000,
+          mode: 'assistant',
         },
       ]
 

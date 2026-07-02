@@ -25,7 +25,7 @@ function proxyDifySSE({ apiKey, query, conversationId, userId, res, req }) {
   const bodyObj = {
     query,
     user: String(userId),
-    inputs: {},
+    inputs: { db_type: process.env.DB_TYPE || 'sqlite' },
     response_mode: 'streaming'
   };
   if (conversationId) {

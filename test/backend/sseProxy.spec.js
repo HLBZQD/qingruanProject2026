@@ -301,7 +301,7 @@ describe('proxyDifySSE', () => {
       expect(body.response_mode).toBe('streaming')
     })
 
-    it('inputs 为空对象', () => {
+    it('inputs 包含 db_type 字段（供 Dify 工作流感知数据库类型）', () => {
       setBaseUrl('http://dify.example.com/v1')
       const res = makeRes()
       const req = makeReq()
@@ -309,7 +309,7 @@ describe('proxyDifySSE', () => {
       proxyDifySSE({ apiKey: 'app-xxx', query: '你好', userId: 1, res, req })
 
       const body = JSON.parse(mockReq._body)
-      expect(body.inputs).toEqual({})
+      expect(body.inputs).toEqual({ db_type: process.env.DB_TYPE || 'sqlite' })
     })
 
     it('传入 conversationId 时包含 conversation_id 字段', () => {

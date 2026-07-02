@@ -99,12 +99,6 @@ router.post('/execute', optionalAuth, difyAuthMiddleware, async (req, res, next)
       return error(res, 'BAD_REQUEST', '请求体必须包含 tool_name 或 sql 字段', 400);
     }
 
-    // KingbaseES 下禁用 sql 模式（迁移计划 §9.2 Phase 1 策略）
-    if (process.env.DB_TYPE === 'kingbase') {
-      return error(res, 'FORBIDDEN',
-        'KingbaseES 下仅支持 tool_name 参数化查询，不支持 sql 模式。请使用 tool_name 参数。', 400);
-    }
-
     if (/^\s*(INSERT|UPDATE|DELETE)\b.*?\badmin_logs\b/i.test(sql)) {
       await insertAdminLog(adapter, operatorId, 'admin_text2sql_denied', sql, '试图修改审计日志被拒绝');
       return error(res, 'FORBIDDEN', '审计日志为系统生成，严禁任何角色篡改或删除', 403);
