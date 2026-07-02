@@ -19,7 +19,7 @@ const messagesContainer = ref<HTMLElement | null>(null)
 
 const isOpen = computed(() => chatStore.fabOpen)
 const isLoggedIn = computed(() => !!authStore.token)
-const messages = computed(() => chatStore.conversations)
+const messages = computed(() => chatStore.conversations.filter(m => m.mode === 'assistant'))
 
 async function scrollToBottom() {
   await nextTick()
@@ -127,7 +127,7 @@ onUnmounted(() => {
             class="btn-clear"
             :disabled="messages.length === 0 || chatStore.isStreaming"
             aria-label="清空对话"
-            @click="chatStore.clearAssistantConversation(); chatStore.clearMessages()"
+            @click="chatStore.clearAssistantConversation(); chatStore.clearMessages('assistant')"
           >
             <AppIcon name="trash" :size="18" />
           </button>

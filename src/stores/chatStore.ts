@@ -274,6 +274,7 @@ function handleSSEEvent(event: SSEEvent): void {
         role: 'assistant',
         content: `[错误] ${event.message || '未知错误'}`,
         timestamp: Date.now(),
+        mode: activeChatMode.value,
       }
       conversations.value.push(errorMsg)
       isStreaming.value = false
@@ -578,8 +579,8 @@ function handleSSEEvent(event: SSEEvent): void {
     // 2. 设置当前医生
     currentDoctorId.value = doctorId
 
-    // 3. 清空消息列表 (准备新对话)
-    conversations.value = []
+    // 3. 清空当前医生的消息列表 (保留 assistant/admin 模式消息，避免跨 agent 串扰)
+    conversations.value = conversations.value.filter(m => m.mode !== 'doctor')
 
     // 4. conversation_id 在下次 sendMessage 时自动通过
     //    getDoctorConversation(doctorId) 读取 (无需在此显式加载)
@@ -625,9 +626,19 @@ function handleSSEEvent(event: SSEEvent): void {
     adminConversationId.value = null
   }
 
-  /** 清空当前消息列表（供外部组件调用，进入 Pinia action 追踪） */
-  function clearMessages(): void {
-    conversations.value = []
+  /**
+   * 清空消息列表（供外部组件调用，进入 Pinia action 追踪）。
+   *
+   * @param mode - 指定模式时仅清除该模式的消息，不传则清空全部。
+   *               用于在共享 conversations 数组中按 agent 隔离清理，
+   *               避免 assistant 清空操作误删 admin/doctor 消息。
+   */
+  function clearMessages(mode?: 'doctor' | 'assistant' | 'admin'): void {
+    if (mode) {
+      conversations.value = conversations.value.filter(m => m.mode !== mode)
+    } else {
+      conversations.value = []
+    }
   }
 
   // ===== [G4] UI 辅助 =====
