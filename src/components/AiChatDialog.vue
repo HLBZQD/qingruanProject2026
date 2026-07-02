@@ -554,6 +554,37 @@ onUnmounted(() => {
   font-weight: 700;
 }
 
+/* 思考过程折叠面板 */
+.msg-content :deep(.think-fold) {
+  margin-bottom: var(--spacing-sm);
+  font-size: 13px;
+  color: var(--color-text-secondary);
+}
+.msg-content :deep(.think-fold summary) {
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: var(--radius-sm);
+  background: rgba(79, 70, 229, 0.06);
+  color: var(--color-text-secondary);
+  font-weight: 600;
+  user-select: none;
+  transition: background var(--transition-fast);
+}
+.msg-content :deep(.think-fold summary:hover) {
+  background: rgba(79, 70, 229, 0.12);
+}
+.msg-content :deep(.think-fold[open] summary) {
+  margin-bottom: 6px;
+  border-bottom: 1px solid var(--color-divider);
+  border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+}
+.msg-content :deep(.think-fold) > *:not(summary) {
+  padding: 4px 8px;
+  font-size: 12px;
+  line-height: 1.5;
+  opacity: 0.85;
+}
+
 .message-bubble.sent .msg-content {
   background: var(--color-primary);
   color: #fff;
