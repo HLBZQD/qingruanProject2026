@@ -30,7 +30,7 @@ const showHistoryPanel = ref(false)
 
 // ===== 计算属性 =====
 const userAvatar = computed(() => {
-  return (authStore.user as any)?.avatar || '/default-avatar.png'
+  return (authStore.user as any)?.avatar || '/static/images/default/default-avatar.png'
 })
 
 /** 过滤 doctor 模式消息，隔离 assistant/admin 对话，避免跨 agent 串扰 */
@@ -225,7 +225,7 @@ onUnmounted(() => {
       <div class="doctor-info-bar">
         <img
           class="avatar-small"
-          :src="doctor?.avatar || '/default-avatar.png'"
+          :src="doctor?.avatar || '/static/images/default/default-avatar.png'"
           :alt="doctor?.name"
         />
         <div>
@@ -367,7 +367,7 @@ onUnmounted(() => {
             :src="
               msg.role === 'user'
                 ? userAvatar
-                : (doctor?.avatar || '/default-avatar.png')
+                : (doctor?.avatar || '/static/images/default/default-avatar.png')
             "
             :alt="msg.role === 'user' ? '我' : doctor?.name"
           />

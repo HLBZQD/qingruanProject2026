@@ -24,10 +24,10 @@ const FALLBACK_ARTICLE_COVER = 'https://images.unsplash.com/photo-1576091160399-
 const FALLBACK_DOCTOR_AVATAR = '/static/images/placeholder-doctor.svg'
 
 const typeCovers = [
-  'https://images.unsplash.com/photo-1505751172876-fa1923c5c528?auto=format&fit=crop&w=250&q=80', // Type 1: healthy diagnostics
-  'https://images.unsplash.com/photo-1498837167922-ddd27525d352?auto=format&fit=crop&w=250&q=80', // Type 2: organic diet
-  'https://images.unsplash.com/photo-1516627145497-ae6968895b74?auto=format&fit=crop&w=250&q=80', // Gestational: maternity
-  'https://images.unsplash.com/photo-1579684389782-64d84b5e901a?auto=format&fit=crop&w=250&q=80'  // Others: clinical stethoscope
+  '/static/images/diabetes/t1.png', // Type 1: healthy diagnostics
+  '/static/images/diabetes/t2.png', // Type 2: organic diet
+  '/static/images/diabetes/t3.png', // Gestational: maternity
+  '/static/images/diabetes/t4.png'  // Others: clinical stethoscope
 ]
 
 function getTypeCover(t: DiabetesTypeView, index: number): string {
