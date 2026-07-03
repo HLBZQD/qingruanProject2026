@@ -25,9 +25,10 @@ interface PagedBody<T> {
 /** 医生列表分页参数（page/pageSize 均可选，缺省走后端默认） */
 type DoctorsParams = Partial<PaginationParams>
 
-/** 文章列表参数：分类筛选 + 分页 */
+/** 文章列表参数：分类筛选 + 分页 + 仅看我的 */
 interface ArticlesParams extends Partial<PaginationParams> {
   category?: string
+  mine?: boolean
 }
 
 /**
