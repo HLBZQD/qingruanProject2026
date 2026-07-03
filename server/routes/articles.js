@@ -8,6 +8,7 @@ const authMiddleware = require('../middleware/auth');
 const optionalAuth = require('../middleware/optionalAuth');
 const { callWorkflowBlocking } = require('../services/difyService');
 const { validateArticleGenerate } = require('../utils/validators');
+const { extractJson } = require('../utils/extractJson');
 
 const router = express.Router();
 
@@ -50,13 +51,29 @@ router.get('/collections', authMiddleware, async (req, res, next) => {
   }
 });
 
-router.get('/', async (req, res, next) => {
+router.get('/', optionalAuth, async (req, res, next) => {
   try {
     const adapter = getAdapter();
     const { page, pageSize, offset, limit } = parsePagination(req.query);
     const params = [];
-    let countSQL = 'SELECT COUNT(*) AS total FROM articles WHERE user_id IS NULL';
-    let dataSQL = 'SELECT id, title, cover, author, category, tags, summary, views, created_at FROM articles WHERE user_id IS NULL';
+    const userId = req.user ? req.user.user_id : null;
+    const onlyMine = req.query.mine === 'true' && userId;
+
+    let countSQL;
+    let dataSQL;
+    const baseCols = 'id, title, cover, author, category, tags, summary, views, created_at';
+    if (onlyMine) {
+      countSQL = 'SELECT COUNT(*) AS total FROM articles WHERE user_id = ?';
+      dataSQL = `SELECT ${baseCols} FROM articles WHERE user_id = ?`;
+      params.push(userId);
+    } else if (userId) {
+      countSQL = 'SELECT COUNT(*) AS total FROM articles WHERE user_id IS NULL OR user_id = ?';
+      dataSQL = `SELECT ${baseCols} FROM articles WHERE user_id IS NULL OR user_id = ?`;
+      params.push(userId);
+    } else {
+      countSQL = 'SELECT COUNT(*) AS total FROM articles WHERE user_id IS NULL';
+      dataSQL = `SELECT ${baseCols} FROM articles WHERE user_id IS NULL`;
+    }
 
     if (req.query.category) {
       countSQL += ' AND category = ?';
@@ -82,12 +99,6 @@ router.post('/generate', authMiddleware, async (req, res, next) => {
   try {
     const adapter = getAdapter();
 
-    const lastTime = recentGenerates.get(req.user.user_id);
-    if (lastTime && Date.now() - lastTime < 30000) {
-      return error(res, 'CONFLICT', '请求过于频繁，请30秒后再试', 409);
-    }
-    recentGenerates.set(req.user.user_id, Date.now());
-
     const validationError = validateArticleGenerate(req.body);
     if (validationError) {
       return error(res, 'VALIDATION_ERROR', validationError, 422);
@@ -112,6 +123,12 @@ router.post('/generate', authMiddleware, async (req, res, next) => {
       return success(res, { stage: 'category_selection', categories }, '分类推荐', 200);
     }
 
+    const lastTime = recentGenerates.get(req.user.user_id);
+    if (lastTime && Date.now() - lastTime < 30000) {
+      return error(res, 'CONFLICT', '请求过于频繁，请30秒后再试', 409);
+    }
+    recentGenerates.set(req.user.user_id, Date.now());
+
     const category = req.body.category.trim();
     let articleData;
 
@@ -125,12 +142,7 @@ router.post('/generate', authMiddleware, async (req, res, next) => {
         const result = await callWorkflowBlocking(difyKey, { category }, 'article');
         const outputsText = result && result.data && result.data.outputs && result.data.outputs.text;
         if (outputsText) {
-          let parsed;
-          try {
-            parsed = JSON.parse(outputsText);
-          } catch (e) {
-            parsed = null;
-          }
+          const parsed = extractJson(outputsText);
           if (parsed && parsed.title && typeof parsed.title === 'string') {
             articleData = {
               title: parsed.title || `${category}——糖尿病管理指南`,
@@ -140,6 +152,7 @@ router.post('/generate', authMiddleware, async (req, res, next) => {
               cover: parsed.cover || null
             };
           } else {
+            console.warn('[articles/generate] 无法从 Dify 输出中提取有效文章 JSON，回退 Mock');
             articleData = buildMockArticle(category);
           }
         } else {

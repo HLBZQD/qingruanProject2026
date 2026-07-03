@@ -24,6 +24,7 @@ const error = ref('')
 const currentPage = ref(1)
 const hasMore = ref(true)
 const generating = ref(false)
+const onlyMine = ref(false)
 
 const isLoggedIn = computed(() => !!authStore.token)
 
@@ -72,6 +73,7 @@ async function fetchArticles(reset = false) {
       category: categoryForApi.value,
       page: currentPage.value,
       pageSize: 10,
+      mine: onlyMine.value || undefined,
     })
     if (reset) {
       articles.value = res
@@ -96,6 +98,11 @@ function loadMore() {
 function switchCategory(cat: string) {
   if (cat === currentCategory.value) return
   currentCategory.value = cat
+  fetchArticles(true)
+}
+
+function toggleOnlyMine() {
+  onlyMine.value = !onlyMine.value
   fetchArticles(true)
 }
 
@@ -361,6 +368,16 @@ onMounted(() => {
         @click="switchCategory(cat)"
       >
         {{ cat }}
+      </button>
+      <!-- 只看我的（仅登录用户可见，靠右分隔） -->
+      <button
+        v-if="isLoggedIn"
+        class="mine-tab"
+        :class="{ active: onlyMine }"
+        :aria-pressed="onlyMine"
+        @click="toggleOnlyMine"
+      >
+        只看我的
       </button>
     </div>
 
@@ -644,6 +661,35 @@ onMounted(() => {
 }
 
 .category-tab:active {
+  transform: scale(0.96);
+}
+
+.mine-tab {
+  flex-shrink: 0;
+  margin-left: auto;
+  padding: 6px 14px;
+  border-radius: var(--radius-full);
+  background: var(--color-bg);
+  border: 1px solid var(--color-divider);
+  color: var(--color-text-secondary);
+  font-size: 13px;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  white-space: nowrap;
+}
+
+.mine-tab:hover {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+.mine-tab.active {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  color: #fff;
+}
+
+.mine-tab:active {
   transform: scale(0.96);
 }
 

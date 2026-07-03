@@ -26,6 +26,7 @@ export async function generateArticle(category?: string): Promise<ArticleGenerat
   const res = await api.post<{ success: boolean; data: ArticleGenerateResponse; message?: string }>(
     '/articles/generate',
     category ? { category } : {},
+    category ? { timeout: 150000 } : undefined,
   )
   return res.data.data
 }
