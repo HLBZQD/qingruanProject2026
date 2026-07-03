@@ -122,6 +122,42 @@ export const usePunchStore = defineStore('punch', () => {
   }
 
   /**
+   * 翻页（替换模式）。
+   * 跳转到指定页码并全量替换 records（保持页面长度有界）。
+   * 与 fetchList 共用 listLoading 态；越界或相同页直接返回。
+   */
+  async function fetchPage(page: number): Promise<void> {
+    if (listLoading.value || listLoadingMore.value) return
+    const total = pagination.value?.totalPages ?? 1
+    if (page < 1 || page > total) return
+    if (page === currentPage.value) return
+    listLoading.value = true
+    error.value = null
+    requestId.value++
+    const snapshot = requestId.value
+    try {
+      const params: PunchListParams = {
+        page,
+        pageSize: 20,
+        ...(filter.value.startDate ? { startDate: filter.value.startDate } : {}),
+        ...(filter.value.endDate ? { endDate: filter.value.endDate } : {}),
+        ...(filter.value.punch_type ? { punch_type: filter.value.punch_type } : {}),
+      }
+      const { records: r, pagination: p } = await getPunchList(params)
+      if (snapshot !== requestId.value) return
+      records.value = r
+      pagination.value = p
+    } catch (e) {
+      if (snapshot !== requestId.value) return
+      error.value = e instanceof Error ? e : new Error('翻页加载失败')
+    } finally {
+      if (snapshot === requestId.value) {
+        listLoading.value = false
+      }
+    }
+  }
+
+  /**
    * 拉取 AI 打卡分析。
    * 成功回填 analysis，失败回填 analysisError（不阻断列表渲染）。
    */
@@ -187,7 +223,7 @@ export const usePunchStore = defineStore('punch', () => {
     // getters
     hasMore, currentPage,
     // actions
-    fetchList, loadMore, fetchAnalysis, setFilter,
+    fetchList, loadMore, fetchPage, fetchAnalysis, setFilter,
     retryFetchList, retryFetchAnalysis,
   }
 })

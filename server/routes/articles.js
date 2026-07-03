@@ -1,4 +1,7 @@
 const express = require('express');
+const multer = require('multer');
+const path = require('path');
+const fs = require('fs');
 const { getAdapter } = require('../db/database');
 const sql = require('../db/sql');
 const { success, error, AppError } = require('../utils/response');
@@ -11,6 +14,47 @@ const { validateArticleGenerate } = require('../utils/validators');
 const { extractJson } = require('../utils/extractJson');
 
 const router = express.Router();
+
+// ===== 封面图上传配置 =====
+const coverUploadDir = path.join(__dirname, '..', '..', 'static', 'uploads', 'articles');
+try {
+  if (!fs.existsSync(coverUploadDir)) fs.mkdirSync(coverUploadDir, { recursive: true });
+} catch (e) {
+  console.warn('[articles] 创建封面上传目录失败:', e.message);
+}
+
+const coverStorage = multer.diskStorage({
+  destination: (_req, _file, cb) => cb(null, coverUploadDir),
+  filename: (req, _file, cb) => {
+    if (!req.user?.user_id) return cb(new Error('User not authenticated'));
+    const ext = path.extname(_file.originalname).toLowerCase() || '.png';
+    cb(null, `article_${req.params.id}_${Date.now()}${ext}`);
+  }
+});
+
+const coverUpload = multer({
+  storage: coverStorage,
+  limits: { fileSize: 2 * 1024 * 1024 },
+  fileFilter: (_req, file, cb) => {
+    const allowed = ['image/jpeg', 'image/png', 'image/webp'];
+    if (allowed.includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(new AppError(415, 'UNSUPPORTED_FILE_TYPE', '仅支持 JPEG/PNG/WebP 格式'));
+    }
+  }
+});
+
+// 删除本地封面文件（仅当 cover 指向本地上传目录时，避免误删外链/默认图）
+function removeLocalCover(coverPath) {
+  if (!coverPath || !coverPath.startsWith('/static/uploads/articles/')) return;
+  try {
+    const abs = path.join(__dirname, '..', '..', coverPath);
+    if (fs.existsSync(abs)) fs.unlinkSync(abs);
+  } catch (e) {
+    console.warn('[articles] 删除旧封面文件失败:', e.message);
+  }
+}
 
 const recentGenerates = new Map();
 const DEFAULT_CATEGORIES = [
@@ -186,7 +230,7 @@ router.get('/:id', optionalAuth, async (req, res, next) => {
   try {
     const adapter = getAdapter();
     const row = await adapter.queryOne(
-      'SELECT id, title, cover, author, content, category, tags, summary, views, created_at FROM articles WHERE id = ?',
+      'SELECT id, user_id, title, cover, author, content, category, tags, summary, views, created_at FROM articles WHERE id = ?',
       [req.params.id]
     );
     if (!row) throw new AppError(404, 'NOT_FOUND', '文章不存在');
@@ -204,6 +248,8 @@ router.get('/:id', optionalAuth, async (req, res, next) => {
     } else {
       row.is_collected = false;
     }
+    row.is_owner = !!(req.user && (req.user.role === 'admin' || (row.user_id != null && row.user_id === req.user.user_id)));
+    delete row.user_id;
     success(res, row, '查询成功', 200);
   } catch (e) {
     next(e);
@@ -234,6 +280,67 @@ router.delete('/:id/collect', authMiddleware, async (req, res, next) => {
 
     await adapter.execute('DELETE FROM article_collections WHERE user_id = ? AND article_id = ?', [req.user.user_id, req.params.id]);
     success(res, null, '已取消收藏', 200);
+  } catch (e) {
+    next(e);
+  }
+});
+
+// ===== 替换封面（仅作者本人）=====
+router.put('/:id/cover', authMiddleware, (req, res, next) => {
+  coverUpload.single('cover')(req, res, (err) => {
+    if (err instanceof multer.MulterError) {
+      if (err.code === 'LIMIT_FILE_SIZE') {
+        return error(res, 'FILE_TOO_LARGE', '封面文件不能超过 2MB', 413);
+      }
+      return error(res, 'BAD_REQUEST', err.message, 400);
+    }
+    if (err instanceof AppError) {
+      return error(res, err.code, err.message, err.statusCode);
+    }
+    if (err) {
+      return error(res, 'INTERNAL_ERROR', err.message, 500);
+    }
+
+    (async () => {
+      try {
+        const adapter = getAdapter();
+        if (!req.file) {
+          return error(res, 'VALIDATION_ERROR', '请选择要上传的封面图片', 422);
+        }
+
+        const article = await adapter.queryOne('SELECT user_id, cover FROM articles WHERE id = ?', [req.params.id]);
+        if (!article) throw new AppError(404, 'NOT_FOUND', '文章不存在');
+        if (req.user.role !== 'admin' && (article.user_id == null || article.user_id !== req.user.user_id)) {
+          removeLocalCover(`/static/uploads/articles/${req.file.filename}`);
+          throw new AppError(403, 'FORBIDDEN', '无权修改他人文章的封面');
+        }
+
+        const newCover = `/static/uploads/articles/${req.file.filename}`;
+        await adapter.execute('UPDATE articles SET cover = ? WHERE id = ?', [newCover, req.params.id]);
+        removeLocalCover(article.cover);
+
+        success(res, { cover: newCover }, '封面更新成功', 200);
+      } catch (e) {
+        next(e);
+      }
+    })();
+  });
+});
+
+// ===== 删除文章（作者本人或管理员）=====
+router.delete('/:id', authMiddleware, async (req, res, next) => {
+  try {
+    const adapter = getAdapter();
+    const article = await adapter.queryOne('SELECT user_id, cover FROM articles WHERE id = ?', [req.params.id]);
+    if (!article) throw new AppError(404, 'NOT_FOUND', '文章不存在');
+    if (req.user.role !== 'admin' && (article.user_id == null || article.user_id !== req.user.user_id)) {
+      throw new AppError(403, 'FORBIDDEN', '无权删除他人文章');
+    }
+
+    await adapter.execute('DELETE FROM articles WHERE id = ?', [req.params.id]);
+    removeLocalCover(article.cover);
+
+    success(res, null, '文章已删除', 200);
   } catch (e) {
     next(e);
   }

@@ -74,6 +74,8 @@ export interface ArticleDetail extends Article {
   content: string;
   /** 当前用户是否已收藏 */
   is_collected: boolean;
+  /** 当前登录用户是否为该文章作者（仅作者可改封面/删除） */
+  is_owner: boolean;
 }
 
 // ========== 糖尿病类型科普实体 ==========

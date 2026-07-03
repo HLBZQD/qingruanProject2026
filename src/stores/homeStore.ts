@@ -117,9 +117,9 @@ export const useHomeStore = defineStore('home', () => {
       getDiabetesTypes(),
     ])
 
-    if (docRes.status === 'fulfilled') doctors.value = docRes.value
+    if (docRes.status === 'fulfilled') doctors.value = docRes.value.list
     else doctorsError.value = docRes.reason instanceof Error ? docRes.reason : new Error('医师列表加载失败')
-    if (artRes.status === 'fulfilled') articles.value = artRes.value
+    if (artRes.status === 'fulfilled') articles.value = artRes.value.list
     else articlesError.value = artRes.reason instanceof Error ? artRes.reason : new Error('科普文章加载失败')
     if (typeRes.status === 'fulfilled') diabetesTypes.value = normalizeTypes(typeRes.value)
     else typesError.value = typeRes.reason instanceof Error ? typeRes.reason : new Error('糖尿病类型加载失败')
@@ -166,7 +166,7 @@ export const useHomeStore = defineStore('home', () => {
     if (which === 'doctors') {
       doctorsError.value = null
       try {
-        doctors.value = await getDoctors({ page: 1, pageSize: 20 })
+        doctors.value = (await getDoctors({ page: 1, pageSize: 20 })).list
         writeHomeCache()
       } catch (e) {
         doctorsError.value = e instanceof Error ? e : new Error('医师列表加载失败')
@@ -176,7 +176,7 @@ export const useHomeStore = defineStore('home', () => {
     if (which === 'articles') {
       articlesError.value = null
       try {
-        articles.value = await getArticles({ page: 1, pageSize: 3 })
+        articles.value = (await getArticles({ page: 1, pageSize: 3 })).list
         writeHomeCache()
       } catch (e) {
         articlesError.value = e instanceof Error ? e : new Error('科普文章加载失败')

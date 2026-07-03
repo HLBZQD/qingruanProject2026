@@ -3,10 +3,11 @@ import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { getCollections, uncollectArticle, syncCollectedState } from '@/composables/useArticleApi'
 import { getErrorMessage } from '@/utils/errorMessage'
-import type { CollectedArticle } from '@/types/api'
+import type { CollectedArticle, PaginationInfo } from '@/types/api'
 import SkeletonLoader from '@/components/SkeletonLoader.vue'
 import ErrorRetry from '@/components/ErrorRetry.vue'
 import EmptyState from '@/components/EmptyState.vue'
+import Pagination from '@/components/Pagination.vue'
 import AppIcon from '@/components/icons/AppIcon.vue'
 
 const router = useRouter()
@@ -15,33 +16,25 @@ const collections = ref<CollectedArticle[]>([])
 const loading = ref(false)
 const error = ref('')
 const currentPage = ref(1)
-const hasMore = ref(true)
+const pagination = ref<PaginationInfo | null>(null)
 const uncollectingId = ref<number | null>(null)
 
 const pageSize = 10
 
-async function fetchCollections(reset = false) {
-  if (reset) {
-    currentPage.value = 1
-    collections.value = []
-    hasMore.value = true
-  }
+async function fetchCollections(page = 1) {
   if (loading.value) return
 
   loading.value = true
   error.value = ''
 
   try {
-    const { list, pagination } = await getCollections({
-      page: currentPage.value,
+    const { list, pagination: p } = await getCollections({
+      page,
       pageSize,
     })
-    if (reset) {
-      collections.value = list
-    } else {
-      collections.value.push(...list)
-    }
-    hasMore.value = currentPage.value < pagination.totalPages
+    collections.value = list
+    pagination.value = p
+    currentPage.value = p.page
   } catch (err: unknown) {
     error.value = getErrorMessage(err, '获取收藏列表失败，请稍后重试')
   } finally {
@@ -49,10 +42,8 @@ async function fetchCollections(reset = false) {
   }
 }
 
-function loadMore() {
-  if (!hasMore.value || loading.value) return
-  currentPage.value++
-  fetchCollections()
+function goToPage(page: number) {
+  fetchCollections(page)
 }
 
 function goDetail(id: number) {
@@ -74,7 +65,7 @@ async function handleUncollect(item: CollectedArticle) {
   uncollectingId.value = item.id
   try {
     await uncollectArticle(item.id)
-    // 从列表中移除
+    // 从当前页移除
     collections.value = collections.value.filter((a) => a.id !== item.id)
     const Swal = (await import('sweetalert2')).default
     Swal.fire({
@@ -85,6 +76,13 @@ async function handleUncollect(item: CollectedArticle) {
       showConfirmButton: false,
       timer: 1800,
     })
+    // 当前页清空且非首页时回退一页，避免空屏
+    if (collections.value.length === 0 && currentPage.value > 1) {
+      fetchCollections(currentPage.value - 1)
+    } else if (pagination.value && collections.value.length === 0) {
+      // 首页也空了，刷新当前页以同步空态
+      fetchCollections(1)
+    }
   } catch (err: unknown) {
     // 乐观更新已在 composable 内回滚，同步 collectedMap 保持一致
     syncCollectedState(item.id, true)
@@ -107,7 +105,7 @@ function goNews() {
 }
 
 onMounted(() => {
-  fetchCollections(true)
+  fetchCollections(1)
 })
 </script>
 
@@ -129,7 +127,7 @@ onMounted(() => {
     <ErrorRetry
       v-else-if="error && collections.length === 0"
       :message="error"
-      @retry="fetchCollections(true)"
+      @retry="fetchCollections(1)"
     />
 
     <!-- 空态 -->
@@ -185,21 +183,15 @@ onMounted(() => {
             </button>
           </div>
         </div>
-      </article>
+        </article>
 
-      <!-- 加载更多 -->
-      <div class="load-more-wrap">
-        <button
-          v-if="hasMore"
-          class="btn-load-more"
+        <Pagination
+          v-if="pagination"
+          :current-page="currentPage"
+          :total-pages="pagination.totalPages"
           :disabled="loading"
-          @click="loadMore"
-        >
-          <AppIcon v-if="loading" name="spinner" :size="16" class="is-spinning" />
-          {{ loading ? '加载中...' : '加载更多' }}
-        </button>
-        <p v-else class="no-more">已经到底啦</p>
-      </div>
+          @change="goToPage"
+        />
     </div>
   </div>
 </template>
@@ -350,38 +342,6 @@ onMounted(() => {
 
 .card-collected-icon {
   color: #FF4D4F;
-}
-
-.load-more-wrap {
-  padding: var(--spacing-md) 0 var(--spacing-lg);
-  text-align: center;
-}
-
-.btn-load-more,
-.no-more {
-  font-size: 13px;
-  color: var(--color-text-secondary);
-}
-
-.btn-load-more {
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  padding: var(--spacing-sm) var(--spacing-lg);
-  transition: color var(--transition-fast);
-}
-
-.btn-load-more:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-.btn-load-more:active:not(:disabled) {
-  color: var(--color-primary);
-}
-
-.no-more {
-  color: var(--color-text-disabled);
 }
 
 .is-spinning {

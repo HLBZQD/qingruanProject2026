@@ -121,3 +121,28 @@ export function useCollectedMap() {
 export function isCollected(id: number): boolean {
   return !!collectedMap.value[id]
 }
+
+/**
+ * 替换文章封面（仅作者本人）
+ * PUT /api/articles/:id/cover
+ * multipart/form-data，字段名 cover
+ * 返回新封面 URL。
+ */
+export async function updateArticleCover(id: number, file: File): Promise<string> {
+  const formData = new FormData()
+  formData.append('cover', file)
+  const res = await api.put<{ success: boolean; data: { cover: string }; message?: string }>(
+    `/articles/${id}/cover`,
+    formData,
+    { headers: { 'Content-Type': 'multipart/form-data' } },
+  )
+  return res.data.data.cover
+}
+
+/**
+ * 删除文章（仅作者本人）
+ * DELETE /api/articles/:id
+ */
+export async function deleteArticle(id: number): Promise<void> {
+  await api.delete(`/articles/${id}`)
+}

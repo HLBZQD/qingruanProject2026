@@ -4,11 +4,12 @@ import { useRouter, useRoute } from 'vue-router'
 import { getArticles } from '@/composables/useHomeApi'
 import { generateArticle, isCategorySelection, isArticleDetail } from '@/composables/useArticleApi'
 import { useAuthStore } from '@/stores/authStore'
-import type { Article } from '@/types/api'
+import type { Article, PaginationInfo } from '@/types/api'
 import SkeletonLoader from '@/components/SkeletonLoader.vue'
 import ErrorRetry from '@/components/ErrorRetry.vue'
 import EmptyState from '@/components/EmptyState.vue'
 import DisclaimerBar from '@/components/DisclaimerBar.vue'
+import Pagination from '@/components/Pagination.vue'
 import AppIcon from '@/components/icons/AppIcon.vue'
 import { sanitizeHtml } from '@/utils/sanitize'
 
@@ -22,7 +23,7 @@ const articles = ref<Article[]>([])
 const loading = ref(false)
 const error = ref('')
 const currentPage = ref(1)
-const hasMore = ref(true)
+const pagination = ref<PaginationInfo | null>(null)
 const generating = ref(false)
 const onlyMine = ref(false)
 
@@ -57,30 +58,22 @@ function restoreState() {
   }
 }
 
-async function fetchArticles(reset = false) {
-  if (reset) {
-    currentPage.value = 1
-    articles.value = []
-    hasMore.value = true
-  }
+async function fetchArticles(page = 1) {
   if (loading.value) return
 
   loading.value = true
   error.value = ''
 
   try {
-    const res = await getArticles({
+    const { list, pagination: p } = await getArticles({
       category: categoryForApi.value,
-      page: currentPage.value,
+      page,
       pageSize: 10,
       mine: onlyMine.value || undefined,
     })
-    if (reset) {
-      articles.value = res
-    } else {
-      articles.value.push(...res)
-    }
-    hasMore.value = res.length === 10
+    articles.value = list
+    pagination.value = p
+    currentPage.value = p.page
     saveState()
   } catch (err: unknown) {
     error.value = (err as { message?: string }).message || '获取资讯失败，请检查网络后重试'
@@ -89,21 +82,19 @@ async function fetchArticles(reset = false) {
   }
 }
 
-function loadMore() {
-  if (!hasMore.value || loading.value) return
-  currentPage.value++
-  fetchArticles()
+function goToPage(page: number) {
+  fetchArticles(page)
 }
 
 function switchCategory(cat: string) {
   if (cat === currentCategory.value) return
   currentCategory.value = cat
-  fetchArticles(true)
+  fetchArticles(1)
 }
 
 function toggleOnlyMine() {
   onlyMine.value = !onlyMine.value
-  fetchArticles(true)
+  fetchArticles(1)
 }
 
 function goDetail(id: number) {
@@ -224,6 +215,19 @@ const searchLoading = ref(false)
 const searchError = ref('')
 const searchResults = ref<Article[]>([])
 const searchedKeyword = ref('')
+const searchCurrentPage = ref(1)
+const searchPageSize = 10
+
+/** 搜索结果总页数 */
+const searchTotalPages = computed(() =>
+  Math.max(1, Math.ceil(searchResults.value.length / searchPageSize)),
+)
+
+/** 当前页搜索结果切片 */
+const searchPageItems = computed(() => {
+  const start = (searchCurrentPage.value - 1) * searchPageSize
+  return searchResults.value.slice(start, start + searchPageSize)
+})
 
 /** 简易防抖 */
 function debounce<T extends (...args: any[]) => any>(fn: T, delay: number): (...args: Parameters<T>) => void {
@@ -251,6 +255,7 @@ async function doSearch(q: string) {
   searchLoading.value = true
   searchError.value = ''
   searchResults.value = []
+  searchCurrentPage.value = 1
 
   try {
     // 全量拉取：pageSize=100，最多 2 页（200 条）
@@ -258,9 +263,9 @@ async function doSearch(q: string) {
     let page = 1
     let hasMoreArticles = true
     while (hasMoreArticles) {
-      const res = await getArticles({ page, pageSize: 100 })
-      allArticles.push(...res)
-      hasMoreArticles = res.length === 100
+      const { list } = await getArticles({ page, pageSize: 100 })
+      allArticles.push(...list)
+      hasMoreArticles = list.length === 100
       page++
       if (page > 2) hasMoreArticles = false
     }
@@ -276,6 +281,10 @@ async function doSearch(q: string) {
   } finally {
     searchLoading.value = false
   }
+}
+
+function goToSearchPage(page: number) {
+  searchCurrentPage.value = page
 }
 
 const debouncedSearch = debounce((q: string) => doSearch(q), 300)
@@ -295,11 +304,12 @@ function clearSearch() {
   keyword.value = ''
   searchedKeyword.value = ''
   searchResults.value = []
+  searchCurrentPage.value = 1
   searchError.value = ''
   router.replace({ query: {} })
   // 恢复普通列表显示
   if (articles.value.length === 0) {
-    fetchArticles(true)
+    fetchArticles(1)
   }
 }
 
@@ -313,7 +323,7 @@ onMounted(() => {
     // doSearch 会由 watch(keyword) 自动触发
   } else {
     restoreState()
-    fetchArticles(true)
+    fetchArticles(currentPage.value)
   }
 })
 </script>
@@ -411,7 +421,7 @@ onMounted(() => {
           &quot;{{ searchedKeyword }}&quot; 的搜索结果（共 {{ searchResults.length }} 条）
         </div>
         <article
-          v-for="item in searchResults"
+          v-for="item in searchPageItems"
           :key="item.id"
           class="article-card"
           @click="goDetail(item.id)"
@@ -434,6 +444,13 @@ onMounted(() => {
             </div>
           </div>
         </article>
+
+        <Pagination
+          :current-page="searchCurrentPage"
+          :total-pages="searchTotalPages"
+          :disabled="searchLoading"
+          @change="goToSearchPage"
+        />
       </div>
     </template>
 
@@ -448,7 +465,7 @@ onMounted(() => {
       <ErrorRetry
         v-else-if="error && articles.length === 0"
         :message="error"
-        @retry="fetchArticles(true)"
+        @retry="fetchArticles(1)"
       />
 
       <!-- 空态 -->
@@ -488,19 +505,13 @@ onMounted(() => {
           </div>
         </article>
 
-        <!-- 加载更多 -->
-        <div class="load-more-wrap">
-          <button
-            v-if="hasMore"
-            class="btn-load-more"
-            :disabled="loading"
-            @click="loadMore"
-          >
-            <AppIcon v-if="loading" name="spinner" :size="14" class="is-spinning" aria-hidden="true" />
-            {{ loading ? '加载中...' : '加载更多' }}
-          </button>
-          <p v-else class="no-more">已经到底啦</p>
-        </div>
+        <Pagination
+          v-if="pagination"
+          :current-page="currentPage"
+          :total-pages="pagination.totalPages"
+          :disabled="loading"
+          @change="goToPage"
+        />
       </div>
     </template>
 
@@ -806,38 +817,6 @@ onMounted(() => {
 
 .card-meta :deep(.app-icon) {
   margin-right: 2px;
-}
-
-.load-more-wrap {
-  padding: var(--spacing-md) 0 var(--spacing-lg);
-  text-align: center;
-}
-
-.btn-load-more,
-.no-more {
-  font-size: 13px;
-  color: var(--color-text-secondary);
-}
-
-.btn-load-more {
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  padding: var(--spacing-sm) var(--spacing-lg);
-  transition: color var(--transition-fast);
-}
-
-.btn-load-more:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-.btn-load-more:active:not(:disabled) {
-  color: var(--color-primary);
-}
-
-.no-more {
-  color: var(--color-text-disabled);
 }
 
 .btn-generate {
