@@ -17,25 +17,25 @@ INSERT INTO doctor_information (name, department, title, description, avatar, ch
  '/static/images/doctors/doc3.png', 'app-PLACEHOLDER_DOC3');
 
 INSERT INTO diabetes_types (name, image, pathogenesis, manifestation, treatment) VALUES
-('1型糖尿病', '/static/images/diabetes/t1.jpg',
+('1型糖尿病', '/static/images/diabetes/t1.png',
  '1型糖尿病是一种自身免疫性疾病，机体免疫系统错误地攻击并破坏胰岛beta细胞，导致胰岛素绝对缺乏。遗传因素和环境因素（如病毒感染）共同参与发病。',
  '多发生于儿童和青少年，起病较急，症状明显——多饮、多食、多尿、体重减轻（三多一少）。由于胰岛素严重缺乏，易发生糖尿病酮症酸中毒等急性并发症。',
- '需终身依赖胰岛素治疗，通过每日注射或胰岛素泵维持血糖稳定。同时需定期监测血糖，配合饮食控制和适量运动，预防并发症的发生。'),
-('2型糖尿病', '/static/images/diabetes/t2.jpg',
+ '需终身依赖胰岛素治疗，通过每日注射或胰岛素泵维持血糖稳定。同时需定期监测血糖，配合饮食控制 and 适量运动，预防并发症的发生。'),
+('2型糖尿病', '/static/images/diabetes/t2.png',
  '2型糖尿病是最常见的糖尿病类型，主要病理机制为胰岛素抵抗和胰岛素分泌相对不足。与遗传易感性、不良生活方式（高热量饮食、缺乏运动）、肥胖等因素密切相关。',
  '多见于中老年人但近年来有年轻化趋势。起病较隐匿，早期症状不明显。常有肥胖、高血压、血脂异常等代谢综合征表现。部分患者以并发症首发就诊。',
  '生活方式干预是基础（饮食控制、规律运动、体重管理）。根据病情可口服降糖药或注射胰岛素。定期监测血糖、糖化血红蛋白，每年筛查并发症。'),
-('妊娠期糖尿病', '/static/images/diabetes/t3.jpg',
+('妊娠期糖尿病', '/static/images/diabetes/t3.png',
  '妊娠期糖尿病是妊娠期间首次发现或发生的糖代谢异常。妊娠期胎盘分泌的激素（如人胎盘生乳素）具有拮抗胰岛素的作用，导致血糖升高。',
  '多数患者无明显症状，通常在孕24-28周糖耐量筛查时发现。可能出现多饮、多尿、反复感染等表现。对母婴均有潜在风险（巨大儿、新生儿低血糖等）。',
  '首选饮食控制和适当运动。若饮食控制后血糖仍不达标，需使用胰岛素治疗（妊娠期不宜使用口服降糖药）。产后多数可恢复，但未来2型糖尿病风险显著升高，需定期随访。'),
-('其他特殊类型糖尿病', '/static/images/diabetes/t4.jpg',
+('其他特殊类型糖尿病', '/static/images/diabetes/t4.png',
  '包括MODY（青少年起病的成人型糖尿病）、胰腺疾病继发性糖尿病、内分泌疾病继发性糖尿病、药物或化学物质诱导的糖尿病等。由特定的遗传缺陷、疾病或外部因素引起。',
  '临床表现因具体病因不同而异。MODY患者通常25岁前发病，有糖尿病家族史，非肥胖体型；胰腺疾病继发性糖尿病伴有胰腺炎、胰腺手术等病史。',
  '针对原发疾病进行治疗。根据胰岛功能状况选择口服降糖药或胰岛素治疗。部分特殊类型（如MODY）有特定的药物敏感性差异，需个体化精准治疗。');
 
 INSERT INTO articles (title, cover, author, content, category, views) VALUES
-('糖尿病患者的饮食指南', '/static/images/default/default-cover.png', 'AI健康助手',
+('糖尿病患者的饮食指南', '/static/images/articles/diet.png', 'AI健康助手',
  '# 糖尿病患者的饮食指南
 
 合理的饮食管理是糖尿病治疗的基石。科学的饮食计划能帮助稳定血糖、预防并发症。
@@ -63,7 +63,7 @@ INSERT INTO articles (title, cover, author, content, category, views) VALUES
 
 > 以上内容由AI自动生成，仅供参考，不构成医疗诊断或治疗建议。如有健康问题，请及时咨询专业医师。
 ', '饮食指导', 1200),
-('适合糖尿病患者的运动建议', '/static/images/default/default-cover.png', 'AI健康助手',
+('适合糖尿病患者的运动建议', '/static/images/articles/exercise.png', 'AI健康助手',
  '# 适合糖尿病患者的运动建议
 
 规律运动是糖尿病管理的重要组成部分。适当的运动可以增加胰岛素敏感性、帮助控制血糖、改善心血管健康。
@@ -95,7 +95,7 @@ INSERT INTO articles (title, cover, author, content, category, views) VALUES
 
 > 以上内容由AI自动生成，仅供参考，不构成医疗诊断或治疗建议。如有健康问题，请及时咨询专业医师。
 ', '运动指南', 856),
-('如何正确监测血糖水平', '/static/images/default/default-cover.png', 'AI健康助手',
+('如何正确监测血糖水平', '/static/images/articles/monitor.png', 'AI健康助手',
  '# 如何正确监测血糖水平
 
 自我血糖监测是糖尿病管理的重要环节。通过定期监测，患者可以了解饮食、运动和药物对血糖的影响，及时调整治疗方案。

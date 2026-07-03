@@ -101,7 +101,7 @@ onMounted(() => {
         <div class="avatar-column">
           <img
             class="doctor-avatar-large"
-            :src="doctor.avatar || '/default-avatar.png'"
+            :src="doctor.avatar || '/static/images/default/default-avatar.png'"
             :alt="doctor.name"
           />
           <span v-if="(doctor as any).is_online !== false" class="doctor-status">
