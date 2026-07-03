@@ -184,11 +184,13 @@ export const useLifePlanStore = defineStore('lifePlan', () => {
     completedMap.value.set(itemId, req.completion_status) // 乐观更新
     try {
       const data = await createPunch(req)
+      writePlanCache() // 持久化打卡态到 sessionStorage，防切出后状态丢失 + 首页统计失同步
       return data
     } catch (e: unknown) {
       // 回滚
       if (prev === undefined) completedMap.value.delete(itemId)
       else completedMap.value.set(itemId, prev)
+      writePlanCache() // 回滚后同步缓存，避免脏数据残留
       throw e // 组件 catch 做 toast
     }
   }

@@ -37,7 +37,14 @@ router.post('/generate', authMiddleware, async (req, res, next) => {
 
     const difyResponse = await callWorkflowBlocking(
       process.env.DIFY_PLAN_WORKFLOW_KEY,
-      { health_info: req.body.health_info, preferences: req.body.preferences },
+      {
+        age: req.body.health_info.age,
+        gender: req.body.health_info.gender,
+        height: req.body.health_info.height,
+        weight: req.body.health_info.weight,
+        dietary: req.body.preferences.dietary || '',
+        activity: req.body.preferences.activity || ''
+      },
       'plan'
     );
 
@@ -45,7 +52,7 @@ router.post('/generate', authMiddleware, async (req, res, next) => {
       difyResponse.data.outputs.text,
       process.env.DIFY_PLAN_WORKFLOW_KEY,
       callWorkflowBlocking,
-      { health_info: req.body.health_info, preferences: req.body.preferences }
+      { age: req.body.health_info.age, gender: req.body.health_info.gender, height: req.body.health_info.height, weight: req.body.health_info.weight, dietary: req.body.preferences.dietary || '', activity: req.body.preferences.activity || '' }
     );
 
     // 事务内：停用旧方案 + FOR UPDATE 锁行 + 批量插入
@@ -56,10 +63,10 @@ router.post('/generate', authMiddleware, async (req, res, next) => {
       );
 
       const rows = await tx.query(
-        'SELECT COALESCE(MAX(plan_id), 0) + 1 AS maxId FROM life_plans WHERE user_id = ? FOR UPDATE',
+        'SELECT plan_id FROM life_plans WHERE user_id = ? ORDER BY plan_id DESC LIMIT 1 FOR UPDATE',
         [req.user.user_id]
       );
-      const planId = rows[0].maxId;
+      const planId = rows.length > 0 ? rows[0].plan_id + 1 : 1;
 
       for (const item of items) {
         await tx.execute(
@@ -158,7 +165,7 @@ router.put('/adjust', authMiddleware, async (req, res, next) => {
 
     const difyResponse = await callWorkflowBlocking(
       process.env.DIFY_PLAN_WORKFLOW_KEY,
-      { health_info: healthInfo, preferences: {}, feedback: req.body.feedback },
+      { age: healthInfo.age, gender: healthInfo.gender, height: healthInfo.height, weight: healthInfo.weight, dietary: '', activity: '', feedback: req.body.feedback },
       'plan'
     );
 
@@ -166,7 +173,7 @@ router.put('/adjust', authMiddleware, async (req, res, next) => {
       difyResponse.data.outputs.text,
       process.env.DIFY_PLAN_WORKFLOW_KEY,
       callWorkflowBlocking,
-      { health_info: healthInfo, preferences: {}, feedback: req.body.feedback }
+      { age: healthInfo.age, gender: healthInfo.gender, height: healthInfo.height, weight: healthInfo.weight, dietary: '', activity: '', feedback: req.body.feedback }
     );
 
     const maxId = await adapter.transaction(async (tx) => {
@@ -176,10 +183,10 @@ router.put('/adjust', authMiddleware, async (req, res, next) => {
       );
 
       const rows = await tx.query(
-        'SELECT COALESCE(MAX(plan_id), 0) + 1 AS maxId FROM life_plans WHERE user_id = ? FOR UPDATE',
+        'SELECT plan_id FROM life_plans WHERE user_id = ? ORDER BY plan_id DESC LIMIT 1 FOR UPDATE',
         [req.user.user_id]
       );
-      const nextId = rows[0].maxId;
+      const nextId = rows.length > 0 ? rows[0].plan_id + 1 : 1;
 
       for (const item of items) {
         await tx.execute(

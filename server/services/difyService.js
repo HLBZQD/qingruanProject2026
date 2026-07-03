@@ -105,7 +105,7 @@ async function callWorkflowBlocking(apiKey, inputs, workflowType) {
       response_mode: 'blocking',
       user: 'api-user'
     }),
-    timeout: 15000
+    timeout: 150000
   });
 
   if (status >= 200 && status < 300) {

@@ -100,28 +100,27 @@ class KingbaseAdapter {
    * @returns {string}
    */
   _ensureReturningId(sql) {
-    // 尝试 node-sql-parser
+    if (!/^\s*INSERT\s+/i.test(sql) || /RETURNING\s+/i.test(sql)) {
+      return sql;
+    }
+
+    // 尝试 node-sql-parser（将 ? 替换为 0 以通过语法校验）
     try {
       const { Parser } = require('node-sql-parser');
       const parser = new Parser();
-      const ast = parser.astify(sql, { database: 'PostgreSQL' });
-
-      // astify 返回数组（多语句）或单个 AST 节点
+      const parseableSql = sql.replace(/\?/g, '0');
+      const ast = parser.astify(parseableSql, { database: 'PostgreSQL' });
       const statements = Array.isArray(ast) ? ast : [ast];
       const firstStmt = statements[0];
 
-      if (firstStmt && firstStmt.type === 'insert' && !/RETURNING\s+/i.test(sql)) {
+      if (firstStmt && firstStmt.type === 'insert') {
         return sql.trimEnd().replace(/;?\s*$/, '') + ' RETURNING id';
       }
     } catch {
-      // node-sql-parser 解析失败，回退到正则
-      console.warn('[KingbaseAdapter] node-sql-parser 解析 INSERT 失败，回退到正则。SQL: ' + sql.substring(0, 200));
-      if (/^\s*INSERT\s+/i.test(sql) && !/RETURNING\s+/i.test(sql)) {
-        return sql.trimEnd().replace(/;?\s*$/, '') + ' RETURNING id';
-      }
+      // AST 解析失败，直接走正则
     }
 
-    return sql;
+    return sql.trimEnd().replace(/;?\s*$/, '') + ' RETURNING id';
   }
 
   // ========== 数据库初始化 ==========
