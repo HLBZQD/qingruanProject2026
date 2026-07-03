@@ -17,7 +17,7 @@ const DEFAULT_CATEGORIES = [
   { label: '饮食指导', recommended: false, reason: '' },
   { label: '运动指南', recommended: false, reason: '' },
   { label: '生活习惯', recommended: false, reason: '' },
-  { label: '糖尿病知识科普', recommended: false, reason: '' }
+  { label: '知识科普', recommended: false, reason: '' }
 ];
 
 function buildMockArticle(category) {
@@ -67,8 +67,8 @@ router.get('/', optionalAuth, async (req, res, next) => {
       dataSQL = `SELECT ${baseCols} FROM articles WHERE user_id = ?`;
       params.push(userId);
     } else if (userId) {
-      countSQL = 'SELECT COUNT(*) AS total FROM articles WHERE user_id IS NULL OR user_id = ?';
-      dataSQL = `SELECT ${baseCols} FROM articles WHERE user_id IS NULL OR user_id = ?`;
+      countSQL = 'SELECT COUNT(*) AS total FROM articles WHERE (user_id IS NULL OR user_id = ?)';
+      dataSQL = `SELECT ${baseCols} FROM articles WHERE (user_id IS NULL OR user_id = ?)`;
       params.push(userId);
     } else {
       countSQL = 'SELECT COUNT(*) AS total FROM articles WHERE user_id IS NULL';
@@ -191,6 +191,12 @@ router.get('/:id', optionalAuth, async (req, res, next) => {
     );
     if (!row) throw new AppError(404, 'NOT_FOUND', '文章不存在');
     row.tags = parseTags(row.tags);
+
+    await adapter.execute(
+      'UPDATE articles SET views = views + 1 WHERE id = ?',
+      [req.params.id]
+    );
+    row.views += 1;
 
     if (req.user) {
       const exists = await adapter.queryOne('SELECT 1 FROM article_collections WHERE user_id = ? AND article_id = ?', [req.user.user_id, req.params.id]);

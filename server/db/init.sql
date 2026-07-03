@@ -30,7 +30,7 @@ CREATE TABLE IF NOT EXISTS articles (
     cover TEXT DEFAULT NULL,
     author TEXT NOT NULL DEFAULT 'AI健康助手',
     content TEXT NOT NULL,
-    category TEXT NOT NULL DEFAULT '糖尿病知识科普',
+    category TEXT NOT NULL DEFAULT '知识科普',
     tags TEXT NOT NULL DEFAULT '[]',
     summary TEXT NOT NULL DEFAULT '',
     views INTEGER NOT NULL DEFAULT 0,

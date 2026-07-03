@@ -381,14 +381,14 @@ onUnmounted(() => {
               <div class="stat-icon-wrap">
                 <AppIcon name="heart" :size="18" color="#fff" />
               </div>
-              <span class="stat-value font-mono stat-placeholder">--</span>
+              <span class="stat-value font-mono" :class="{ 'stat-placeholder': profile?.risk_score == null }">{{ profile?.risk_score ?? '--' }}</span>
               <span class="stat-label">健康评分</span>
             </article>
             <article class="stat-card stat-card-coral">
               <div class="stat-icon-wrap">
                 <AppIcon name="check-in" :size="18" color="#fff" />
               </div>
-              <span class="stat-value font-mono stat-placeholder">--</span>
+              <span class="stat-value font-mono" :class="{ 'stat-placeholder': !profile || profile.streak_days === 0 }">{{ profile ? profile.streak_days : '--' }}</span>
               <span class="stat-label">连续打卡</span>
             </article>
           </section>

@@ -17,6 +17,10 @@ export interface User {
 
 export interface UserProfile extends User {
   created_at: string;
+  /** 最新风险评分（null = 未做过风险预测） */
+  risk_score: number | null;
+  /** 连续打卡天数（0 = 未打卡或已断签） */
+  streak_days: number;
 }
 
 // ========== 管理员操作日志实体 ==========

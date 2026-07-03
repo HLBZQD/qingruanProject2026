@@ -34,6 +34,22 @@ const MOCK_PLAN_DATA = {
   }
 };
 
+const MOCK_PUNCH_DATA = {
+  data: {
+    id: 'mock-workflow-run-id-punch',
+    workflow_id: 'mock-workflow-punch',
+    status: 'succeeded',
+    outputs: {
+      text: '{"diet_completion_rate":0.75,"exercise_completion_rate":0.6,"total_punches":12,"last_7_days_trend":[{"date":"2026-06-27","diet_completed":2,"exercise_completed":1},{"date":"2026-06-28","diet_completed":2,"exercise_completed":1},{"date":"2026-06-29","diet_completed":1,"exercise_completed":0},{"date":"2026-06-30","diet_completed":2,"exercise_completed":1},{"date":"2026-07-01","diet_completed":2,"exercise_completed":1},{"date":"2026-07-02","diet_completed":1,"exercise_completed":1},{"date":"2026-07-03","diet_completed":1,"exercise_completed":0}],"adherence_comment":"**依从性评估**\\n\\n近7天饮食打卡完成率 **75%**，运动完成率 **60%**，整体执行情况良好。\\n\\n- 饮食：完成较为规律\\n- 运动：周末执行率偏低\\n","improvement_suggestions":["建议固定晚间运动时间，避免周末遗漏","早餐打卡可提前至7:00前完成"]}'
+    },
+    error: null,
+    elapsed_time: 0.6,
+    total_tokens: 0,
+    total_steps: 0,
+    created_at: 1719244800
+  }
+};
+
 function httpRequest(urlStr, options) {
   return new Promise((resolve, reject) => {
     const parsedUrl = new URL(urlStr);
@@ -88,6 +104,7 @@ async function callWorkflowBlocking(apiKey, inputs, workflowType) {
     console.log('[difyService] Mock mode: returning mock data for', workflowType);
     if (workflowType === 'risk') return MOCK_RISK_DATA;
     if (workflowType === 'plan') return MOCK_PLAN_DATA;
+    if (workflowType === 'punch') return MOCK_PUNCH_DATA;
     if (workflowType === 'article') return { data: { outputs: { text: '' } } };
     return MOCK_PLAN_DATA;
   }

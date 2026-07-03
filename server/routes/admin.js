@@ -402,8 +402,9 @@ async function dispatchParameterizedQuery(adapter, toolName, params, operatorId,
       const fields = params.fields || {};
       const keys = Object.keys(fields).filter(k => ['username', 'avatar', 'password_changed'].includes(k));
       if (keys.length === 0) return { rows: [] };
-      const setClause = keys.map(k => `${k} = ?`).join(', ');
-      const args = keys.map(k => fields[k]);
+      keys.push('updated_at');
+      const setClause = keys.map(k => k === 'updated_at' ? 'updated_at = CURRENT_TIMESTAMP' : `${k} = ?`).join(', ');
+      const args = keys.filter(k => k !== 'updated_at').map(k => fields[k]);
       args.push(targetUserId);
       const info = await adapter.execute(`UPDATE users SET ${setClause} WHERE id = ?`, args);
       insertAdminLog(adapter, operatorId, 'UPDATE', `[update_user_profile] 更新user_id=${targetUserId}资料: ${keys.join(', ')}`, '成功');
