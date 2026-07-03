@@ -326,9 +326,18 @@ onUnmounted(() => {
       <!-- 正常内容 -->
       <template v-else>
         <header class="profile-hero">
-          <div class="profile-hero-glow" aria-hidden="true"></div>
           <div class="profile-hero-icon-bg" aria-hidden="true">
             <DiabetesIcon name="doctor" :size="80" />
+          </div>
+          <!-- Cute hand-drawn stars and flowers decorations -->
+          <div class="profile-header-decorations" aria-hidden="true">
+            <span class="profile-decor-star profile-decor-star-1">★</span>
+            <span class="profile-decor-star profile-decor-star-2">✦</span>
+            <span class="profile-decor-star profile-decor-star-3">✿</span>
+            <span class="profile-decor-star profile-decor-star-4">♥</span>
+            <span class="profile-decor-star profile-decor-star-5">☺</span>
+            <span class="profile-decor-star profile-decor-star-6">✚</span>
+            <span class="profile-decor-star profile-decor-star-7">⚡</span>
           </div>
           <div class="hero-content">
             <div class="avatar-wrapper" @click="triggerAvatarUpload">
@@ -359,11 +368,6 @@ onUnmounted(() => {
                 <span v-if="joinDateText" class="join-date">{{ joinDateText }}</span>
               </div>
             </div>
-          </div>
-          <div class="hero-wave" aria-hidden="true">
-            <svg viewBox="0 0 400 36" preserveAspectRatio="none">
-              <path d="M0,0 L0,16 Q100,34 200,22 T400,16 L400,0 Z" fill="var(--color-bg)" />
-            </svg>
           </div>
         </header>
 
@@ -490,37 +494,100 @@ onUnmounted(() => {
   }
 }
 
-/* ========== Hero 头部 (苹果暗色高级智能风格) ========== */
+/* ========== Hero 头部 (适配系统的手绘可爱风格) ========== */
 .profile-hero {
   position: relative;
   padding: 36px var(--spacing-lg) 28px;
   overflow: hidden;
-  background: linear-gradient(135deg, #171825 0%, #0c0c14 100%);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
-  border-radius: 0 0 16px 16px;
+  background: 
+    linear-gradient(90deg, transparent 48px, rgba(255, 59, 48, 0.12) 48px, rgba(255, 59, 48, 0.12) 50px, transparent 50px),
+    radial-gradient(circle, rgba(29, 29, 31, 0.04) 1.5px, transparent 1.5px) 0 0 / 16px 16px,
+    var(--color-card);
+  border-bottom: 2px solid var(--color-text-primary);
+  box-shadow: 0 4px 0px rgba(29, 29, 31, 0.05);
+  border-radius: 0 0 var(--radius-lg);
 }
 
 .profile-hero-glow {
-  position: absolute;
-  width: 160px;
-  height: 160px;
-  background: radial-gradient(circle, rgba(90, 200, 250, 0.15) 0%, transparent 70%);
-  right: -20px;
-  top: -20px;
-  filter: blur(20px);
-  pointer-events: none;
-  z-index: 1;
+  display: none;
 }
 
 .profile-hero-icon-bg {
   position: absolute;
   right: 24px;
   bottom: -15px;
-  opacity: 0.06;
+  opacity: 0.15;
   transform: rotate(-10deg);
   z-index: 1;
-  color: #fff;
+  color: var(--color-primary);
+}
+
+.profile-header-decorations {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 1;
+}
+
+.profile-decor-star {
+  position: absolute;
+  font-size: 16px;
+  opacity: 0.6;
+}
+
+.profile-decor-star-1 {
+  top: 15px;
+  left: 170px;
+  transform: rotate(15deg);
+  color: var(--color-vivid);
+}
+
+.profile-decor-star-2 {
+  bottom: 12px;
+  left: 100px;
+  transform: rotate(-10deg);
+  font-size: 12px;
+  color: var(--color-accent);
+}
+
+.profile-decor-star-3 {
+  top: 18px;
+  right: 140px;
+  transform: rotate(45deg);
+  font-size: 14px;
+  color: var(--color-lavender-dark);
+}
+
+.profile-decor-star-4 {
+  top: 36px;
+  left: 30px;
+  color: var(--color-danger);
+  font-size: 14px;
+  transform: rotate(-15deg);
+}
+
+.profile-decor-star-5 {
+  bottom: 15px;
+  right: 200px;
+  color: var(--color-amber-dark);
+  font-size: 15px;
+  transform: rotate(10deg);
+}
+
+.profile-decor-star-6 {
+  top: 10px;
+  left: 260px;
+  color: var(--color-success);
+  font-size: 12px;
+}
+
+.profile-decor-star-7 {
+  bottom: 24px;
+  left: 200px;
+  color: var(--color-vivid);
+  font-size: 13px;
+  transform: rotate(20deg);
 }
 
 .hero-content {
@@ -533,18 +600,7 @@ onUnmounted(() => {
 }
 
 .hero-wave {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: 32px;
-  transform: translateY(1px);
-}
-
-.hero-wave svg {
-  width: 100%;
-  height: 100%;
-  display: block;
+  display: none;
 }
 
 /* ========== 头像 ========== */
@@ -556,9 +612,9 @@ onUnmounted(() => {
   cursor: pointer;
   flex-shrink: 0;
   padding: 2px;
-  background: rgba(255, 255, 255, 0.12);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+  background: var(--color-card);
+  border: 1.5px solid var(--color-text-primary);
+  box-shadow: 2px 2px 0px var(--color-text-primary);
   transition: transform var(--transition-fast);
   transform: rotate(2deg);
 }
@@ -572,7 +628,7 @@ onUnmounted(() => {
   height: 100%;
   border-radius: var(--radius-full);
   object-fit: cover;
-  border: 2px solid #fff;
+  border: 1px solid var(--color-text-primary);
   background: #fff;
 }
 
@@ -607,7 +663,7 @@ onUnmounted(() => {
 /* ========== 用户信息 ========== */
 .user-info {
   margin-top: 0;
-  color: #fff;
+  color: var(--color-text-primary);
   flex: 1;
   min-width: 0;
 }
@@ -615,7 +671,7 @@ onUnmounted(() => {
 .user-name {
   font-size: 20px;
   font-weight: 800;
-  color: #fff;
+  color: var(--color-text-primary);
   line-height: 1.25;
   letter-spacing: -0.015em;
 }
@@ -636,20 +692,20 @@ onUnmounted(() => {
   border-radius: var(--radius-tag);
   font-size: var(--font-size-xs);
   font-weight: 700;
-  background: rgba(255, 255, 255, 0.12);
-  color: rgba(255, 255, 255, 0.8);
-  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: var(--color-bg);
+  color: var(--color-text-primary);
+  border: 1px solid var(--color-text-primary);
 }
 
 .role-badge.admin {
-  background: rgba(175, 82, 222, 0.15);
-  color: #AF52DE;
-  border-color: rgba(175, 82, 222, 0.25);
+  background: var(--color-primary-light);
+  color: var(--color-primary);
+  border-color: var(--color-primary);
 }
 
 .join-date {
   font-size: var(--font-size-caption);
-  color: rgba(255, 255, 255, 0.5);
+  color: var(--color-text-secondary);
   font-weight: 600;
 }
 

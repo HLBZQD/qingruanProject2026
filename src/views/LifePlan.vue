@@ -349,9 +349,18 @@ onUnmounted(() => {
   <div class="life-plan page-enter">
     <!-- Header（苹果暗色高级智能 Banner 风格） -->
     <header class="lp-header">
-      <div class="lp-header-glow" aria-hidden="true"></div>
       <div class="lp-header-icon-bg" aria-hidden="true">
         <DiabetesIcon name="pills" :size="80" />
+      </div>
+      <!-- Cute hand-drawn stars and flowers decorations -->
+      <div class="lp-header-decorations" aria-hidden="true">
+        <span class="lp-decor-star lp-decor-star-1">★</span>
+        <span class="lp-decor-star lp-decor-star-2">✦</span>
+        <span class="lp-decor-star lp-decor-star-3">✿</span>
+        <span class="lp-decor-star lp-decor-star-4">♥</span>
+        <span class="lp-decor-star lp-decor-star-5">☺</span>
+        <span class="lp-decor-star lp-decor-star-6">✚</span>
+        <span class="lp-decor-star lp-decor-star-7">⚡</span>
       </div>
       <div class="lp-header-left">
         <span class="lp-header-badge">AI PERSONALIZED</span>
@@ -621,41 +630,104 @@ onUnmounted(() => {
   background: transparent;
 }
 
-/* Header 苹果暗色高级智能 Banner 风格 */
+/* Header 适配系统的手绘可爱风格 */
 .lp-header {
   position: relative;
-  background: linear-gradient(135deg, #171825 0%, #0c0c14 100%);
-  color: #fff;
+  background: 
+    linear-gradient(90deg, transparent 48px, rgba(255, 59, 48, 0.12) 48px, rgba(255, 59, 48, 0.12) 50px, transparent 50px),
+    radial-gradient(circle, rgba(29, 29, 31, 0.04) 1.5px, transparent 1.5px) 0 0 / 16px 16px,
+    var(--color-card);
+  color: var(--color-text-primary);
   padding: 32px var(--spacing-xl) 28px;
-  border-radius: 0 0 16px 16px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 0 0 var(--radius-lg);
+  border-bottom: 2px solid var(--color-text-primary);
   display: flex;
   justify-content: space-between;
   align-items: center;
   overflow: hidden;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 4px 0px rgba(29, 29, 31, 0.05);
 }
 
 .lp-header-glow {
-  position: absolute;
-  width: 150px;
-  height: 150px;
-  background: radial-gradient(circle, rgba(90, 200, 250, 0.18) 0%, transparent 70%);
-  right: -20px;
-  top: -30px;
-  filter: blur(20px);
-  pointer-events: none;
-  z-index: 1;
+  display: none;
 }
 
 .lp-header-icon-bg {
   position: absolute;
   right: 20px;
   bottom: -10px;
-  opacity: 0.08;
+  opacity: 0.15;
   transform: rotate(-15deg);
   z-index: 1;
-  color: #fff;
+  color: var(--color-primary);
+}
+
+.lp-header-decorations {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 1;
+}
+
+.lp-decor-star {
+  position: absolute;
+  font-size: 16px;
+  opacity: 0.6;
+}
+
+.lp-decor-star-1 {
+  top: 15px;
+  left: 150px;
+  transform: rotate(15deg);
+  color: var(--color-vivid);
+}
+
+.lp-decor-star-2 {
+  bottom: 12px;
+  left: 80px;
+  transform: rotate(-10deg);
+  font-size: 12px;
+  color: var(--color-accent);
+}
+
+.lp-decor-star-3 {
+  top: 18px;
+  right: 120px;
+  transform: rotate(45deg);
+  font-size: 14px;
+  color: var(--color-lavender-dark);
+}
+
+.lp-decor-star-4 {
+  top: 40px;
+  left: 40px;
+  color: var(--color-danger);
+  font-size: 14px;
+  transform: rotate(-15deg);
+}
+
+.lp-decor-star-5 {
+  bottom: 15px;
+  right: 180px;
+  color: var(--color-amber-dark);
+  font-size: 15px;
+  transform: rotate(10deg);
+}
+
+.lp-decor-star-6 {
+  top: 10px;
+  left: 240px;
+  color: var(--color-success);
+  font-size: 12px;
+}
+
+.lp-decor-star-7 {
+  bottom: 30px;
+  left: 180px;
+  color: var(--color-vivid);
+  font-size: 13px;
+  transform: rotate(20deg);
 }
 
 .lp-header-left {
@@ -668,26 +740,26 @@ onUnmounted(() => {
   font-size: 8px;
   font-weight: 800;
   letter-spacing: 0.1em;
-  color: #5AC8FA;
-  background: rgba(90, 200, 250, 0.12);
+  color: var(--color-primary);
+  background: var(--color-primary-light);
   padding: 2px 6px;
   border-radius: var(--radius-full);
   display: inline-block;
   margin-bottom: 6px;
-  border: 1px solid rgba(90, 200, 250, 0.15);
+  border: 1px solid var(--color-primary);
 }
 
 .lp-title {
   font-size: 22px;
   font-weight: 800;
-  color: #fff;
+  color: var(--color-text-primary);
   line-height: 1.2;
   letter-spacing: -0.01em;
 }
 
 .lp-subtitle {
   font-size: 11px;
-  color: rgba(255, 255, 255, 0.6);
+  color: var(--color-text-secondary);
   line-height: 1.3;
   margin-top: 4px;
 }
@@ -695,23 +767,29 @@ onUnmounted(() => {
 .lp-recustomize {
   position: relative;
   z-index: 2;
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  color: #fff;
+  background: var(--color-card);
+  border: 1.5px solid var(--color-text-primary);
+  color: var(--color-text-primary);
   font-size: 11px;
   font-weight: 700;
   padding: 7px 14px;
-  border-radius: var(--radius-full);
+  border-radius: var(--radius-button);
   cursor: pointer;
   white-space: nowrap;
   flex-shrink: 0;
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  transition: background var(--transition-fast);
+  box-shadow: 1.5px 1.5px 0px var(--color-text-primary);
+  transition: all 0.2s;
+}
+
+.lp-recustomize:hover {
+  background: #ffe066;
+  transform: translate(-1px, -1px);
+  box-shadow: 2.5px 2.5px 0px var(--color-text-primary);
 }
 
 .lp-recustomize:active {
-  background: rgba(255, 255, 255, 0.16);
+  transform: translate(1px, 1px);
+  box-shadow: 1px 1px 0px var(--color-text-primary);
 }
 
 /* 通用卡片 */
@@ -729,17 +807,18 @@ onUnmounted(() => {
 
 .lp-item-card {
   background: var(--color-card);
-  border-radius: var(--radius-2xl); /* 8px */
-  border: 1px solid var(--color-border);
-  box-shadow: var(--shadow-sm);
+  border-radius: var(--radius-lg);
+  border: 1.5px solid var(--color-text-primary);
+  box-shadow: 3px 3px 0px var(--color-text-primary);
   padding: var(--spacing-xl);
   margin: 0 var(--spacing-lg) var(--spacing-md);
   transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+  overflow: hidden;
 }
 
 .lp-item-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 16px -6px rgba(0, 113, 227, 0.06);
+  box-shadow: var(--shadow-md);
 }
 
 /* 无方案引导态 */
@@ -749,6 +828,15 @@ onUnmounted(() => {
 .lp-empty-card {
   text-align: center;
   padding: var(--spacing-2xl) var(--spacing-xl);
+  border: 1.5px solid var(--color-text-primary) !important;
+  box-shadow: 3px 3px 0px rgba(29, 29, 31, 0.15) !important;
+  transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.2s ease !important;
+  animation: acidCardFloat 5s ease-in-out infinite alternate;
+}
+
+.lp-empty-card:hover {
+  transform: translateY(-2px) rotate(var(--acid-rotate, -0.5deg)) !important;
+  box-shadow: 4.5px 4.5px 0px rgba(29, 29, 31, 0.22) !important;
 }
 .lp-empty-icon {
   width: 80px;
@@ -960,17 +1048,17 @@ onUnmounted(() => {
   line-height: 1.3;
 }
 
-/* 生成按钮（复刻原型 wand-magic-sparkles 渐变） */
+/* 生成按钮（黄绿渐变） */
 .lp-cta,
 .lp-generate-btn {
-  background: linear-gradient(135deg, var(--color-primary), #0EA5E9);
+  background: linear-gradient(135deg, #FFFF00 0%, #00C853 100%);
   color: #fff;
-  border: none;
+  border: 1.5px solid var(--color-text-primary);
   border-radius: var(--radius-button);
   padding: 12px 24px;
   font-weight: 700;
   width: 100%;
-  box-shadow: var(--shadow-md);
+  box-shadow: 2px 2px 0px var(--color-text-primary);
   cursor: pointer;
   font-size: var(--font-size-body);
 }
