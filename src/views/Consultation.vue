@@ -5,24 +5,35 @@ import { useRouter } from 'vue-router'
 import { getDoctors } from '@/composables/useHomeApi'
 import AppIcon from '@/components/icons/AppIcon.vue'
 import DiabetesIcon from '@/components/icons/DiabetesIcon.vue'
-import type { Doctor } from '@/types/api'
+import Pagination from '@/components/Pagination.vue'
+import type { Doctor, PaginationInfo } from '@/types/api'
 
 const router = useRouter()
 const doctors = ref<Doctor[]>([])
 const loading = ref(true)
 const error = ref('')
+const currentPage = ref(1)
+const pagination = ref<PaginationInfo | null>(null)
+const pageSize = 10
 
-async function fetchDoctors() {
+async function fetchDoctors(page = 1) {
   loading.value = true
   error.value = ''
   try {
-    doctors.value = await getDoctors()
+    const { list, pagination: p } = await getDoctors({ page, pageSize })
+    doctors.value = list
+    pagination.value = p
+    currentPage.value = p.page
   } catch (err: unknown) {
     error.value =
       (err as { message?: string }).message || '获取医生列表失败，请检查网络后重试'
   } finally {
     loading.value = false
   }
+}
+
+function goToPage(page: number) {
+  fetchDoctors(page)
 }
 
 function goToChat(doctorId: number) {
@@ -79,7 +90,7 @@ onMounted(() => {
     <div v-else-if="error" class="error-state">
       <DiabetesIcon name="medical-sign" :size="48" color="#CBD5E1" />
       <p>{{ error }}</p>
-      <button @click="fetchDoctors" class="btn-retry">重试</button>
+      <button @click="fetchDoctors()" class="btn-retry">重试</button>
     </div>
 
     <!-- 空态 -->
@@ -119,6 +130,14 @@ onMounted(() => {
         </div>
         <button class="btn-chat">咨询</button>
       </div>
+
+      <Pagination
+        v-if="pagination"
+        :current-page="currentPage"
+        :total-pages="pagination.totalPages"
+        :disabled="loading"
+        @change="goToPage"
+      />
     </div>
   </div>
 </template>

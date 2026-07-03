@@ -7,6 +7,7 @@ import { usePunchStore } from '@/stores/punchStore'
 import { enumLabel } from '@/utils/enumLabels'
 import type { PunchType } from '@/types/api'
 import DisclaimerBar from '@/components/DisclaimerBar.vue'
+import Pagination from '@/components/Pagination.vue'
 import AppIcon from '@/components/icons/AppIcon.vue'
 
 const router = useRouter()
@@ -119,23 +120,9 @@ function typeIcon(punchType: PunchType): string {
   return punchType === 'diet' ? 'utensils' : 'person-running'
 }
 
-// ===== 滚动触底监听（loadMore） =====
-let scrollTicking = false
-function onScroll() {
-  if (scrollTicking) return
-  // 仅在当前页面可见时处理滚动逻辑
-  const container = document.querySelector('[data-scroll-container="punch"]')
-  if (!container) return
-
-  scrollTicking = true
-  requestAnimationFrame(() => {
-    const { scrollTop, scrollHeight, clientHeight } = document.documentElement
-    // 距底部 120px 触发
-    if (scrollHeight - scrollTop - clientHeight < 120) {
-      store.loadMore()
-    }
-    scrollTicking = false
-  })
+// ===== 翻页（替换模式，保持页面长度有界） =====
+function goToPage(page: number) {
+  store.fetchPage(page)
 }
 
 // ===== 日期范围变更 =====
@@ -224,12 +211,9 @@ onMounted(async () => {
   } else {
     listViewMode.value = 'list'
   }
-  // 滚动监听（用于触底加载更多）
-  window.addEventListener('scroll', onScroll, { passive: true })
 })
 
 onUnmounted(() => {
-  window.removeEventListener('scroll', onScroll)
   // 清理刷新按钮旋转定时器（防止组件卸载后 timer 操作已销毁的响应式状态）
   if (refreshAnimTimer !== null) {
     clearTimeout(refreshAnimTimer)
@@ -239,7 +223,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="punch-page page-enter" data-scroll-container="punch">
+  <div class="punch-page page-enter">
     <!-- ===== Header（复刻原型 1249-1253） ===== -->
     <header class="punch-header">
       <button
@@ -494,7 +478,7 @@ onUnmounted(() => {
         </div>
       </div>
 
-      <!-- 记录列表 + 分页加载更多 -->
+      <!-- 记录列表 + 分页 -->
       <template v-else>
         <!-- 筛选重新加载中微弱指示条（列表已有记录，重新拉取时告知用户） -->
         <div v-if="store.listLoading && store.records.length > 0" class="punch-reloading-bar">
@@ -550,35 +534,21 @@ onUnmounted(() => {
         </div>
 
         <!--
-          加载失败（fetchList 或 loadMore），共享 error 状态。
-          重试统一调用 retryFetchList() 从 page=1 重新拉取——这是最安全的恢复路径，
-          避免 loadMore 在筛选变更后误追加旧数据（task_v3 §4 技术约束）。
+          加载失败，共享 error 状态。
+          重试统一调用 retryFetchList() 从 page=1 重新拉取——这是最安全的恢复路径。
         -->
         <div v-if="store.error && store.records.length > 0" class="punch-loadmore-error">
           <p class="punch-error-text">{{ getErrorMessage(store.error, '加载失败') }}</p>
           <button class="punch-retry-btn press" @click="store.retryFetchList()">重试</button>
         </div>
 
-        <!-- 加载更多中 -->
-        <div v-if="store.listLoadingMore" class="punch-loadmore">
-          <AppIcon name="spinner" :size="18" class="punch-spinner" />
-          <span>加载中...</span>
-        </div>
-
-        <!-- 还有更多：手动加载按钮 -->
-        <button
-          v-else-if="store.hasMore"
-          id="btn-load-more"
-          class="punch-loadmore-btn press"
-          @click="store.loadMore()"
-        >
-          加载更多
-        </button>
-
-        <!-- 已全部加载 -->
-        <p v-else-if="store.records.length > 0" class="punch-loadmore-end">
-          已加载全部记录
-        </p>
+        <Pagination
+          v-if="store.pagination"
+          :current-page="store.currentPage"
+          :total-pages="store.pagination.totalPages"
+          :disabled="store.listLoading"
+          @change="goToPage"
+        />
       </template>
     </section>
   </div>
@@ -1022,16 +992,7 @@ onUnmounted(() => {
   margin-bottom: var(--spacing-md);
 }
 
-/* ===== 加载更多 ===== */
-.punch-loadmore {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--spacing-sm);
-  padding: var(--spacing-lg);
-  font-size: var(--font-size-caption);
-  color: var(--color-text-secondary);
-}
+/* ===== 加载失败提示 ===== */
 .punch-loadmore-error {
   display: flex;
   align-items: center;
@@ -1042,24 +1003,6 @@ onUnmounted(() => {
   border: 1px solid #FAAD14;
   border-radius: var(--radius-md);
   margin-top: var(--spacing-md);
-}
-.punch-loadmore-btn {
-  display: block;
-  width: 100%;
-  padding: var(--spacing-md);
-  text-align: center;
-  font-size: var(--font-size-caption);
-  color: var(--color-primary);
-  background: var(--color-card);
-  border: 1px solid var(--color-divider);
-  border-radius: var(--radius-md);
-  margin-top: var(--spacing-md);
-}
-.punch-loadmore-end {
-  text-align: center;
-  font-size: var(--font-size-caption);
-  color: var(--color-text-secondary);
-  padding: var(--spacing-lg);
 }
 
 /* ===== 骨架屏（脉动动画） ===== */

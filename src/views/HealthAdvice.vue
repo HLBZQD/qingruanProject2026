@@ -4,11 +4,12 @@ import { useRouter } from 'vue-router'
 import { getHealthAdvice } from '@/composables/useAdviceApi'
 import { useChatStore } from '@/stores/chatStore'
 import { renderMarkdown } from '@/composables/useMarkdown'
-import type { HealthAdvice as HealthAdviceItem } from '@/types/api'
+import type { HealthAdvice as HealthAdviceItem, PaginationInfo } from '@/types/api'
 import SkeletonLoader from '@/components/SkeletonLoader.vue'
 import ErrorRetry from '@/components/ErrorRetry.vue'
 import EmptyState from '@/components/EmptyState.vue'
 import DisclaimerBar from '@/components/DisclaimerBar.vue'
+import Pagination from '@/components/Pagination.vue'
 import AppIcon from '@/components/icons/AppIcon.vue'
 
 const router = useRouter()
@@ -18,30 +19,22 @@ const adviceList = ref<HealthAdviceItem[]>([])
 const loading = ref(false)
 const error = ref('')
 const currentPage = ref(1)
-const hasMore = ref(true)
+const pagination = ref<PaginationInfo | null>(null)
 const expandedId = ref<number | null>(null)
 
 const pageSize = 10
 
-async function fetchAdvice(reset = false) {
-  if (reset) {
-    currentPage.value = 1
-    adviceList.value = []
-    hasMore.value = true
-  }
+async function fetchAdvice(page = 1) {
   if (loading.value) return
 
   loading.value = true
   error.value = ''
 
   try {
-    const { list, pagination } = await getHealthAdvice(currentPage.value, pageSize)
-    if (reset) {
-      adviceList.value = list
-    } else {
-      adviceList.value.push(...list)
-    }
-    hasMore.value = currentPage.value < pagination.totalPages
+    const { list, pagination: p } = await getHealthAdvice(page, pageSize)
+    adviceList.value = list
+    pagination.value = p
+    currentPage.value = p.page
   } catch (err: unknown) {
     error.value = (err as { message?: string }).message || '获取健康建议失败，请检查网络后重试'
   } finally {
@@ -49,10 +42,8 @@ async function fetchAdvice(reset = false) {
   }
 }
 
-function loadMore() {
-  if (!hasMore.value || loading.value) return
-  currentPage.value++
-  fetchAdvice()
+function goToPage(page: number) {
+  fetchAdvice(page)
 }
 
 function toggleExpand(id: number) {
@@ -80,7 +71,7 @@ function openAiAssistant() {
 }
 
 onMounted(() => {
-  fetchAdvice(true)
+  fetchAdvice(1)
 })
 </script>
 
@@ -103,7 +94,7 @@ onMounted(() => {
     <ErrorRetry
       v-else-if="error && adviceList.length === 0"
       :message="error"
-      @retry="fetchAdvice(true)"
+      @retry="fetchAdvice(1)"
     />
 
     <!-- 空态 -->
@@ -148,19 +139,13 @@ onMounted(() => {
         </Transition>
       </div>
 
-      <!-- 加载更多 -->
-      <div class="load-more-wrap">
-        <button
-          v-if="hasMore"
-          class="btn-load-more"
-          :disabled="loading"
-          @click="loadMore"
-        >
-          <AppIcon v-if="loading" name="spinner" :size="14" class="is-spinning" />
-          {{ loading ? '加载中...' : '加载更多' }}
-        </button>
-        <p v-else class="no-more">已经到底啦</p>
-      </div>
+      <Pagination
+        v-if="pagination"
+        :current-page="currentPage"
+        :total-pages="pagination.totalPages"
+        :disabled="loading"
+        @change="goToPage"
+      />
     </div>
   </div>
 </template>
@@ -305,33 +290,6 @@ onMounted(() => {
 
 .advice-content :deep(.markdown-body li) {
   margin-bottom: 4px;
-}
-
-.load-more-wrap {
-  padding: var(--spacing-md) 0 var(--spacing-lg);
-  text-align: center;
-}
-
-.btn-load-more,
-.no-more {
-  font-size: 13px;
-  color: var(--color-text-secondary);
-}
-
-.btn-load-more {
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  padding: var(--spacing-sm) var(--spacing-lg);
-}
-
-.btn-load-more:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-.no-more {
-  color: var(--color-text-disabled);
 }
 
 .is-spinning {

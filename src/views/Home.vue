@@ -20,7 +20,7 @@ const lifePlanStore = useLifePlanStore()
 const punchStore = usePunchStore()
 const chatStore = useChatStore()
 
-const FALLBACK_ARTICLE_COVER = 'https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?auto=format&fit=crop&w=300&q=80'
+const FALLBACK_ARTICLE_COVER = '/static/images/default/default-cover.png'
 const FALLBACK_DOCTOR_AVATAR = '/static/images/placeholder-doctor.svg'
 
 const typeCovers = [

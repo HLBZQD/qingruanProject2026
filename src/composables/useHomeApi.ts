@@ -34,20 +34,24 @@ interface ArticlesParams extends Partial<PaginationParams> {
 /**
  * GET /api/doctors（分页）
  * 解包：res.data 是 body（PagedBody<Doctor>），数组 = res.data.data，分页 = res.data.pagination。
- * 返回 Doctor[]。
+ * 返回 { list, pagination }。
  */
-export async function getDoctors(params: DoctorsParams = {}): Promise<Doctor[]> {
+export async function getDoctors(
+  params: DoctorsParams = {},
+): Promise<{ list: Doctor[]; pagination: PaginationInfo }> {
   const res = await api.get<PagedBody<Doctor>>('/doctors', { params })
-  return res.data.data
+  return { list: res.data.data, pagination: res.data.pagination }
 }
 
 /**
  * GET /api/articles（分页 + 分类筛选）
- * 解包：res.data.data 是 Article[]；返回 Article[]。
+ * 解包：res.data.data 是 Article[]；返回 { list, pagination }。
  */
-export async function getArticles(params: ArticlesParams = {}): Promise<Article[]> {
+export async function getArticles(
+  params: ArticlesParams = {},
+): Promise<{ list: Article[]; pagination: PaginationInfo }> {
   const res = await api.get<PagedBody<Article>>('/articles', { params })
-  return res.data.data
+  return { list: res.data.data, pagination: res.data.pagination }
 }
 
 /**

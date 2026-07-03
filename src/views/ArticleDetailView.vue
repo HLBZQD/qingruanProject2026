@@ -3,7 +3,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { getArticle } from '@/composables/useHomeApi'
 import { renderMarkdown } from '@/composables/useMarkdown'
-import { collectArticle, uncollectArticle, syncCollectedState, useCollectedMap } from '@/composables/useArticleApi'
+import { collectArticle, uncollectArticle, syncCollectedState, useCollectedMap, updateArticleCover, deleteArticle } from '@/composables/useArticleApi'
 import { useAuthStore } from '@/stores/authStore'
 import { getErrorMessage } from '@/utils/errorMessage'
 import type { ArticleDetail } from '@/types/api'
@@ -21,6 +21,9 @@ const loading = ref(true)
 const error = ref<string | null>(null)
 const notFound = ref(false)
 const collectLoading = ref(false)
+const coverLoading = ref(false)
+const deleteLoading = ref(false)
+const coverInput = ref<HTMLInputElement | null>(null)
 
 // ===== 收藏状态（响应式追踪 collectedMap，跨页面同步） =====
 const isCollected = computed(() => {
@@ -140,6 +143,88 @@ async function toggleCollect(): Promise<void> {
   }
 }
 
+// ===== 替换封面（仅作者）=====
+function triggerCoverUpload(): void {
+  coverInput.value?.click()
+}
+
+async function handleCoverChange(e: Event): Promise<void> {
+  const target = e.target as HTMLInputElement
+  const file = target.files?.[0]
+  if (!file || !article.value) return
+
+  const ext = file.name.split('.').pop()?.toLowerCase()
+  if (!['jpg', 'jpeg', 'png', 'webp'].includes(ext || '') ||
+      !['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+    const Swal = (await import('sweetalert2')).default
+    Swal.fire('格式不支持', '请选择 JPEG / PNG / WebP 格式的图片', 'warning')
+    target.value = ''
+    return
+  }
+  if (file.size > 2 * 1024 * 1024) {
+    const Swal = (await import('sweetalert2')).default
+    Swal.fire('文件过大', '封面图片不能超过 2MB', 'warning')
+    target.value = ''
+    return
+  }
+
+  coverLoading.value = true
+  try {
+    const newCover = await updateArticleCover(article.value.id, file)
+    article.value.cover = newCover
+    const Swal = (await import('sweetalert2')).default
+    Swal.fire({
+      toast: true, position: 'top', icon: 'success',
+      title: '封面已更新', showConfirmButton: false, timer: 1800,
+    })
+  } catch (err: unknown) {
+    const Swal = (await import('sweetalert2')).default
+    Swal.fire({
+      toast: true, position: 'top', icon: 'error',
+      title: getErrorMessage(err, '封面更新失败'),
+      showConfirmButton: false, timer: 2500,
+    })
+  } finally {
+    coverLoading.value = false
+    target.value = ''
+  }
+}
+
+// ===== 删除文章（仅作者）=====
+async function handleDelete(): Promise<void> {
+  if (!article.value || deleteLoading.value) return
+  const Swal = (await import('sweetalert2')).default
+  const result = await Swal.fire({
+    title: '删除文章',
+    text: '删除后不可恢复，确认要删除这篇文章吗？',
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonText: '确认删除',
+    cancelButtonText: '取消',
+    confirmButtonColor: '#EF4444',
+  })
+  if (!result.isConfirmed) return
+
+  deleteLoading.value = true
+  try {
+    await deleteArticle(article.value.id)
+    Swal.fire({
+      toast: true, position: 'top', icon: 'success',
+      title: '文章已删除', showConfirmButton: false, timer: 1500,
+    })
+    router.push('/news')
+  } catch (err: unknown) {
+    const Swal2 = (await import('sweetalert2')).default
+    Swal2.fire({
+      toast: true, position: 'top', icon: 'error',
+      title: getErrorMessage(err, '删除失败'),
+      showConfirmButton: false, timer: 2500,
+    })
+  } finally {
+    deleteLoading.value = false
+  }
+}
+
 onMounted(() => { fetchArticle() })
 </script>
 
@@ -202,6 +287,55 @@ onMounted(() => { fetchArticle() })
 
     <!-- 正常态 -->
     <template v-else-if="article">
+      <!-- 封面展示区（作者可替换） -->
+      <section class="article-cover-section">
+        <div class="article-cover-wrap">
+          <img
+            v-if="article.cover"
+            class="article-cover"
+            :src="article.cover"
+            :alt="article.title"
+            @error="(e) => (e.target as HTMLImageElement).style.display = 'none'"
+          />
+          <div v-else class="article-cover-placeholder">
+            <AppIcon name="news" :size="32" />
+          </div>
+          <!-- 作者操作浮层 -->
+          <div v-if="article.is_owner" class="article-cover-actions">
+            <button
+              class="cover-action-btn"
+              :disabled="coverLoading"
+              @click="triggerCoverUpload"
+              aria-label="替换封面"
+            >
+              <AppIcon v-if="coverLoading" name="spinner" :size="14" class="is-spinning" />
+              <AppIcon v-else name="camera" :size="14" />
+              <span>替换封面</span>
+            </button>
+          </div>
+        </div>
+        <!-- 作者管理栏 -->
+        <div v-if="article.is_owner" class="article-owner-bar">
+          <span class="owner-tag">我的文章</span>
+          <button
+            class="owner-delete-btn"
+            :disabled="deleteLoading"
+            @click="handleDelete"
+          >
+            <AppIcon v-if="deleteLoading" name="spinner" :size="14" class="is-spinning" />
+            <AppIcon v-else name="trash" :size="14" />
+            <span>删除文章</span>
+          </button>
+        </div>
+        <input
+          ref="coverInput"
+          type="file"
+          accept="image/jpeg,image/png,image/webp"
+          class="cover-file-input"
+          @change="handleCoverChange"
+        />
+      </section>
+
       <!-- 文章元信息 -->
       <section class="article-meta-section">
         <h1 class="article-title">{{ article.title }}</h1>
@@ -305,6 +439,107 @@ onMounted(() => { fetchArticle() })
 }
 .article-header-spacer {
   width: 32px;
+}
+
+/* ===== 封面展示区 ===== */
+.article-cover-section {
+  background: var(--color-card);
+}
+.article-cover-wrap {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  background: var(--color-divider);
+  overflow: hidden;
+}
+.article-cover {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.article-cover-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-text-tertiary);
+}
+.article-cover-actions {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.35);
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+.article-cover-wrap:hover .article-cover-actions {
+  opacity: 1;
+}
+.cover-action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border-radius: var(--radius-full);
+  background: rgba(255, 255, 255, 0.95);
+  color: var(--color-text-primary);
+  font-size: 13px;
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+  transition: transform var(--transition-fast);
+}
+.cover-action-btn:active:not(:disabled) {
+  transform: scale(0.96);
+}
+.cover-action-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+.cover-file-input {
+  display: none;
+}
+
+/* ===== 作者管理栏 ===== */
+.article-owner-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--spacing-sm) var(--spacing-lg);
+  border-bottom: 1px solid var(--color-divider);
+}
+.owner-tag {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--color-primary);
+  background: var(--color-primary-light);
+  padding: 3px 10px;
+  border-radius: var(--radius-full);
+}
+.owner-delete-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 12px;
+  border-radius: var(--radius-full);
+  background: transparent;
+  border: 1px solid var(--color-danger);
+  color: var(--color-danger);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+.owner-delete-btn:active:not(:disabled) {
+  transform: scale(0.96);
+}
+.owner-delete-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 /* ===== 文章元信息区 ===== */
