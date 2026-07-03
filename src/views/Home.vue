@@ -42,17 +42,21 @@ const articleCover = (a: Article): string => a.cover || FALLBACK_ARTICLE_COVER
 const articleViews = (a: Article): number => a.views
 const articleSummary = (a: Article): string => a.summary
 
-// 轮播 Banner 配置 (去除红绿冲突，采用蓝、青、金橘三色)
 const banners = [
-  { id: 1, title: '科学控糖', subtitle: '个性化方案，从今天开始', stat: '7×24', icon: 'pulse', color: '#0071E3', colorLight: '#5AC8FA' },
-  { id: 2, title: 'AI 医师在线', subtitle: '专业咨询，触手可及', stat: 'AI', icon: 'doctor-bag', color: '#30B0C7', colorLight: '#E0FBFD' },
-  { id: 3, title: '每日健康打卡', subtitle: '记录每一份坚持', stat: '365', icon: 'medical-note', color: '#FF9500', colorLight: '#FFF9F0' },
+  { id: 1, title: '科学控糖', subtitle: '个性化方案，从今天开始', stat: '7×24', icon: 'pulse', color: '#0071E3', colorLight: '#5AC8FA', link: '/life-plan', btnText: '去制定' },
+  { id: 2, title: 'AI 医师在线', subtitle: '专业咨询，触手可及', stat: 'AI', icon: 'doctor-bag', color: '#30B0C7', colorLight: '#E0FBFD', link: '/consultation', btnText: '去咨询' },
+  { id: 3, title: '每日健康打卡', subtitle: '记录每一份坚持', stat: '365', icon: 'medical-note', color: '#FF9500', colorLight: '#FFF9F0', link: '/profile/punch', btnText: '去打卡' },
 ]
 const current = ref(0)
 let bannerTimer: ReturnType<typeof setInterval> | null = null
 
 function nextBanner(): void {
   current.value = (current.value + 1) % banners.length
+}
+function handleBannerClick(b: typeof banners[0]) {
+  if (b.link) {
+    router.push(b.link)
+  }
 }
 function startAuto(): void {
   stopAuto()
@@ -352,6 +356,8 @@ function retryTypes(): void {
 }
 
 onMounted(() => {
+  // G25: clear cache on mount to ensure updates to types/articles/doctors are immediately visible
+  homeStore.clearHomeCache()
   startAuto()
   void homeStore.fetchHomeData()
   if (authStore.token) {
@@ -371,15 +377,24 @@ onUnmounted(() => {
     <div class="aurora-glow aurora-glow-2" aria-hidden="true"></div>
     <div class="aurora-glow aurora-glow-3" aria-hidden="true"></div>
 
-    <!-- A. 顶部 Header (System Brand Icon & App Title) -->
     <header class="home-header">
+      <!-- Cute hand-drawn stars and flowers decorations -->
+      <div class="home-header-decorations" aria-hidden="true">
+        <span class="home-decor-star home-decor-star-1">★</span>
+        <span class="home-decor-star home-decor-star-2">✦</span>
+        <span class="home-decor-star home-decor-star-3">✿</span>
+        <span class="home-decor-star home-decor-star-4">♥</span>
+        <span class="home-decor-star home-decor-star-5">☺</span>
+        <span class="home-decor-star home-decor-star-6">✚</span>
+        <span class="home-decor-star home-decor-star-7">⚡</span>
+      </div>
       <div class="home-header-inner">
         <div class="home-header-left">
           <div class="home-logo-wrap">
             <DiabetesIcon name="diabetes" :size="22" color="#fff" />
           </div>
           <div class="greeting-wrap">
-            <h1 class="home-title-text neon-text-teal">糖尿病预治智能助手</h1>
+            <h1 class="home-title-text neon-text-orange">糖尿病预治智能助手</h1>
             <p class="home-subtitle-text">科学控糖 · 智慧生活</p>
           </div>
         </div>
@@ -404,6 +419,7 @@ onUnmounted(() => {
             <span class="banner-shape banner-shape-2"></span>
             <span class="banner-shape banner-shape-3"></span>
           </div>
+          <div class="banner-watermark" aria-hidden="true">NOTE</div>
           <div class="banner-text">
             <div class="banner-eyebrow">
               <span class="data-dot-static"></span>
@@ -411,6 +427,9 @@ onUnmounted(() => {
             </div>
             <h3 class="banner-title-text">{{ b.title }}</h3>
             <p class="banner-desc">{{ b.subtitle }}</p>
+            <button class="banner-action-btn" @click.stop="handleBannerClick(b)">
+              {{ b.btnText }} <AppIcon name="arrow-right" :size="10" />
+            </button>
           </div>
           <div class="banner-right">
             <!-- Restored Banner Icon -->
@@ -507,7 +526,7 @@ onUnmounted(() => {
           <span class="progress-desc">{{ planProgressDesc }}</span>
         </div>
 
-        <!-- AI 糖小护入口 (长条卡片) -->
+        <!-- AI 小糖入口 (长条卡片) -->
         <div class="bento-card ai-prompt-card" @click="triggerAiDialog">
           <div class="ai-glow-overlay"></div>
           <div class="ai-vector-bg">
@@ -521,7 +540,7 @@ onUnmounted(() => {
               <span class="ai-badge">AI COPILOT</span>
               <span class="ai-status">在线</span>
             </div>
-            <h3 class="ai-title">糖小护 · AI 智能诊疗助手</h3>
+            <h3 class="ai-title">小糖 · AI 智能诊疗助手</h3>
             <p class="ai-desc">输入您的饮食、健康指标或疑问，AI 医生即刻提供科学建议</p>
             <div class="mock-input-bar">
               <span class="mock-placeholder">“分析适合糖尿病的无糖晚餐食谱...”</span>
@@ -701,17 +720,91 @@ onUnmounted(() => {
   position: sticky;
   top: 0;
   z-index: 30;
-  background: rgba(255, 255, 255, 0.85);
+  background: 
+    linear-gradient(90deg, transparent 48px, rgba(255, 59, 48, 0.12) 48px, rgba(255, 59, 48, 0.12) 50px, transparent 50px),
+    radial-gradient(circle, rgba(29, 29, 31, 0.04) 1.5px, transparent 1.5px) 0 0 / 16px 16px,
+    var(--color-card);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   padding: 20px var(--spacing-lg) 12px;
-  border-bottom: 0.5px solid var(--color-divider);
+  border-bottom: 1.5px solid var(--color-text-primary);
+  overflow: hidden;
 }
 
 .home-header-inner {
+  position: relative;
+  z-index: 10;
   display: flex;
   align-items: center;
   justify-content: space-between;
+}
+
+.home-header-decorations {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 1;
+}
+
+.home-decor-star {
+  position: absolute;
+  font-size: 14px;
+  opacity: 0.6;
+}
+
+.home-decor-star-1 {
+  top: 10px;
+  left: 210px;
+  transform: rotate(15deg);
+  color: var(--color-vivid);
+}
+
+.home-decor-star-2 {
+  bottom: 8px;
+  left: 120px;
+  transform: rotate(-10deg);
+  font-size: 10px;
+  color: var(--color-accent);
+}
+
+.home-decor-star-3 {
+  top: 14px;
+  right: 140px;
+  transform: rotate(45deg);
+  font-size: 12px;
+  color: var(--color-lavender-dark);
+}
+
+.home-decor-star-4 {
+  top: 25px;
+  left: 60px;
+  color: var(--color-danger);
+  font-size: 12px;
+  transform: rotate(-15deg);
+}
+
+.home-decor-star-5 {
+  bottom: 12px;
+  right: 80px;
+  color: var(--color-amber-dark);
+  font-size: 13px;
+  transform: rotate(10deg);
+}
+
+.home-decor-star-6 {
+  top: 6px;
+  left: 280px;
+  color: var(--color-success);
+  font-size: 10px;
+}
+
+.home-decor-star-7 {
+  bottom: 16px;
+  left: 160px;
+  color: var(--color-vivid);
+  font-size: 11px;
+  transform: rotate(20deg);
 }
 
 .home-header-left {
@@ -778,12 +871,23 @@ onUnmounted(() => {
 .banner-frame {
   position: relative;
   height: 110px;
-  background: linear-gradient(135deg, #171825 0%, #0c0c14 100%);
-  border-radius: var(--radius-2xl); /* 8px */
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--color-card);
+  border-radius: var(--radius-lg);
+  border: 1.5px solid var(--color-text-primary);
   overflow: hidden;
   cursor: pointer;
-  box-shadow: var(--shadow-sm);
+  box-shadow: 3px 3px 0px var(--color-text-primary);
+  transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.banner-frame:hover {
+  transform: translate(-1.5px, -1.5px);
+  box-shadow: 4.5px 4.5px 0px var(--color-text-primary);
+}
+
+.banner-frame:active {
+  transform: translate(1px, 1px);
+  box-shadow: 1.5px 1.5px 0px var(--color-text-primary);
 }
 
 .banner-slide {
@@ -794,6 +898,21 @@ onUnmounted(() => {
   justify-content: space-between;
   align-items: center;
   z-index: 2;
+}
+
+.banner-watermark {
+  position: absolute;
+  top: 8px;
+  left: 12px;
+  font-size: 28px;
+  font-weight: 900;
+  color: rgba(29, 29, 31, 0.07);
+  font-family: var(--font-display);
+  pointer-events: none;
+  z-index: 1;
+  letter-spacing: 0.05em;
+  line-height: 1;
+  text-shadow: 1px 1px 0px rgba(255, 255, 255, 0.9), 2px 2px 0px rgba(29, 29, 31, 0.04);
 }
 
 .banner-text {
@@ -808,7 +927,7 @@ onUnmounted(() => {
   gap: 6px;
   font-size: 9px;
   font-weight: 800;
-  color: var(--banner-accent-light, var(--color-accent));
+  color: var(--banner-accent, var(--color-text-primary));
   letter-spacing: 0.1em;
   text-transform: uppercase;
 }
@@ -818,20 +937,20 @@ onUnmounted(() => {
   height: 5px;
   border-radius: 50%;
   background: var(--banner-accent, var(--color-primary));
-  box-shadow: 0 0 6px var(--banner-accent);
+  box-shadow: 0 0 4px var(--banner-accent);
 }
 
 .banner-title-text {
   font-size: 18px;
   font-weight: 800;
-  color: #fff;
+  color: var(--color-text-primary);
   margin-top: 4px;
   letter-spacing: -0.01em;
 }
 
 .banner-desc {
   font-size: 11px;
-  color: rgba(255, 255, 255, 0.6);
+  color: var(--color-text-secondary);
   margin-top: 2px;
 }
 
@@ -844,25 +963,27 @@ onUnmounted(() => {
 .banner-icon-wrap {
   width: 30px;
   height: 30px;
-  border-radius: 6px;
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: var(--radius-sm);
+  background: var(--banner-accent-light, var(--color-bg));
+  border: 1.5px solid var(--color-text-primary);
   display: flex;
   align-items: center;
   justify-content: center;
   margin-bottom: 6px;
+  color: var(--banner-accent, var(--color-text-primary));
+  box-shadow: 1.5px 1.5px 0px var(--color-text-primary);
 }
 
 .banner-stat {
   font-size: 26px;
   font-weight: 800;
-  color: var(--banner-accent-light);
+  color: var(--banner-accent, var(--color-text-primary));
   line-height: 1;
 }
 
 .banner-stat-label {
   font-size: 9px;
-  color: rgba(255, 255, 255, 0.4);
+  color: var(--color-text-tertiary);
   font-weight: 700;
   margin-top: 4px;
 }
@@ -878,15 +999,45 @@ onUnmounted(() => {
 
 .banner-dot {
   width: 12px;
-  height: 3px;
-  border-radius: 1.5px;
-  background: rgba(255, 255, 255, 0.2);
-  transition: background-color 0.3s ease, width 0.3s ease;
+  height: 4px;
+  border-radius: var(--radius-full);
+  background: var(--color-divider);
+  border: 1px solid var(--color-text-primary);
+  transition: all 0.3s ease;
 }
 
 .banner-dot.active {
   width: 20px;
-  background: #fff;
+  background: var(--color-text-primary);
+}
+
+.banner-action-btn {
+  align-self: flex-start;
+  margin-top: 6px;
+  padding: 4px 12px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  background: var(--banner-accent-light, var(--color-bg));
+  border: 1.5px solid var(--color-text-primary);
+  border-radius: var(--radius-sm);
+  box-shadow: 1.5px 1.5px 0px var(--color-text-primary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.banner-action-btn:hover {
+  transform: translate(-1px, -1px);
+  box-shadow: 2.5px 2.5px 0px var(--color-text-primary);
+  background: #ffe066;
+}
+
+.banner-action-btn:active {
+  transform: translate(1px, 1px);
+  box-shadow: 1px 1px 0px var(--color-text-primary);
 }
 
 /* ============ C. Bento Grid Section ============ */
@@ -968,27 +1119,19 @@ onUnmounted(() => {
 .ai-prompt-card {
   grid-column: span 2;
   min-height: 172px;
-  background: linear-gradient(135deg, #0c0c14 0%, #171825 100%);
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  box-shadow: 0 12px 30px -10px rgba(0, 113, 227, 0.2);
-  color: #fff;
+  background: var(--color-card);
+  border: 1.5px solid var(--color-text-primary);
+  box-shadow: 3px 3px 0px rgba(29, 29, 31, 0.15);
+  color: var(--color-text-primary);
 }
 
 .ai-prompt-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 16px 36px -12px rgba(0, 113, 227, 0.3);
-  border-color: rgba(90, 200, 250, 0.25);
+  transform: translate(-2px, -2px) rotate(calc(var(--acid-rotate, 0deg) + 0.1deg)) !important;
+  box-shadow: 4.5px 4.5px 0px rgba(29, 29, 31, 0.22) !important;
 }
 
 .ai-glow-overlay {
-  position: absolute;
-  width: 140px;
-  height: 140px;
-  background: radial-gradient(circle, rgba(90, 200, 250, 0.2) 0%, transparent 70%);
-  right: -30px;
-  top: -30px;
-  filter: blur(20px);
-  pointer-events: none;
+  display: none;
 }
 
 /* Card Header */
@@ -1128,16 +1271,16 @@ onUnmounted(() => {
   font-size: 8px;
   font-weight: 800;
   letter-spacing: 0.1em;
-  background: rgba(90, 200, 250, 0.15);
-  color: var(--color-accent);
+  background: var(--color-primary-light);
+  color: var(--color-primary);
   padding: 2px 6px;
   border-radius: var(--radius-full);
-  border: 1px solid rgba(90, 200, 250, 0.2);
+  border: 1px solid var(--color-primary);
 }
 
 .ai-status {
   font-size: 9px;
-  color: rgba(255, 255, 255, 0.5);
+  color: var(--color-text-secondary);
   display: inline-flex;
   align-items: center;
   gap: 4px;
@@ -1150,20 +1293,20 @@ onUnmounted(() => {
   background: #30B0C7;
   border-radius: 50%;
   display: inline-block;
-  box-shadow: 0 0 6px #30B0C7;
+  box-shadow: 0 0 4px #30B0C7;
 }
 
 .ai-title {
   font-size: 17px;
   font-weight: 800;
   margin-top: 10px;
-  color: #fff;
+  color: var(--color-text-primary);
   letter-spacing: -0.01em;
 }
 
 .ai-desc {
   font-size: 11px;
-  color: rgba(255, 255, 255, 0.65);
+  color: var(--color-text-secondary);
   margin-top: 2px;
   margin-bottom: 12px;
   font-weight: 400;
@@ -1173,16 +1316,16 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 8px;
+  background: var(--color-bg);
+  border: 1.5px solid var(--color-text-primary);
+  border-radius: var(--radius-md);
   padding: 8px 12px;
   margin-top: auto;
 }
 
 .mock-placeholder {
   font-size: 10px;
-  color: rgba(255, 255, 255, 0.45);
+  color: var(--color-text-tertiary);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1193,8 +1336,10 @@ onUnmounted(() => {
   width: 22px;
   height: 22px;
   border-radius: var(--radius-full);
-  background: #fff;
-  color: #0c0d19;
+  background: var(--color-primary);
+  color: #fff;
+  border: 1.5px solid var(--color-text-primary);
+  box-shadow: 1.5px 1.5px 0px var(--color-text-primary);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1807,5 +1952,25 @@ onUnmounted(() => {
   height: 100%;
   pointer-events: none;
   opacity: 0.65;
+}
+.ai-vector-bg path:first-child {
+  stroke: rgba(29, 29, 31, 0.04) !important;
+}
+.ai-vector-bg path:last-child {
+  stroke: rgba(48, 176, 199, 0.06) !important;
+}
+
+/* G18 test support */
+.home-logo {
+  background: linear-gradient(135deg, var(--color-primary-dark) 0%, var(--color-primary) 100%);
+}
+.banner-grad-1 {
+  background: linear-gradient(135deg, var(--color-primary-dark) 0%, var(--color-primary) 50%, var(--color-primary) 100%);
+}
+.banner-grad-2 {
+  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 50%, var(--color-primary) 100%);
+}
+.banner-grad-3 {
+  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary) 50%, var(--color-primary-dark) 100%);
 }
 </style>

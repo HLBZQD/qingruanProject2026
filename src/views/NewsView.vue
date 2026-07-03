@@ -544,10 +544,10 @@ onMounted(() => {
   position: sticky;
   top: 0;
   z-index: 30;
-  background: rgba(255, 255, 255, 0.85);
+  background: var(--color-card);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  border-bottom: 1px solid var(--color-divider);
+  border-bottom: 1.5px solid var(--color-text-primary);
   padding: 16px var(--spacing-lg);
   display: flex;
   align-items: center;
@@ -829,12 +829,12 @@ onMounted(() => {
   gap: 6px;
   padding: 10px 16px;
   border-radius: var(--radius-full);
-  background: linear-gradient(135deg, var(--color-primary), #5AC8FA);
+  background: linear-gradient(135deg, #FFFF00 0%, #00C853 100%);
   color: #fff;
   font-size: 13px;
   font-weight: 600;
-  border: none;
-  box-shadow: 0 4px 14px rgba(0, 113, 227, 0.25);
+  border: 1.5px solid var(--color-text-primary) !important;
+  box-shadow: 2px 2px 0px var(--color-text-primary) !important;
   cursor: pointer;
   transition: transform var(--transition-fast), opacity var(--transition-fast);
 }
