@@ -1,4 +1,4 @@
-﻿<script setup lang="ts">
+<script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, nextTick, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
@@ -183,9 +183,9 @@ onUnmounted(() => {
           <h3>智能管理助手</h3>
           <p>您可以输入自然语言指令，例如：</p>
           <div class="example-list">
-            <span class="example-chip">查询所有用户</span>
-            <span class="example-chip">查看最近的风险评估记录</span>
-            <span class="example-chip">统计今日打卡数量</span>
+            <span class="example-chip" @click="inputText = '查询所有用户'">查询所有用户</span>
+            <span class="example-chip" @click="inputText = '查看最近的风险评估记录'">查看最近的风险评估记录</span>
+            <span class="example-chip" @click="inputText = '统计今日打卡数量'">统计今日打卡数量</span>
           </div>
         </div>
 
@@ -295,7 +295,7 @@ onUnmounted(() => {
 
 <style scoped>
 .admin-container {
-  max-width: 768px;
+  max-width: 480px;
   margin: 0 auto;
   min-height: 100vh;
   background: var(--color-bg);
@@ -313,7 +313,7 @@ onUnmounted(() => {
   gap: var(--spacing-md);
   padding: var(--spacing-md) var(--spacing-lg);
   background: var(--color-card);
-  border-bottom: 1px solid var(--color-divider);
+  border-bottom: 2px solid var(--color-text-primary);
   flex-shrink: 0;
 }
 
@@ -323,23 +323,37 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: none;
-  border: none;
-  color: var(--color-text-secondary);
+  background: var(--color-card);
+  border: 1.5px solid var(--color-text-primary);
+  color: var(--color-text-primary);
   font-size: var(--font-size-body);
-  border-radius: var(--radius-full);
+  border-radius: var(--radius-md);
   cursor: pointer;
   flex-shrink: 0;
+  box-shadow: 2px 2px 0px var(--color-text-primary);
+  transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
 .btn-back {
   width: 36px;
+  border-radius: var(--radius-full);
 }
 
 .btn-logs {
   gap: 4px;
   padding: 0 12px;
-  border: 1px solid var(--color-divider);
+}
+
+.btn-back:hover,
+.btn-logs:hover {
+  transform: translate(-1.5px, -1.5px);
+  box-shadow: 3.5px 3.5px 0px var(--color-text-primary);
+}
+
+.btn-back:active,
+.btn-logs:active {
+  transform: translate(1px, 1px);
+  box-shadow: 1px 1px 0px var(--color-text-primary);
 }
 
 .admin-info-bar {
@@ -353,14 +367,16 @@ onUnmounted(() => {
 .admin-avatar {
   width: 38px;
   height: 38px;
-  border-radius: var(--radius-full);
-  background: linear-gradient(135deg, var(--color-warning), #ffc53d);
-  color: #fff;
+  border-radius: var(--radius-md);
+  background: #ffe066;
+  border: 1.5px solid var(--color-text-primary);
+  color: var(--color-text-primary);
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 16px;
   flex-shrink: 0;
+  box-shadow: 1.5px 1.5px 0px var(--color-text-primary);
 }
 
 .admin-info-bar h2 {
@@ -371,7 +387,7 @@ onUnmounted(() => {
 
 .admin-info-bar p {
   font-size: 11px;
-  color: var(--color-text-tertiary);
+  color: var(--color-text-secondary);
 }
 
 .admin-messages {
@@ -382,6 +398,17 @@ onUnmounted(() => {
   flex-direction: column;
   gap: var(--spacing-md);
   -webkit-overflow-scrolling: touch;
+}
+
+.admin-messages::-webkit-scrollbar {
+  width: 6px;
+}
+.admin-messages::-webkit-scrollbar-track {
+  background: transparent;
+}
+.admin-messages::-webkit-scrollbar-thumb {
+  background: var(--color-text-primary);
+  border-radius: var(--radius-full);
 }
 
 .chat-welcome {
@@ -395,14 +422,16 @@ onUnmounted(() => {
 .welcome-avatar {
   width: 64px;
   height: 64px;
-  border-radius: var(--radius-full);
-  background: linear-gradient(135deg, var(--color-warning), #ffc53d);
-  color: #fff;
+  border-radius: var(--radius-lg);
+  background: #ffe066;
+  border: 2px solid var(--color-text-primary);
+  color: var(--color-text-primary);
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 28px;
   margin-bottom: var(--spacing-md);
+  box-shadow: 3px 3px 0px var(--color-text-primary);
 }
 
 .chat-welcome h3 {
@@ -426,11 +455,25 @@ onUnmounted(() => {
 
 .example-chip {
   padding: 8px 16px;
-  border-radius: var(--radius-full);
+  border-radius: var(--radius-md);
   background: var(--color-card);
-  border: 1px solid var(--color-divider);
-  color: var(--color-text-secondary);
+  border: 1.5px solid var(--color-text-primary);
+  color: var(--color-text-primary);
   font-size: 13px;
+  box-shadow: 2px 2px 0px var(--color-text-primary);
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.example-chip:hover {
+  transform: translate(-1.5px, -1.5px);
+  box-shadow: 3.5px 3.5px 0px var(--color-text-primary);
+  background: #ffe066;
+}
+
+.example-chip:active {
+  transform: translate(1px, 1px);
+  box-shadow: 1px 1px 0px var(--color-text-primary);
 }
 
 .message-bubble {
@@ -511,16 +554,19 @@ onUnmounted(() => {
 }
 
 .message-bubble.sent .msg-content {
-  background: var(--color-primary);
-  color: #fff;
+  background: var(--color-primary-light);
+  color: var(--color-text-primary);
+  border: 1.5px solid var(--color-text-primary);
+  box-shadow: -2.5px 2.5px 0px var(--color-text-primary);
   border-radius: var(--radius-md) 4px var(--radius-md) var(--radius-md);
 }
 
 .message-bubble.received .msg-content {
   background: var(--color-card);
   color: var(--color-text-primary);
+  border: 1.5px solid var(--color-text-primary);
+  box-shadow: 2.5px 2.5px 0px var(--color-text-primary);
   border-radius: 4px var(--radius-md) var(--radius-md) var(--radius-md);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
 }
 
 .typing-indicator {
@@ -529,8 +575,9 @@ onUnmounted(() => {
   padding: 10px 14px;
   align-self: flex-start;
   background: var(--color-card);
+  border: 1.5px solid var(--color-text-primary);
+  box-shadow: 2.5px 2.5px 0px var(--color-text-primary);
   border-radius: 4px var(--radius-md) var(--radius-md) var(--radius-md);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
 }
 
 .typing-indicator span {
@@ -555,23 +602,25 @@ onUnmounted(() => {
   gap: var(--spacing-sm);
   padding: var(--spacing-md) var(--spacing-lg) calc(var(--spacing-md) + env(safe-area-inset-bottom));
   background: var(--color-card);
-  border-top: 1px solid var(--color-divider);
+  border-top: 2px solid var(--color-text-primary);
   flex-shrink: 0;
 }
 
 .chat-input input {
   flex: 1;
   padding: 11px 14px;
-  border: 1px solid var(--color-divider);
-  border-radius: var(--radius-full);
+  border: 1.5px solid var(--color-text-primary);
+  border-radius: var(--radius-md);
   font-size: var(--font-size-body);
   outline: none;
   background: var(--color-bg);
   color: var(--color-text-primary);
+  box-shadow: inset 1px 1px 2px rgba(0, 0, 0, 0.08);
 }
 
 .chat-input input:focus {
   border-color: var(--color-primary);
+  background: var(--color-bg-elevated);
 }
 
 .btn-send {
@@ -582,20 +631,29 @@ onUnmounted(() => {
   justify-content: center;
   background: var(--color-primary);
   color: #fff;
-  border: none;
+  border: 1.5px solid var(--color-text-primary);
   border-radius: var(--radius-full);
+  box-shadow: 2px 2px 0px var(--color-text-primary);
   font-size: 16px;
   cursor: pointer;
   flex-shrink: 0;
-  transition: transform var(--transition-fast), opacity var(--transition-fast);
+  transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.btn-send:hover:not(:disabled) {
+  transform: translate(-1.5px, -1.5px);
+  box-shadow: 3.5px 3.5px 0px var(--color-text-primary);
 }
 
 .btn-send:active:not(:disabled) {
-  transform: scale(0.94);
+  transform: translate(1px, 1px);
+  box-shadow: 1px 1px 0px var(--color-text-primary);
 }
 
 .btn-send:disabled {
   background: var(--color-divider);
+  border-color: var(--color-text-disabled);
+  box-shadow: none;
   cursor: not-allowed;
 }
 
@@ -610,7 +668,7 @@ onUnmounted(() => {
   top: 0;
   z-index: 30;
   background: var(--color-card);
-  border-bottom: 1px solid var(--color-divider);
+  border-bottom: 2px solid var(--color-text-primary);
   padding: var(--spacing-md) var(--spacing-lg);
   display: flex;
   align-items: center;
@@ -633,10 +691,12 @@ onUnmounted(() => {
 
 .log-item {
   background: var(--color-card);
-  border-radius: 16px;
+  border-radius: var(--radius-lg);
   padding: var(--spacing-lg);
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.06);
+  border: 1.5px solid var(--color-text-primary);
+  box-shadow: 3px 3px 0px var(--color-text-primary);
   margin-bottom: var(--spacing-md);
+  position: relative;
 }
 
 .log-type-badge {
@@ -645,13 +705,14 @@ onUnmounted(() => {
   font-weight: 600;
   padding: 2px 8px;
   border-radius: var(--radius-full);
+  border: 1px solid var(--color-text-primary);
   margin-bottom: var(--spacing-sm);
 }
 
-.type-insert { color: #237804; background: #f6ffed; }
-.type-update { color: #ad6800; background: #fffbe6; }
-.type-delete { color: #a8071a; background: #fff1f0; }
-.type-select { color: #0958d9; background: #e6f4ff; }
+.type-insert { color: #1D1D1F; background: #78E0A0; }
+.type-update { color: #1D1D1F; background: #ffe066; }
+.type-delete { color: #1D1D1F; background: #FF8EAA; }
+.type-select { color: #1D1D1F; background: #C8EFF4; }
 
 .log-content {
   font-size: 13px;
@@ -663,15 +724,16 @@ onUnmounted(() => {
 
 .log-meta {
   font-size: 11px;
-  color: var(--color-text-tertiary);
+  color: var(--color-text-secondary);
 }
 
 .log-operator {
   display: inline-block;
   margin-top: var(--spacing-sm);
   font-size: 11px;
-  color: var(--color-primary);
+  color: var(--color-text-primary);
   background: var(--color-primary-light);
+  border: 1px solid var(--color-text-primary);
   padding: 2px 8px;
   border-radius: var(--radius-full);
 }
@@ -689,30 +751,34 @@ onUnmounted(() => {
   height: 36px;
   padding: 0 var(--spacing-sm);
   font-size: 13px;
-  color: var(--color-text-secondary);
+  color: var(--color-text-primary);
   background: var(--color-card);
-  border: 1px solid var(--color-divider);
+  border: 1.5px solid var(--color-text-primary);
   border-radius: var(--radius-sm);
+  box-shadow: 1.5px 1.5px 0px var(--color-text-primary);
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.15s;
+  transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
 .page-btn:hover:not(:disabled):not(.active) {
-  color: var(--color-primary);
-  border-color: var(--color-primary);
+  transform: translate(-1px, -1px);
+  box-shadow: 2.5px 2.5px 0px var(--color-text-primary);
+  background: #ffe066;
 }
 
 .page-btn.active {
-  color: #fff;
-  background: var(--color-primary);
-  border-color: var(--color-primary);
+  color: var(--color-text-inverse);
+  background: var(--color-text-primary);
+  border-color: var(--color-text-primary);
+  box-shadow: none;
 }
 
 .page-btn:disabled {
   opacity: 0.4;
+  box-shadow: none;
   cursor: not-allowed;
 }
 

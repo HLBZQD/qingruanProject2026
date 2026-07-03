@@ -25,6 +25,20 @@ const loading = ref(true)
 const doctorError = ref('')
 const inputText = ref('')
 const messagesContainer = ref<HTMLElement | null>(null)
+const inputArea = ref<HTMLTextAreaElement | null>(null)
+
+function adjustHeight() {
+  if (inputArea.value) {
+    inputArea.value.style.height = 'auto'
+    inputArea.value.style.height = `${inputArea.value.scrollHeight}px`
+  }
+}
+
+function handleEnter(e: KeyboardEvent) {
+  if (e.shiftKey) return
+  e.preventDefault()
+  handleSend()
+}
 /** 历史会话弹层可见性 */
 const showHistoryPanel = ref(false)
 
@@ -72,6 +86,11 @@ async function handleSend() {
   if (!text || chatStore.isStreaming) return
 
   inputText.value = ''
+  nextTick(() => {
+    if (inputArea.value) {
+      inputArea.value.style.height = 'auto'
+    }
+  })
   const token = authStore.token
   if (!token) {
     // Token 不存在 — 引导登录
@@ -390,14 +409,16 @@ onUnmounted(() => {
 
     <!-- 底部固定: 输入框 -->
     <div class="chat-input">
-      <input
-        type="text"
+      <textarea
+        ref="inputArea"
         id="msgInput"
         v-model="inputText"
         placeholder="输入您的问题..."
-        @keyup.enter="handleSend"
+        rows="1"
         :disabled="chatStore.isStreaming"
-      />
+        @input="adjustHeight"
+        @keydown.enter="handleEnter"
+      ></textarea>
       <button
         id="sendBtn"
         @click="handleSend"
@@ -595,7 +616,7 @@ onUnmounted(() => {
 /* ===== 底部输入区 ===== */
 .chat-input {
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   gap: var(--spacing-sm);
   padding: var(--spacing-md) var(--spacing-lg);
   background: var(--color-card);
@@ -603,17 +624,25 @@ onUnmounted(() => {
   flex-shrink: 0;
   margin-bottom: calc(var(--tab-bar-height) + env(safe-area-inset-bottom, 0px));
 }
-.chat-input input {
+.chat-input textarea {
   flex: 1;
   padding: 10px 14px;
   border: 1px solid var(--color-divider);
-  border-radius: var(--radius-full);
+  border-radius: 18px 8px 18px 8px;
   font-size: var(--font-size-body);
   outline: none;
   background: var(--color-bg);
   color: var(--color-text-primary);
+  resize: none;
+  height: 40px;
+  min-height: 40px;
+  max-height: 120px;
+  line-height: 1.4;
+  box-sizing: border-box;
+  font-family: inherit;
+  transition: border-color var(--transition-fast);
 }
-.chat-input input:focus {
+.chat-input textarea:focus {
   border-color: var(--color-primary);
 }
 #sendBtn {

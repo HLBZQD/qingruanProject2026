@@ -16,6 +16,20 @@ const authStore = useAuthStore()
 
 const inputText = ref('')
 const messagesContainer = ref<HTMLElement | null>(null)
+const inputArea = ref<HTMLTextAreaElement | null>(null)
+
+function adjustHeight() {
+  if (inputArea.value) {
+    inputArea.value.style.height = 'auto'
+    inputArea.value.style.height = `${inputArea.value.scrollHeight}px`
+  }
+}
+
+function handleEnter(e: KeyboardEvent) {
+  if (e.shiftKey) return
+  e.preventDefault()
+  handleSend()
+}
 
 const isOpen = computed(() => chatStore.fabOpen)
 const isLoggedIn = computed(() => !!authStore.token)
@@ -77,6 +91,11 @@ async function handleSend() {
   }
 
   inputText.value = ''
+  nextTick(() => {
+    if (inputArea.value) {
+      inputArea.value.style.height = 'auto'
+    }
+  })
   await chatStore.sendAssistantMessage(text, token)
   await scrollToBottom()
 }
@@ -89,6 +108,9 @@ const quickQuestions = [
 
 function askQuick(q: string) {
   inputText.value = q
+  nextTick(() => {
+    adjustHeight()
+  })
   handleSend()
 }
 
@@ -193,13 +215,15 @@ onUnmounted(() => {
 
         <!-- 输入区 -->
         <div v-if="isLoggedIn" class="dialog-input">
-          <input
+          <textarea
+            ref="inputArea"
             v-model="inputText"
-            type="text"
             placeholder="输入您的问题..."
             :disabled="chatStore.isStreaming"
-            @keyup.enter="handleSend"
-          />
+            rows="1"
+            @input="adjustHeight"
+            @keydown.enter="handleEnter"
+          ></textarea>
           <button
             class="btn-send"
             :disabled="!inputText.trim() || chatStore.isStreaming"
@@ -601,7 +625,7 @@ onUnmounted(() => {
 
 .dialog-input {
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   gap: var(--spacing-sm);
   padding: var(--spacing-md) var(--spacing-lg) calc(var(--spacing-md) + env(safe-area-inset-bottom));
   background: var(--color-card);
@@ -609,19 +633,26 @@ onUnmounted(() => {
   flex-shrink: 0;
 }
 
-.dialog-input input {
+.dialog-input textarea {
   flex: 1;
   padding: 11px 16px;
   border: 1.5px solid var(--color-border);
-  border-radius: 20px 8px 20px 8px;
+  border-radius: 16px 8px 16px 8px;
   font-size: var(--font-size-body);
   outline: none;
   background: var(--color-bg);
   color: var(--color-text-primary);
+  resize: none;
+  height: 44px;
+  min-height: 44px;
+  max-height: 120px;
+  line-height: 1.5;
+  box-sizing: border-box;
+  font-family: inherit;
   transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
 }
 
-.dialog-input input:focus {
+.dialog-input textarea:focus {
   border-color: var(--color-primary);
   box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
 }

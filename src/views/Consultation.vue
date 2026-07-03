@@ -157,11 +157,11 @@ onMounted(() => {
   position: relative;
   margin: 16px var(--spacing-lg) var(--spacing-lg);
   padding: 24px 20px;
-  background: linear-gradient(135deg, #0c0c14 0%, #171825 100%);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: var(--radius-2xl);
-  box-shadow: 0 12px 30px -10px rgba(0, 113, 227, 0.25);
-  color: #fff;
+  background: var(--color-card);
+  border: 1.5px solid var(--color-text-primary);
+  border-radius: var(--radius-lg);
+  box-shadow: 3px 3px 0px rgba(29, 29, 31, 0.15);
+  color: var(--color-text-primary);
   overflow: hidden;
 }
 
@@ -179,13 +179,14 @@ onMounted(() => {
 .top-bar-icon {
   width: 42px;
   height: 42px;
-  border-radius: var(--radius-lg);
-  background: rgba(90, 200, 250, 0.15);
-  border: 1px solid rgba(90, 200, 250, 0.2);
+  border-radius: var(--radius-sm);
+  background: var(--color-bg);
+  border: 1.5px solid var(--color-text-primary);
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  box-shadow: 1.5px 1.5px 0px var(--color-text-primary);
 }
 
 .top-bar-header-meta {
@@ -199,17 +200,17 @@ onMounted(() => {
   font-size: 8px;
   font-weight: 800;
   letter-spacing: 0.1em;
-  background: rgba(90, 200, 250, 0.15);
-  color: var(--color-accent);
+  background: var(--color-primary-light);
+  color: var(--color-primary);
   padding: 1px 5px;
   border-radius: var(--radius-full);
-  border: 1px solid rgba(90, 200, 250, 0.2);
+  border: 1px solid var(--color-primary);
   text-transform: uppercase;
 }
 
 .top-bar-status {
   font-size: 9px;
-  color: rgba(255, 255, 255, 0.5);
+  color: var(--color-text-secondary);
   display: inline-flex;
   align-items: center;
   gap: 4px;
@@ -223,33 +224,25 @@ onMounted(() => {
   background: #78E0A0;
   border-radius: 50%;
   display: inline-block;
-  box-shadow: 0 0 6px #78E0A0;
+  box-shadow: 0 0 4px #78E0A0;
 }
 
 .top-bar-title {
   font-size: 19px;
   font-weight: 800;
-  color: #ffffff !important;
+  color: var(--color-text-primary) !important;
   line-height: 1.2;
 }
 
 .top-bar-sub {
   font-size: 11px;
-  color: rgba(255, 255, 255, 0.65) !important;
+  color: var(--color-text-secondary) !important;
   margin-top: 4px;
   font-weight: 400;
 }
 
 .ai-glow-overlay {
-  position: absolute;
-  width: 140px;
-  height: 140px;
-  background: radial-gradient(circle, rgba(90, 200, 250, 0.18) 0%, transparent 70%);
-  right: -30px;
-  top: -30px;
-  filter: blur(20px);
-  pointer-events: none;
-  z-index: 1;
+  display: none;
 }
 
 .ai-vector-bg {
@@ -263,6 +256,12 @@ onMounted(() => {
 .ai-vector-bg svg {
   width: 100%;
   height: 100%;
+}
+.ai-vector-bg path:first-child {
+  stroke: rgba(29, 29, 31, 0.04) !important;
+}
+.ai-vector-bg path:last-child {
+  stroke: rgba(48, 176, 199, 0.06) !important;
 }
 
 /* ===== 医生列表 ===== */
