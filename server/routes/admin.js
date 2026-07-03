@@ -64,6 +64,12 @@ router.post('/execute', optionalAuth, difyAuthMiddleware, async (req, res, next)
 
     if (req.difyAuth && req.difyAuth.mode === 'callback') {
       operatorId = req.difyAuth.userId;
+      console.log(`[admin/execute] dify callback user_id=${operatorId} (type=${typeof operatorId}) tool_name=${tool_name || '(none)'}`);
+      const numId = Number(operatorId);
+      if (!Number.isInteger(numId) || numId <= 0) {
+        return error(res, 'FORBIDDEN', '操作者用户不存在', 403);
+      }
+      operatorId = numId;
       const userRow = await adapter.queryOne('SELECT role FROM users WHERE id = ?', [operatorId]);
       if (!userRow) {
         return error(res, 'FORBIDDEN', '操作者用户不存在', 403);
