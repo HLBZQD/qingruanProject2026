@@ -52,7 +52,7 @@ CREATE TABLE IF NOT EXISTS articles (
     cover        VARCHAR(1000),
     author       VARCHAR(100) NOT NULL DEFAULT 'AI健康助手',
     content      TEXT NOT NULL,
-    category     VARCHAR(50) NOT NULL DEFAULT '糖尿病知识科普',
+    category     VARCHAR(50) NOT NULL DEFAULT '知识科普',
     tags         JSONB NOT NULL DEFAULT '[]',
     summary      TEXT NOT NULL DEFAULT '',
     views        INTEGER NOT NULL DEFAULT 0,

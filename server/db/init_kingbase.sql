@@ -315,7 +315,7 @@ INSERT INTO articles (title, author, content, category, view_count) VALUES
 ---
 
 早筛查、早发现、早干预——您的健康掌握在自己手中。',
-    '糖尿病知识科普',
+    '知识科普',
     1560
 );
 

@@ -75,8 +75,8 @@ const greetingTime = computed(() => {
   return '晚上好'
 })
 
-// latest recorded glucose level from check-ins (fallbacks to 5.6 if none)
-const latestGlucose = computed(() => {
+// latest recorded glucose level from check-ins (null when no data)
+const latestGlucose = computed<string | null>(() => {
   const hasRecords = punchStore.records && punchStore.records.length > 0
   if (hasRecords) {
     for (const r of punchStore.records) {
@@ -86,21 +86,24 @@ const latestGlucose = computed(() => {
       }
     }
   }
-  return '5.6'
+  return null
 })
 
-const latestGlucoseTime = computed(() => {
+const latestGlucoseTime = computed<string | null>(() => {
   const hasRecords = punchStore.records && punchStore.records.length > 0
   if (hasRecords && punchStore.records[0].punch_time) {
     const d = new Date(punchStore.records[0].punch_time)
     return `${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}`
   }
-  return '08:30'
+  return null
 })
 
+const hasGlucoseData = computed(() => latestGlucose.value !== null)
+
 const glucoseStatus = computed(() => {
-  const val = parseFloat(latestGlucose.value)
-  if (isNaN(val)) return { text: '正常', isNormal: true }
+  if (!hasGlucoseData.value) return { text: '无数据', isNormal: true }
+  const val = parseFloat(latestGlucose.value as string)
+  if (isNaN(val)) return { text: '无数据', isNormal: true }
   if (val >= 3.9 && val <= 7.0) {
     return { text: '正常', isNormal: true }
   } else {
@@ -447,11 +450,14 @@ onUnmounted(() => {
             </span>
           </div>
           <div class="glucose-val">
-            <span class="val-num font-mono neon-text-teal">{{ latestGlucose }}</span>
-            <span class="val-unit">mmol/L</span>
+            <template v-if="hasGlucoseData">
+              <span class="val-num font-mono neon-text-teal">{{ latestGlucose }}</span>
+              <span class="val-unit">mmol/L</span>
+            </template>
+            <span v-else class="val-num val-empty">暂无记录</span>
           </div>
           <!-- Miniature blood sugar SVG trend line (Apple Stock-style) -->
-          <svg class="glucose-mini-chart" viewBox="0 0 100 30" preserveAspectRatio="none">
+          <svg v-if="hasGlucoseData" class="glucose-mini-chart" viewBox="0 0 100 30" preserveAspectRatio="none">
             <defs>
               <linearGradient id="chartGrad" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="0%" stop-color="var(--color-primary)" stop-opacity="0.18" />
@@ -462,7 +468,7 @@ onUnmounted(() => {
             <path d="M 0,25 Q 20,15 40,22 T 80,10 T 100,18" fill="none" stroke="var(--color-primary)" stroke-width="1.5" stroke-linecap="round" />
           </svg>
           <div class="card-footer">
-            <span class="footer-time">{{ latestGlucoseTime }} 记录</span>
+            <span class="footer-time">{{ hasGlucoseData ? latestGlucoseTime + ' 记录' : '点击去记录' }}</span>
             <span class="footer-btn">
               <AppIcon name="arrow-right" :size="10" />
             </span>
@@ -1038,6 +1044,13 @@ onUnmounted(() => {
   font-size: 11px;
   font-weight: 600;
   color: var(--color-text-tertiary);
+}
+
+.glucose-val .val-empty {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--color-text-tertiary);
+  letter-spacing: 0;
 }
 
 .card-footer {

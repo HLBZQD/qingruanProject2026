@@ -8,6 +8,33 @@ const authMiddleware = require('../middleware/auth');
 
 const router = express.Router();
 
+function calcStreakDays(dates) {
+  if (!Array.isArray(dates) || dates.length === 0) return 0;
+  const set = new Set(dates);
+  function todayStr() {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  }
+  function yesterdayStr() {
+    const d = new Date();
+    d.setDate(d.getDate() - 1);
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  }
+  let cursor = todayStr();
+  if (!set.has(cursor)) {
+    cursor = yesterdayStr();
+    if (!set.has(cursor)) return 0;
+  }
+  let streak = 0;
+  const d = new Date();
+  if (!set.has(todayStr())) d.setDate(d.getDate() - 1);
+  while (set.has(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`)) {
+    streak++;
+    d.setDate(d.getDate() - 1);
+  }
+  return streak;
+}
+
 router.get('/profile', authMiddleware, async (req, res, next) => {
   try {
     const adapter = getAdapter();
@@ -16,12 +43,26 @@ router.get('/profile', authMiddleware, async (req, res, next) => {
       throw new AppError(404, 'NOT_FOUND', '用户不存在');
     }
 
+    const riskRow = await adapter.queryOne(
+      `SELECT ${sql.jsonFieldAs('result', 'risk_score', 'INTEGER')} AS risk_score FROM user_risk_info WHERE user_id = ? ORDER BY created_at DESC LIMIT 1`,
+      [req.user.user_id]
+    );
+    const healthScore = riskRow && riskRow.risk_score != null ? riskRow.risk_score : null;
+
+    const punchRows = await adapter.query(
+      'SELECT DISTINCT substr(punch_time, 1, 10) AS punch_date FROM punch_in WHERE user_id = ? ORDER BY punch_date DESC',
+      [req.user.user_id]
+    );
+    const streakDays = calcStreakDays(punchRows.map(r => r.punch_date));
+
     return success(res, {
       id: user.id,
       username: user.username,
       avatar: user.avatar,
       role: user.role,
-      created_at: user.created_at
+      created_at: user.created_at,
+      risk_score: healthScore,
+      streak_days: streakDays
     }, '查询成功', 200);
   } catch (e) {
     next(e);
