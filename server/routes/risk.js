@@ -61,11 +61,34 @@ router.post('/predict', authMiddleware, async (req, res, next) => {
       'risk'
     );
 
-    const outputsText = difyResponse.data.outputs.text;
+    // G27: 日志记录 Dify 响应结构，便于排查不同版本 API 差异
+    console.log('[risk] Dify 响应顶层键:', Object.keys(difyResponse));
+    console.log('[risk] difyResponse.data 存在:', !!difyResponse.data);
+    if (difyResponse.data) {
+      console.log('[risk] difyResponse.data 键:', Object.keys(difyResponse.data));
+      console.log('[risk] difyResponse.data.outputs 存在:', !!difyResponse.data.outputs);
+    }
+    if (!difyResponse.data && difyResponse.outputs) {
+      console.log('[risk] 检测到 Dify 响应无 data 包装，使用 difyResponse.outputs');
+    }
+
+    const outputsText = (difyResponse.data && difyResponse.data.outputs)
+      ? difyResponse.data.outputs.text
+      : (difyResponse.outputs ? difyResponse.outputs.text : null);
+
+    if (!outputsText) {
+      console.error('[risk] 无法提取 Dify 输出，完整响应:', JSON.stringify(difyResponse).substring(0, 500));
+      throw new AppError(502, 'RISK_PARSE_ERROR', 'Dify 工作流执行成功但输出格式异常');
+    }
+
+    console.log('[risk] Dify 原始输出(前200字符):', String(outputsText).substring(0, 200));
+
     let parsed;
     try {
-      parsed = JSON.parse(outputsText);
+      // Dify 端输出节点 text 可能是 JSON 字符串，也可能已被解析为对象
+      parsed = typeof outputsText === 'string' ? JSON.parse(outputsText) : outputsText;
     } catch (e) {
+      console.warn('[risk] JSON.parse 失败，原始值类型:', typeof outputsText);
       parsed = null;
     }
 
@@ -127,6 +150,11 @@ router.post('/predict', authMiddleware, async (req, res, next) => {
       ]
     );
     const recordId = info.lastInsertId;
+    console.log('[risk] INSERT 完成, lastInsertId:', recordId, ', changes:', info.changes);
+
+    if (!recordId || recordId === 0) {
+      throw new AppError(500, 'DB_ERROR', '数据库写入失败：未获取到插入记录ID');
+    }
 
     const record = await adapter.queryOne('SELECT created_at FROM user_risk_info WHERE id = ?', [recordId]);
 

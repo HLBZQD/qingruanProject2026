@@ -271,6 +271,7 @@ function parseWhereClause(whereStr) {
 }
 
 async function dispatchParameterizedQuery(adapter, toolName, params, operatorId, operatorRole) {
+  console.log(`[dispatch] toolName=${toolName}, params keys:`, Object.keys(params));
   switch (toolName) {
     case 'query_user_profile': {
       const targetId = operatorRole === 'admin' ? (params.user_id || operatorId) : operatorId;
@@ -333,6 +334,64 @@ async function dispatchParameterizedQuery(adapter, toolName, params, operatorId,
       );
       insertAdminLog(adapter, operatorId, 'INSERT', `[write_health_advice] 为user_id=${targetUserId}写入健康建议: ${params.title}`, '成功');
       return { rows: [{ id: info.lastInsertId }], operation_type: 'INSERT' };
+    }
+
+    case 'write_life_plans': {
+      console.log('[write_life_plans] 收到请求, params:', JSON.stringify(params, null, 2));
+      const targetUserId = operatorRole === 'admin' ? (params.user_id || operatorId) : operatorId;
+      if (targetUserId !== operatorId && operatorRole !== 'admin') {
+        return { error: { code: 'FORBIDDEN', message: '无权写入他人方案' }, httpStatus: 403 };
+      }
+
+      // 归一化 items：Dify 的 json_object 类型不接受裸数组，agent 可能以多种形态传入
+      // 兼容："[...]" 字符串 / [...] 裸数组 / {items:[...]} / {plans:[...]} / {diet_plans,exercise_plans,other_plans}
+      let items = params.items;
+      if (typeof items === 'string') {
+        try { items = JSON.parse(items); } catch (e) {
+          return { error: { code: 'BAD_REQUEST', message: 'items 解析失败，期望 JSON 数组或含数组的对象' }, httpStatus: 400 };
+        }
+      }
+      if (items && typeof items === 'object' && !Array.isArray(items)) {
+        if (Array.isArray(items.items)) items = items.items;
+        else if (Array.isArray(items.plans)) items = items.plans;
+        else {
+          const diet = Array.isArray(items.diet_plans) ? items.diet_plans : [];
+          const exercise = Array.isArray(items.exercise_plans) ? items.exercise_plans : [];
+          const other = Array.isArray(items.other_plans) ? items.other_plans : [];
+          const flat = [...diet, ...exercise, ...other];
+          if (flat.length > 0) items = flat;
+        }
+      }
+      if (!Array.isArray(items) || items.length === 0) {
+        return { error: { code: 'BAD_REQUEST', message: 'items 必须为非空数组（或包含 plan_type/order_num/title/content 的对象数组）' }, httpStatus: 400 };
+      }
+
+      const result = await adapter.transaction(async (tx) => {
+        await tx.execute(
+          'UPDATE life_plans SET is_active = 0, updated_at = CURRENT_TIMESTAMP WHERE user_id = ? AND is_active = 1',
+          [targetUserId]
+        );
+
+        const rows = await tx.query(
+          'SELECT plan_id FROM life_plans WHERE user_id = ? ORDER BY plan_id DESC LIMIT 1',
+          [targetUserId]
+        );
+        const planId = rows.length > 0 ? rows[0].plan_id + 1 : 1;
+
+        for (const item of items) {
+          await tx.execute(
+            'INSERT INTO life_plans (user_id, plan_id, plan_type, order_num, time_desc, title, content, is_active, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)',
+            [targetUserId, planId, item.plan_type, item.order_num, item.time_desc || '', item.title, item.content]
+          );
+        }
+
+        return { planId };
+      });
+
+      insertAdminLog(adapter, operatorId, 'INSERT',
+        `[write_life_plans] 为user_id=${targetUserId}写入方案plan_id=${result.planId}, 共${items.length}条`, '成功');
+
+      return { rows: [{ plan_id: result.planId, item_count: items.length }], operation_type: 'INSERT' };
     }
 
     case 'update_user_profile': {

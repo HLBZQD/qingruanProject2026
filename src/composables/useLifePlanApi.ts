@@ -21,16 +21,16 @@ export async function getCurrentPlan(): Promise<PlanCurrentResponse | null> {
 }
 
 /**
- * POST /api/plan/generate — 生成方案（Dify blocking，超时 15s）。
+ * POST /api/plan/generate — 生成方案（Dify blocking，超时 150s）。
  * 解包：res.data.data 是 PlanResponse（无 generated_at）。
- * 请求级 timeout: 20000（给后端 15s 余量，防边界误降级）。
+ * 请求级 timeout: 150000（Dify 平均响应 110s，给 40s 余量）。
  * 409 CONFLICT 由调用方 catch 处理（30s 幂等）。
  */
 export async function generatePlan(req: PlanGenerateRequest): Promise<PlanResponse> {
   const res = await api.post<{ success: boolean; data: PlanResponse; message?: string }>(
     '/plan/generate',
     req,
-    { timeout: 20000 },
+    { timeout: 150000 },
   )
   return res.data.data
 }
