@@ -58,6 +58,8 @@ function restoreState() {
   }
 }
 
+const pageSize = ref(10)
+
 async function fetchArticles(page = 1) {
   if (loading.value) return
 
@@ -68,7 +70,7 @@ async function fetchArticles(page = 1) {
     const { list, pagination: p } = await getArticles({
       category: categoryForApi.value,
       page,
-      pageSize: 10,
+      pageSize: pageSize.value,
       mine: onlyMine.value || undefined,
     })
     articles.value = list
@@ -84,6 +86,11 @@ async function fetchArticles(page = 1) {
 
 function goToPage(page: number) {
   fetchArticles(page)
+}
+
+function handleChangePageSize(size: number) {
+  pageSize.value = size
+  fetchArticles(1)
 }
 
 function switchCategory(cat: string) {
@@ -216,17 +223,17 @@ const searchError = ref('')
 const searchResults = ref<Article[]>([])
 const searchedKeyword = ref('')
 const searchCurrentPage = ref(1)
-const searchPageSize = 10
+const searchPageSize = ref(10)
 
 /** 搜索结果总页数 */
 const searchTotalPages = computed(() =>
-  Math.max(1, Math.ceil(searchResults.value.length / searchPageSize)),
+  Math.max(1, Math.ceil(searchResults.value.length / searchPageSize.value)),
 )
 
 /** 当前页搜索结果切片 */
 const searchPageItems = computed(() => {
-  const start = (searchCurrentPage.value - 1) * searchPageSize
-  return searchResults.value.slice(start, start + searchPageSize)
+  const start = (searchCurrentPage.value - 1) * searchPageSize.value
+  return searchResults.value.slice(start, start + searchPageSize.value)
 })
 
 /** 简易防抖 */
@@ -285,6 +292,11 @@ async function doSearch(q: string) {
 
 function goToSearchPage(page: number) {
   searchCurrentPage.value = page
+}
+
+function handleSearchPageSize(size: number) {
+  searchPageSize.value = size
+  searchCurrentPage.value = 1
 }
 
 const debouncedSearch = debounce((q: string) => doSearch(q), 300)
@@ -448,8 +460,11 @@ onMounted(() => {
         <Pagination
           :current-page="searchCurrentPage"
           :total-pages="searchTotalPages"
+          :total="searchResults.length"
+          :page-size="searchPageSize"
           :disabled="searchLoading"
           @change="goToSearchPage"
+          @change-page-size="handleSearchPageSize"
         />
       </div>
     </template>
@@ -509,8 +524,11 @@ onMounted(() => {
           v-if="pagination"
           :current-page="currentPage"
           :total-pages="pagination.totalPages"
+          :total="pagination.total"
+          :page-size="pageSize"
           :disabled="loading"
           @change="goToPage"
+          @change-page-size="handleChangePageSize"
         />
       </div>
     </template>

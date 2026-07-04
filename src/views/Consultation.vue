@@ -14,13 +14,13 @@ const loading = ref(true)
 const error = ref('')
 const currentPage = ref(1)
 const pagination = ref<PaginationInfo | null>(null)
-const pageSize = 10
+const pageSize = ref(10)
 
 async function fetchDoctors(page = 1) {
   loading.value = true
   error.value = ''
   try {
-    const { list, pagination: p } = await getDoctors({ page, pageSize })
+    const { list, pagination: p } = await getDoctors({ page, pageSize: pageSize.value })
     doctors.value = list
     pagination.value = p
     currentPage.value = p.page
@@ -34,6 +34,11 @@ async function fetchDoctors(page = 1) {
 
 function goToPage(page: number) {
   fetchDoctors(page)
+}
+
+function handleChangePageSize(size: number) {
+  pageSize.value = size
+  fetchDoctors(1)
 }
 
 function goToChat(doctorId: number) {
@@ -135,8 +140,11 @@ onMounted(() => {
         v-if="pagination"
         :current-page="currentPage"
         :total-pages="pagination.totalPages"
+        :total="pagination.total"
+        :page-size="pageSize"
         :disabled="loading"
         @change="goToPage"
+        @change-page-size="handleChangePageSize"
       />
     </div>
   </div>

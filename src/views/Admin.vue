@@ -27,8 +27,14 @@ const logs = ref<AdminLog[]>([])
 const logsLoading = ref(false)
 const logsError = ref('')
 const logsPage = ref(1)
-const logsPageSize = 15
+const logsPageSize = ref(15)
 const logsTotalPages = ref(0)
+const logsTotal = ref(0)
+const sizeOpen = ref(false)
+const sizeDropUp = ref(false)
+const sizeBtnRef = ref<HTMLElement | null>(null)
+
+const logPageSizes = [10, 20, 50]
 
 /** 过滤 admin 模式消息，隔离 doctor/assistant 对话 */
 const adminMessages = computed(() =>
@@ -87,12 +93,36 @@ function getOpTypeClass(type: string): string {
   return 'type-select'
 }
 
-const pages = computed(() => {
-  const arr: number[] = []
-  for (let i = 1; i <= logsTotalPages.value; i++) {
-    arr.push(i)
+const pages = computed<(number | '…')[]>(() => {
+  const total = logsTotalPages.value
+  const cur = logsPage.value
+  if (total <= 6) {
+    const arr: (number | '…')[] = []
+    for (let i = 1; i <= total; i++) arr.push(i)
+    return arr
   }
-  return arr
+  const m = Math.ceil(total / 2)
+  let left: number[]
+  let right: number[]
+
+  if (cur < m) {
+    const c = Math.ceil(cur / 3) * 3
+    left = [c - 2, c - 1, c]
+    right = [total - 2, total - 1, total]
+  } else {
+    left = [1, 2, 3]
+    const groupFromEnd = Math.floor((total - cur) / 3)
+    const start = total - (groupFromEnd + 1) * 3 + 1
+    right = [start, start + 1, start + 2]
+  }
+
+  if (left[2] >= right[0]) {
+    const arr: (number | '…')[] = []
+    for (let i = 1; i <= total; i++) arr.push(i)
+    return arr
+  }
+
+  return [...left, '…' as const, ...right]
 })
 
 async function fetchLogs() {
@@ -102,9 +132,10 @@ async function fetchLogs() {
   logsError.value = ''
 
   try {
-    const { list, pagination } = await getAdminLogs(logsPage.value, logsPageSize)
+    const { list, pagination } = await getAdminLogs(logsPage.value, logsPageSize.value)
     logs.value = list
     logsTotalPages.value = pagination.totalPages
+    logsTotal.value = pagination.total
   } catch (err: unknown) {
     logsError.value = (err as { message?: string }).message || '获取操作日志失败，请检查网络后重试'
   } finally {
@@ -116,6 +147,33 @@ function goToPage(page: number) {
   if (page < 1 || page > logsTotalPages.value || page === logsPage.value || logsLoading.value) return
   logsPage.value = page
   fetchLogs()
+}
+
+function handleChangeLogsPageSize(size: number) {
+  logsPageSize.value = size
+  logsPage.value = 1
+  fetchLogs()
+}
+
+function toggleSizeMenu() {
+  if (sizeOpen.value) { sizeOpen.value = false; return }
+  if (sizeBtnRef.value) {
+    const rect = sizeBtnRef.value.getBoundingClientRect()
+    const menuH = logPageSizes.length * 36 + 8
+    sizeDropUp.value = rect.bottom + menuH > window.innerHeight && rect.top - menuH > 0
+  }
+  sizeOpen.value = true
+}
+
+function selectPageSize(size: number) {
+  sizeOpen.value = false
+  handleChangeLogsPageSize(size)
+}
+
+function onSizeClickOutside(e: MouseEvent) {
+  if (sizeBtnRef.value && !sizeBtnRef.value.contains(e.target as Node)) {
+    sizeOpen.value = false
+  }
 }
 
 function switchView(target: 'chat' | 'logs') {
@@ -137,6 +195,7 @@ function goBack() {
 }
 
 onMounted(() => {
+  document.addEventListener('click', onSizeClickOutside, true)
   if (route.query.view === 'logs') {
     view.value = 'logs'
     logsPage.value = 1
@@ -145,6 +204,7 @@ onMounted(() => {
 })
 
 onUnmounted(() => {
+  document.removeEventListener('click', onSizeClickOutside, true)
   chatStore.abortActiveConnection()
 })
 </script>
@@ -264,29 +324,37 @@ onUnmounted(() => {
           <span class="log-operator">{{ log.operator_username }}</span>
         </div>
 
-        <div v-if="logsTotalPages > 1" class="pagination-wrap">
-          <button
-            class="page-btn"
-            :disabled="logsPage <= 1"
-            @click="goToPage(logsPage - 1)"
-          >
-            上一页
-          </button>
-          <button
-            v-for="p in pages"
-            :key="p"
-            :class="['page-btn', { active: p === logsPage }]"
-            @click="goToPage(p)"
-          >
-            {{ p }}
-          </button>
-          <button
-            class="page-btn"
-            :disabled="logsPage >= logsTotalPages"
-            @click="goToPage(logsPage + 1)"
-          >
-            下一页
-          </button>
+        <div v-if="logsTotalPages > 0" class="pagination-wrap">
+          <div ref="sizeBtnRef" class="size-selector" :class="{ 'size-open': sizeOpen }">
+            <button class="size-trigger" @click.stop="toggleSizeMenu">{{ logsPageSize }}条/页 <span class="size-arrow">&#9662;</span></button>
+            <Transition name="size-fade">
+              <div v-if="sizeOpen" class="size-menu" :class="{ 'size-drop-up': sizeDropUp }">
+                <button
+                  v-for="size in logPageSizes"
+                  :key="size"
+                  :class="['size-option', { active: size === logsPageSize }]"
+                  @click.stop="selectPageSize(size)"
+                >{{ size }}条/页</button>
+              </div>
+            </Transition>
+          </div>
+
+          <span v-if="logsTotal > 0" class="page-total">{{ logsTotal }}条</span>
+
+          <button class="page-btn page-btn-arrow" :disabled="logsPage <= 1" title="首页" @click="goToPage(1)">&laquo;</button>
+          <button class="page-btn page-btn-arrow" :disabled="logsPage <= 1" title="上一页" @click="goToPage(logsPage - 1)">&lsaquo;</button>
+
+          <template v-for="(p, i) in pages" :key="i">
+            <span v-if="p === '…'" class="page-ellipsis">…</span>
+            <button
+              v-else
+              :class="['page-btn', { active: p === logsPage }]"
+              @click="goToPage(p as number)"
+            >{{ p }}</button>
+          </template>
+
+          <button class="page-btn page-btn-arrow" :disabled="logsPage >= logsTotalPages" title="下一页" @click="goToPage(logsPage + 1)">&rsaquo;</button>
+          <button class="page-btn page-btn-arrow" :disabled="logsPage >= logsTotalPages" title="末页" @click="goToPage(logsTotalPages)">&raquo;</button>
         </div>
       </div>
     </div>
@@ -780,6 +848,124 @@ onUnmounted(() => {
   opacity: 0.4;
   box-shadow: none;
   cursor: not-allowed;
+}
+
+.page-ellipsis {
+  min-width: 28px;
+  text-align: center;
+  font-size: 13px;
+  color: var(--color-text-tertiary);
+  user-select: none;
+}
+
+.page-btn.page-btn-arrow {
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1;
+  min-width: 32px;
+}
+
+.page-total {
+  margin-right: var(--spacing-sm);
+  font-size: 13px;
+  color: var(--color-text-primary);
+  user-select: none;
+}
+
+/* ===== 每页条数选择器 ===== */
+.size-selector {
+  position: relative;
+  margin-right: var(--spacing-sm);
+}
+
+.size-trigger {
+  height: 36px;
+  padding: 0 10px;
+  font-size: 13px;
+  color: var(--color-text-primary);
+  background: var(--color-card);
+  border: 1.5px solid var(--color-text-primary);
+  border-radius: var(--radius-sm);
+  box-shadow: 1.5px 1.5px 0px var(--color-text-primary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  user-select: none;
+}
+
+.size-trigger:hover {
+  transform: translate(-1px, -1px);
+  box-shadow: 2.5px 2.5px 0px var(--color-text-primary);
+  background: #ffe066;
+}
+
+.size-arrow {
+  font-size: 10px;
+  transition: transform 0.2s;
+}
+
+.size-selector.size-open .size-arrow {
+  transform: rotate(180deg);
+}
+
+.size-menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  min-width: 100%;
+  background: var(--color-card);
+  border: 1.5px solid var(--color-text-primary);
+  border-radius: var(--radius-sm);
+  box-shadow: 2px 2px 0px var(--color-text-primary);
+  overflow: hidden;
+  z-index: 9999;
+}
+
+.size-menu.size-drop-up {
+  top: auto;
+  bottom: calc(100% + 4px);
+}
+
+.size-option {
+  display: block;
+  width: 100%;
+  height: 36px;
+  padding: 0 12px;
+  font-size: 13px;
+  color: var(--color-text-primary);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.1s;
+}
+
+.size-option:hover {
+  background: #ffe066;
+}
+
+.size-option.active {
+  font-weight: 600;
+  background: var(--color-text-primary);
+  color: var(--color-text-inverse);
+}
+
+.size-fade-enter-active,
+.size-fade-leave-active {
+  transition: opacity 0.12s, transform 0.12s;
+}
+
+.size-fade-enter-from,
+.size-fade-leave-to {
+  opacity: 0;
+  transform: translateY(-4px);
+}
+
+.size-drop-up .size-fade-enter-from,
+.size-drop-up .size-fade-leave-to {
+  transform: translateY(4px);
 }
 
 .is-spinning {

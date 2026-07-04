@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
 import { useRiskFormStore } from '@/stores/riskFormStore'
@@ -21,6 +21,49 @@ const profileError = ref(false)
 const avatarInput = ref<HTMLInputElement | null>(null)
 let loadAbort: AbortController | null = null
 let uploadAbort: AbortController | null = null
+
+const showScoreHelp = ref(false)
+const helpTriggerRef = ref<HTMLElement | null>(null)
+const tooltipStyle = ref<Record<string, string>>({})
+let helpCloseTimer: ReturnType<typeof setTimeout> | null = null
+
+function toggleScoreHelp() {
+  clearHelpCloseTimer()
+  showScoreHelp.value = !showScoreHelp.value
+  if (showScoreHelp.value) {
+    nextTick(() => updateTooltipPosition())
+  }
+}
+
+function openScoreHelp() {
+  clearHelpCloseTimer()
+  showScoreHelp.value = true
+  nextTick(() => updateTooltipPosition())
+}
+
+function closeScoreHelp() {
+  helpCloseTimer = setTimeout(() => {
+    showScoreHelp.value = false
+  }, 150)
+}
+
+function clearHelpCloseTimer() {
+  if (helpCloseTimer) {
+    clearTimeout(helpCloseTimer)
+    helpCloseTimer = null
+  }
+}
+
+function updateTooltipPosition() {
+  if (!helpTriggerRef.value) return
+  const rect = helpTriggerRef.value.getBoundingClientRect()
+  tooltipStyle.value = {
+    position: 'fixed',
+    left: `${Math.max(8, rect.left + rect.width / 2 - 120)}px`,
+    top: `${rect.top - 10}px`,
+    transform: 'translateY(-100%)',
+  }
+}
 
 const isSubRouteActive = computed(() => route.path !== '/profile')
 const defaultAvatar = '/static/images/default/default-avatar.png'
@@ -283,6 +326,7 @@ onMounted(loadProfile)
 onUnmounted(() => {
   loadAbort?.abort()
   uploadAbort?.abort()
+  clearHelpCloseTimer()
 })
 </script>
 
@@ -386,7 +430,31 @@ onUnmounted(() => {
                 <AppIcon name="heart" :size="18" color="#fff" />
               </div>
               <span class="stat-value font-mono" :class="{ 'stat-placeholder': profile?.risk_score == null }">{{ profile?.risk_score ?? '--' }}</span>
-              <span class="stat-label">健康评分</span>
+              <span class="stat-label">
+                健康评分
+                <span
+                  ref="helpTriggerRef"
+                  class="help-trigger"
+                  @click.stop="toggleScoreHelp"
+                  @mouseenter="openScoreHelp"
+                  @mouseleave="closeScoreHelp"
+                >?</span>
+              </span>
+              <Teleport to="body">
+                <Transition name="tooltip-fade">
+                  <span
+                    v-if="showScoreHelp"
+                    class="help-tooltip"
+                    :style="tooltipStyle"
+                    @mouseenter="openScoreHelp"
+                    @mouseleave="closeScoreHelp"
+                  >
+                    健康评分基于《中国2型糖尿病防治指南》评分体系，总分0-51分。<br /><br />
+                    评分因素包括：年龄（0-8分）、性别（0-2分）、腰围（0-8分）、收缩压（0-8分）、BMI（0-6分）、家族史（0-6分）、妊娠史（仅女性，0-5分）。<br /><br />
+                    风险等级：&lt;15分低风险、15-24分中风险、≥25分高风险。
+                  </span>
+                </Transition>
+              </Teleport>
             </article>
             <article class="stat-card stat-card-coral">
               <div class="stat-icon-wrap">
@@ -736,7 +804,6 @@ onUnmounted(() => {
   flex-direction: column;
   align-items: center;
   gap: 6px;
-  overflow: hidden;
   background: var(--color-card);
 }
 
@@ -783,6 +850,65 @@ onUnmounted(() => {
   color: var(--color-text-secondary);
   line-height: 1.2;
   font-weight: 500;
+  position: relative;
+}
+
+/* ========== 健康评分帮助提示 ========== */
+.help-trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  vertical-align: middle;
+  margin-left: 3px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: 1px solid var(--color-text-tertiary);
+  font-size: 8px;
+  font-weight: 600;
+  color: var(--color-text-tertiary);
+  line-height: 1;
+  transition: background var(--transition-fast), color var(--transition-fast);
+}
+
+.help-trigger:hover {
+  background: var(--color-text-tertiary);
+  color: #fff;
+}
+
+.help-tooltip {
+  background: var(--color-card);
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-xs);
+  font-weight: 400;
+  line-height: 1.6;
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  box-shadow: var(--shadow-lg);
+  white-space: normal;
+  width: 240px;
+  max-width: calc(100vw - 32px);
+  text-align: left;
+  z-index: 9999;
+}
+
+@media (max-width: 480px) {
+  .help-tooltip {
+    width: 220px;
+  }
+}
+
+/* Tooltip transition */
+.tooltip-fade-enter-active,
+.tooltip-fade-leave-active {
+  transition: opacity var(--transition-fast), transform var(--transition-fast);
+}
+
+.tooltip-fade-enter-from,
+.tooltip-fade-leave-to {
+  opacity: 0;
 }
 
 /* ========== 菜单区块 ========== */

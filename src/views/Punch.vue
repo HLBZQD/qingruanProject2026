@@ -125,6 +125,10 @@ function goToPage(page: number) {
   store.fetchPage(page)
 }
 
+function handleChangePageSize(size: number) {
+  store.setPageSize(size)
+}
+
 // ===== 日期范围变更 =====
 function onDateChange() {
   store.setFilter({
@@ -546,8 +550,11 @@ onUnmounted(() => {
           v-if="store.pagination"
           :current-page="store.currentPage"
           :total-pages="store.pagination.totalPages"
+          :total="store.pagination.total"
+          :page-size="store.pageSize"
           :disabled="store.listLoading"
           @change="goToPage"
+          @change-page-size="handleChangePageSize"
         />
       </template>
     </section>

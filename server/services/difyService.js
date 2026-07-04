@@ -156,7 +156,7 @@ async function callDifyGetConversations(apiKey, userId) {
     return [];
   }
 
-  const url = baseUrl.replace(/\/$/, '') + '/conversations?user=user-' + userId;
+  const url = baseUrl.replace(/\/$/, '') + '/conversations?user=' + userId;
 
   try {
     const { status, body } = await httpRequest(url, {

@@ -22,7 +22,12 @@ const currentPage = ref(1)
 const pagination = ref<PaginationInfo | null>(null)
 const expandedId = ref<number | null>(null)
 
-const pageSize = 10
+const pageSize = ref(10)
+
+function handleChangePageSize(size: number) {
+  pageSize.value = size
+  fetchAdvice(1)
+}
 
 async function fetchAdvice(page = 1) {
   if (loading.value) return
@@ -31,7 +36,7 @@ async function fetchAdvice(page = 1) {
   error.value = ''
 
   try {
-    const { list, pagination: p } = await getHealthAdvice(page, pageSize)
+    const { list, pagination: p } = await getHealthAdvice(page, pageSize.value)
     adviceList.value = list
     pagination.value = p
     currentPage.value = p.page
@@ -143,8 +148,11 @@ onMounted(() => {
         v-if="pagination"
         :current-page="currentPage"
         :total-pages="pagination.totalPages"
+        :total="pagination.total"
+        :page-size="pageSize"
         :disabled="loading"
         @change="goToPage"
+        @change-page-size="handleChangePageSize"
       />
     </div>
   </div>

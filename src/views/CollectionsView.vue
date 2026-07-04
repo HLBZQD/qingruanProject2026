@@ -19,7 +19,7 @@ const currentPage = ref(1)
 const pagination = ref<PaginationInfo | null>(null)
 const uncollectingId = ref<number | null>(null)
 
-const pageSize = 10
+const pageSize = ref(10)
 
 async function fetchCollections(page = 1) {
   if (loading.value) return
@@ -30,7 +30,7 @@ async function fetchCollections(page = 1) {
   try {
     const { list, pagination: p } = await getCollections({
       page,
-      pageSize,
+      pageSize: pageSize.value,
     })
     collections.value = list
     pagination.value = p
@@ -44,6 +44,11 @@ async function fetchCollections(page = 1) {
 
 function goToPage(page: number) {
   fetchCollections(page)
+}
+
+function handleChangePageSize(size: number) {
+  pageSize.value = size
+  fetchCollections(1)
 }
 
 function goDetail(id: number) {
@@ -189,8 +194,11 @@ onMounted(() => {
           v-if="pagination"
           :current-page="currentPage"
           :total-pages="pagination.totalPages"
+          :total="pagination.total"
+          :page-size="pageSize"
           :disabled="loading"
           @change="goToPage"
+          @change-page-size="handleChangePageSize"
         />
     </div>
   </div>

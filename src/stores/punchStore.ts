@@ -15,6 +15,8 @@ export const usePunchStore = defineStore('punch', () => {
   const records = ref<PunchRecord[]>([])
   /** 分页信息（null = 未加载或加载失败） */
   const pagination = ref<PaginationInfo | null>(null)
+  /** 每页条数 */
+  const pageSize = ref(20)
   /** 当前筛选条件 */
   const filter = ref<{
     startDate?: string
@@ -67,7 +69,7 @@ export const usePunchStore = defineStore('punch', () => {
     try {
       const params: PunchListParams = {
         page: 1,
-        pageSize: 20,
+        pageSize: pageSize.value,
         ...(filter.value.startDate ? { startDate: filter.value.startDate } : {}),
         ...(filter.value.endDate ? { endDate: filter.value.endDate } : {}),
         ...(filter.value.punch_type ? { punch_type: filter.value.punch_type } : {}),
@@ -102,7 +104,7 @@ export const usePunchStore = defineStore('punch', () => {
       const nextPage = currentPage.value + 1
       const params: PunchListParams = {
         page: nextPage,
-        pageSize: 20,
+        pageSize: pageSize.value,
         ...(filter.value.startDate ? { startDate: filter.value.startDate } : {}),
         ...(filter.value.endDate ? { endDate: filter.value.endDate } : {}),
         ...(filter.value.punch_type ? { punch_type: filter.value.punch_type } : {}),
@@ -138,7 +140,7 @@ export const usePunchStore = defineStore('punch', () => {
     try {
       const params: PunchListParams = {
         page,
-        pageSize: 20,
+        pageSize: pageSize.value,
         ...(filter.value.startDate ? { startDate: filter.value.startDate } : {}),
         ...(filter.value.endDate ? { endDate: filter.value.endDate } : {}),
         ...(filter.value.punch_type ? { punch_type: filter.value.punch_type } : {}),
@@ -208,6 +210,12 @@ export const usePunchStore = defineStore('punch', () => {
     await fetchList()
   }
 
+  /** 切换每页条数并重新拉取 */
+  function setPageSize(size: number) {
+    pageSize.value = size
+    fetchList()
+  }
+
   /** 重试 AI 分析加载 */
   async function retryFetchAnalysis(): Promise<void> {
     await fetchAnalysis()
@@ -215,7 +223,7 @@ export const usePunchStore = defineStore('punch', () => {
 
   return {
     // state
-    records, pagination, filter, analysis,
+    records, pagination, filter, analysis, pageSize,
     listLoading, listLoadingMore, analysisLoading,
     error, analysisError,
     // 防竞态
@@ -223,7 +231,7 @@ export const usePunchStore = defineStore('punch', () => {
     // getters
     hasMore, currentPage,
     // actions
-    fetchList, loadMore, fetchPage, fetchAnalysis, setFilter,
+    fetchList, loadMore, fetchPage, fetchAnalysis, setFilter, setPageSize,
     retryFetchList, retryFetchAnalysis,
   }
 })
