@@ -1,0 +1,323 @@
+app:
+  description: ''
+  icon: 🤖
+  icon_background: '#FFEAD5'
+  icon_type: emoji
+  mode: agent-chat
+  name: 智能助手
+  use_icon_as_answer_icon: false
+dependencies:
+- current_identifier: null
+  type: marketplace
+  value:
+    marketplace_plugin_unique_identifier: langgenius/deepseek:0.0.17@f7a5c1d222d17ee419b17a80d6e4923838fe93788dc724a3af73fbc6990b3a32
+    version: null
+kind: app
+model_config:
+  agent_mode:
+    enabled: true
+    max_iteration: 5
+    prompt: null
+    strategy: function_call
+    tools:
+    - enabled: true
+      isDeleted: false
+      notAuthor: false
+      provider_id: e013b88e-06ca-41d7-8532-5830b97fabb0
+      provider_name: 普通用户数据库管理工作流集合
+      provider_type: workflow
+      tool_label: 普通用户数据库管理工作流集合
+      tool_name: set_of_database_workflow_for_user
+      tool_parameters:
+        content: ''
+        end_date: ''
+        fields: ''
+        limit: ''
+        punch_type: ''
+        sql: ''
+        start_date: ''
+        tags: ''
+        title: ''
+        tool_name: ''
+      type: workflow
+    - enabled: true
+      isDeleted: false
+      notAuthor: false
+      provider_id: bc557b89-025a-453c-abb1-cf3e0b514591
+      provider_name: 风险预测
+      provider_type: workflow
+      tool_label: 风险预测
+      tool_name: diabetes_risk_prediction
+      tool_parameters:
+        age: ''
+        diabetes_history: ''
+        family_history: ''
+        gender: ''
+        height: ''
+        pregnancy: true
+        systolic_bp: ''
+        waist: ''
+        weight: ''
+      type: workflow
+    - enabled: true
+      isDeleted: false
+      notAuthor: false
+      provider_id: 65aef676-bf3f-4095-8756-6da8b18ed5b7
+      provider_name: 方案定制
+      provider_type: workflow
+      tool_label: 方案定制
+      tool_name: life_plan_generator
+      tool_parameters:
+        activity: ''
+        age: ''
+        dietary: ''
+        feedback: ''
+        gender: ''
+        height: ''
+        weight: ''
+      type: workflow
+    - enabled: true
+      isDeleted: false
+      notAuthor: false
+      provider_id: 166f21df-adce-4f35-99cb-4daa61c937aa
+      provider_name: execute_SQL
+      provider_type: workflow
+      tool_label: execute_SQL
+      tool_name: execute_SQL
+      tool_parameters:
+        sql: ''
+      type: workflow
+  annotation_reply:
+    enabled: false
+  chat_prompt_config:
+    prompt:
+    - role: system
+      text: ''
+  completion_prompt_config:
+    conversation_histories_role:
+      assistant_prefix: ''
+      user_prefix: ''
+    prompt:
+      text: ''
+  dataset_configs:
+    datasets:
+      datasets:
+      - dataset:
+          enabled: true
+          id: d8700016-da85-46cf-a662-7936e2cc0289
+      - dataset:
+          enabled: true
+          id: 43bee99a-4b07-4816-94e6-3965622ba02c
+    reranking_enable: true
+    reranking_mode: reranking_model
+    reranking_model:
+      reranking_model_name: qwen3-rerank
+      reranking_provider_name: langgenius/tongyi/tongyi
+    retrieval_model: multiple
+    top_k: 4
+    weights:
+      keyword_setting:
+        keyword_weight: 0
+      vector_setting:
+        embedding_model_name: ep-20250219145849-wnxzt
+        embedding_provider_name: langgenius/openai_api_compatible/openai_api_compatible
+        vector_weight: 1
+  dataset_query_variable: ''
+  external_data_tools: []
+  file_upload:
+    allowed_file_extensions:
+    - .JPG
+    - .JPEG
+    - .PNG
+    - .GIF
+    - .WEBP
+    - .SVG
+    - .MP4
+    - .MOV
+    - .MPEG
+    - .MPGA
+    allowed_file_types: []
+    allowed_file_upload_methods:
+    - remote_url
+    - local_file
+    enabled: false
+    image:
+      detail: high
+      enabled: false
+      number_limits: 3
+      transfer_methods:
+      - remote_url
+      - local_file
+    number_limits: 3
+  model:
+    completion_params:
+      max_tokens: 384000
+      stop: []
+      temperature: 0.7
+    mode: chat
+    name: deepseek-v4-pro
+    provider: langgenius/deepseek/deepseek
+  more_like_this:
+    enabled: false
+  opening_statement: ''
+  pre_prompt: '# 角色
+
+    你是一个专业的糖尿病智能健康助手"小糖"，能够为糖尿病患者和关注健康的人群提供全面、专业、贴心的服务。你具备医疗知识、数据分析能力和工具调用能力。注意，你的语言风格定位为轻快活泼，让人感到亲切。
+
+
+    # 用户信息
+
+    你需要通过用户的输入内容和工具调用，查询该用户的健康数据、方案信息、打卡记录等，以便提供个性化服务。
+
+    用户信息包括:
+
+    用户ID:{{userId}}
+
+    性别:{{sex}}
+
+    年龄:{{age}}
+
+    身高（cm）:{{height}}
+
+    体重（kg）:{{weight}}
+
+    家族病史（yes / no）:{{familyHistory}}
+
+    腰围（cm）:{{waistline}}
+
+    收缩压（mmHg）:{{systolicPressure}}
+
+    妊娠（是 / 否 / 空）:{{isPregnancy}}
+
+    糖尿病史（healthy / prediabetes / diagnosed）:{{disease}}
+
+
+    ## 技能
+
+    ## 技能1: 糖尿病知识问答
+
+    使用你的专业医学知识(基于知识库和训练数据)回答用户关于糖尿病预防、诊断、治疗、饮食、运动等问题。回答要准确、易懂、有依据。
+
+
+    ## 技能2: 风险预测触发
+
+    当用户表达想了解自己的糖尿病风险时，引导用户提供必要的健康信息(年龄/性别/身高/体重/家族史等)，然后通过DIABETES_RISK_PREDICTION工具触发风险预测。
+
+
+
+    ## 技能3: 方案生成
+
+    当用户需要饮食/运动方案时，先了解用户的身体状况和生活偏好，然后通过"LIFE_PLAN"工具生成个性化方案,并以自然语言解释给用户。用户确认后，通过数据库相关工具将方案写入/更新数据库。
+
+
+    ## 技能4: 信息查询
+
+    当用户想查看自己的打卡记录、风险预测历史、健康建议等信息时，通过在工具”普通用户数据库管理工作流集合“中传入不同的tool_name和相应专有工具需要字段，调用对应的专用工具（query_punch_records
+    / query_risk_history / query_health_advice / query_life_plans / query_user_profile）查询数据库并以友好的表格或列表形式展示。未覆盖的查询场景可使用
+    execute_SQL 兜底工具。注意：数据库要么使用Kingbase(Postgres类型方言)，要么使用sqlite，前者优先，后者次之，如果sql失败，可以试试调整方言再试。
+
+
+
+    ## 技能5: 信息修改
+
+    当用户需要修改个人信息(身高、体重等)时，确认修改内容后通过 工具更新数据库。
+
+
+    ## 技能6: 健康建议生成
+
+    当用户在对话中表达健康管理意图(如"我应该怎么调整生活习惯""给我一些饮食建议""帮我分析现在的健康状况")时，分析用户数据后生成结构化的健康建议，通过 write_health_advice
+    工具将建议(标题、标签、内容)写入life_advice表，并在回复中告知用户"已为您生成一份健康建议，可在''我的-健康建议''中查看"。
+
+
+    ## 技能7: 生活状态分析
+
+    当用户想了解自己的整体健康状态和方案执行情况时，通过 query_punch_records 工具查询punch_in表进行打卡数据分析（按user_id筛选，按日期范围聚合统计完成率），以友好的表格或列表形式展示分析结果。
+
+
+    # 限制
+
+    - 只提供与糖尿病健康管理相关的信息和服务，拒绝回答无关话题
+
+    - 所有建议必须基于医学事实，不得编造医疗信息
+
+    - 对于需要医疗诊断的问题，建议用户就医
+
+    - 输出内容按清晰、有条理的格式组织
+
+    - 涉及数据库修改操作时，必须先向用户确认
+
+    - 优先使用专用工具（query_*/write_*/update_*/knowledge_search），未覆盖场景才使用 execute_SQL 兜底工具
+
+    - 调用任何工具时须注意权限约束(仅能操作当前用户本人数据)
+
+    - knowledge_search 工具用于检索糖尿病知识库，不涉及 SQL 操作
+
+    ```'
+  prompt_type: simple
+  retriever_resource:
+    enabled: true
+  sensitive_word_avoidance:
+    configs: []
+    enabled: false
+    type: ''
+  speech_to_text:
+    enabled: false
+  suggested_questions: []
+  suggested_questions_after_answer:
+    enabled: false
+  text_to_speech:
+    enabled: false
+    language: ''
+    voice: ''
+  user_input_form:
+  - number:
+      default: ''
+      label: userId
+      required: true
+      variable: userId
+  - text-input:
+      default: ''
+      label: sex
+      required: false
+      variable: sex
+  - number:
+      default: ''
+      label: age
+      required: false
+      variable: age
+  - number:
+      default: ''
+      label: height
+      required: false
+      variable: height
+  - number:
+      default: ''
+      label: weight
+      required: false
+      variable: weight
+  - text-input:
+      default: ''
+      label: familyHistory
+      required: false
+      variable: familyHistory
+  - number:
+      default: ''
+      label: waistline
+      required: false
+      variable: waistline
+  - number:
+      default: ''
+      label: systolicPressure
+      required: false
+      variable: systolicPressure
+  - text-input:
+      default: ''
+      label: isPregnancy
+      required: false
+      variable: isPregnancy
+  - text-input:
+      default: ''
+      label: disease
+      required: false
+      variable: disease
+version: 0.6.0

@@ -1,0 +1,255 @@
+app:
+  description: ''
+  icon: 🤖
+  icon_background: '#FFEAD5'
+  icon_type: emoji
+  mode: workflow
+  name: 方案定制
+  use_icon_as_answer_icon: false
+dependencies:
+- current_identifier: null
+  type: marketplace
+  value:
+    marketplace_plugin_unique_identifier: langgenius/deepseek:0.0.17@f7a5c1d222d17ee419b17a80d6e4923838fe93788dc724a3af73fbc6990b3a32
+    version: null
+kind: app
+version: 0.6.0
+workflow:
+  conversation_variables: []
+  environment_variables: []
+  features:
+    file_upload:
+      allowed_file_extensions:
+      - .JPG
+      - .JPEG
+      - .PNG
+      - .GIF
+      - .WEBP
+      - .SVG
+      allowed_file_types:
+      - image
+      allowed_file_upload_methods:
+      - local_file
+      - remote_url
+      enabled: false
+      fileUploadConfig:
+        attachment_image_file_size_limit: 2
+        audio_file_size_limit: 50
+        batch_count_limit: 5
+        file_size_limit: 15
+        file_upload_limit: 20
+        image_file_batch_limit: 10
+        image_file_size_limit: 10
+        single_chunk_attachment_limit: 10
+        video_file_size_limit: 100
+        workflow_file_upload_limit: 10
+      image:
+        enabled: false
+        number_limits: 3
+        transfer_methods:
+        - local_file
+        - remote_url
+      number_limits: 3
+    opening_statement: ''
+    retriever_resource:
+      enabled: true
+    sensitive_word_avoidance:
+      enabled: false
+    speech_to_text:
+      enabled: false
+    suggested_questions: []
+    suggested_questions_after_answer:
+      enabled: false
+    text_to_speech:
+      enabled: false
+      language: ''
+      voice: ''
+  graph:
+    edges:
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: start
+        targetType: llm
+      id: 1744962995740-source-1783055263513-target
+      source: '1744962995740'
+      sourceHandle: source
+      target: '1783055263513'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: llm
+        targetType: end
+      id: 1783055263513-source-1783056420677-target
+      source: '1783055263513'
+      sourceHandle: source
+      target: '1783056420677'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    nodes:
+    - data:
+        desc: ''
+        selected: false
+        title: 开始
+        type: start
+        variables:
+        - default: ''
+          hint: ''
+          label: age
+          options: []
+          placeholder: ''
+          required: true
+          type: number
+          variable: age
+        - default: ''
+          hint: ''
+          label: gender
+          options: []
+          placeholder: ''
+          required: true
+          type: text-input
+          variable: gender
+        - default: ''
+          hint: ''
+          label: height
+          options: []
+          placeholder: ''
+          required: true
+          type: number
+          variable: height
+        - default: ''
+          hint: ''
+          label: weight
+          options: []
+          placeholder: ''
+          required: true
+          type: number
+          variable: weight
+        - default: ''
+          hint: ''
+          label: dietary
+          options: []
+          placeholder: ''
+          required: false
+          type: text-input
+          variable: dietary
+        - default: ''
+          hint: ''
+          label: activity
+          options: []
+          placeholder: ''
+          required: false
+          type: text-input
+          variable: activity
+        - default: ''
+          hint: ''
+          label: feedback
+          options: []
+          placeholder: ''
+          required: false
+          type: text-input
+          variable: feedback
+      height: 264
+      id: '1744962995740'
+      position:
+        x: 77.60792400690102
+        y: 273.7497121454458
+      positionAbsolute:
+        x: 77.60792400690102
+        y: 273.7497121454458
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+    - data:
+        context:
+          enabled: false
+          variable_selector: []
+        model:
+          completion_params:
+            max_tokens: 384000
+            response_format: json_object
+            temperature: 1
+          mode: chat
+          name: deepseek-v4-flash
+          provider: langgenius/deepseek/deepseek
+        prompt_template:
+        - id: 7a2a6224-1e48-418e-8a2c-e2ec8ba3611c
+          role: system
+          text: "你是一个专业的糖尿病健康管理师。根据用户身体信息和生活偏好，生成个性化的饮食和运动方案。\n\n# 用户数据\n年龄：{{#1744962995740.age#}}岁\n\
+            性别：{{#1744962995740.gender#}}\n身高：{{#1744962995740.height#}}cm\n体重：{{#1744962995740.weight#}}kg\n\
+            饮食偏好：{{#1744962995740.dietary#}}\n运动偏好：{{#1744962995740.activity#}}\n\
+            反馈意见：{{#1744962995740.feedback#}}\n\n# 必含：饮食方案4项\n必须生成以下4项饮食方案（缺一不可）：\n\
+            1. 早餐 (order_num=1, plan_type=\"diet\")：含具体食物名称、份量和热量\n2. 午餐 (order_num=2,\
+            \ plan_type=\"diet\")：含主食、蛋白质、蔬菜\n3. 晚餐 (order_num=3, plan_type=\"diet\"\
+            )：清淡易消化，控制热量\n4. 加餐 (order_num=4, plan_type=\"diet\")：健康零食，避免高糖\n\n饮食总热量控制在用户每日需求的80-90%。考虑用户的饮食偏好和禁忌。如有反馈意见，据此调整。\n\
+            \n# 必含：运动方案3项\n必须生成以下3项运动方案（缺一不可）：\n1. 晨间运动 (order_num=1, plan_type=\"\
+            exercise\")：早晨时段，中低强度\n2. 晚间运动 (order_num=2, plan_type=\"exercise\")：傍晚时段，餐后1小时\n\
+            3. 周末运动 (order_num=3, plan_type=\"exercise\")：周末时段，可较长时长\n\n每周总计达到150分钟中等强度有氧运动。考虑用户运动偏好和身体限制。有关节问题避免跑跳类。\n\
+            \n# 输出格式\n**必须输出一个纯JSON数组（不要包含```json标记，不要有任何解释文字）**，数组中包含7个对象：\n\n[\n\
+            \  {\"plan_type\":\"diet\",\"order_num\":1,\"time_desc\":\"7:00-8:00\"\
+            ,\"title\":\"早餐标题\",\"content\":\"详细内容：食物名称、份量、做法\"},\n  {\"plan_type\"\
+            :\"diet\",\"order_num\":2,\"time_desc\":\"12:00-13:00\",\"title\":\"午餐标题\"\
+            ,\"content\":\"详细内容\"},\n  {\"plan_type\":\"diet\",\"order_num\":3,\"\
+            time_desc\":\"18:00-19:00\",\"title\":\"晚餐标题\",\"content\":\"详细内容\"},\n\
+            \  {\"plan_type\":\"diet\",\"order_num\":4,\"time_desc\":\"15:00-15:30\"\
+            ,\"title\":\"加餐标题\",\"content\":\"详细内容\"},\n  {\"plan_type\":\"exercise\"\
+            ,\"order_num\":1,\"time_desc\":\"6:30-7:00\",\"title\":\"晨间运动标题\",\"content\"\
+            :\"详细内容：运动类型、强度、时长、注意事项\"},\n  {\"plan_type\":\"exercise\",\"order_num\"\
+            :2,\"time_desc\":\"19:00-19:30\",\"title\":\"晚间运动标题\",\"content\":\"详细内容\"\
+            },\n  {\"plan_type\":\"exercise\",\"order_num\":3,\"time_desc\":\"8:00-9:00\"\
+            ,\"title\":\"周末运动标题\",\"content\":\"详细内容\"}\n]\n\n# 重要规则\n- 数组必须恰好包含7个对象，diet在前exercise在后\n\
+            - order_num 必须连续递增：diet为1,2,3,4；exercise为1,2,3\n- time_desc 必须给出具体时间段（如\"\
+            7:00-8:00\"），不能为空\n- title 概括方案项要点，不超过20字\n- content 详细描述食物/运动的具体内容、份量、做法/强度，至少50字\n\
+            - 方案必须个性化，不能是通用模板\n- 食物选择参考《中国居民膳食指南2022》\n- 有反馈意见时必须针对性调整相关方案项\n- **只输出JSON数组，不输出任何其他文字**"
+        reasoning_format: separated
+        selected: true
+        title: LLM 4
+        type: llm
+        vision:
+          enabled: false
+      height: 87
+      id: '1783055263513'
+      position:
+        x: 407.36021066197316
+        y: 294.7497121454458
+      positionAbsolute:
+        x: 407.36021066197316
+        y: 294.7497121454458
+      selected: true
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 241
+    - data:
+        outputs:
+        - value_selector:
+          - '1783055263513'
+          - text
+          value_type: string
+          variable: text
+        selected: false
+        title: 输出 2
+        type: end
+      height: 87
+      id: '1783056420677'
+      position:
+        x: 709.3602106619732
+        y: 294.7497121454458
+      positionAbsolute:
+        x: 709.3602106619732
+        y: 294.7497121454458
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 241
+    viewport:
+      x: -163.03317412915476
+      y: 17.60807838911569
+      zoom: 1.1170250720343573
+  rag_pipeline_variables: []

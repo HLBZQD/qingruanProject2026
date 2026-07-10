@@ -1,0 +1,309 @@
+app:
+  description: ''
+  icon: 🤖
+  icon_background: '#FFEAD5'
+  icon_type: emoji
+  mode: workflow
+  name: 风险预测
+  use_icon_as_answer_icon: false
+dependencies:
+- current_identifier: null
+  type: marketplace
+  value:
+    marketplace_plugin_unique_identifier: langgenius/deepseek:0.0.17@f7a5c1d222d17ee419b17a80d6e4923838fe93788dc724a3af73fbc6990b3a32
+    version: null
+kind: app
+version: 0.6.0
+workflow:
+  conversation_variables: []
+  environment_variables: []
+  features:
+    file_upload:
+      allowed_file_extensions:
+      - .JPG
+      - .JPEG
+      - .PNG
+      - .GIF
+      - .WEBP
+      - .SVG
+      allowed_file_types:
+      - image
+      allowed_file_upload_methods:
+      - local_file
+      - remote_url
+      enabled: false
+      fileUploadConfig:
+        attachment_image_file_size_limit: 2
+        audio_file_size_limit: 50
+        batch_count_limit: 5
+        file_size_limit: 15
+        file_upload_limit: 20
+        image_file_batch_limit: 10
+        image_file_size_limit: 10
+        single_chunk_attachment_limit: 10
+        video_file_size_limit: 100
+        workflow_file_upload_limit: 10
+      image:
+        enabled: false
+        number_limits: 3
+        transfer_methods:
+        - local_file
+        - remote_url
+      number_limits: 3
+    opening_statement: ''
+    retriever_resource:
+      enabled: true
+    sensitive_word_avoidance:
+      enabled: false
+    speech_to_text:
+      enabled: false
+    suggested_questions: []
+    suggested_questions_after_answer:
+      enabled: false
+    text_to_speech:
+      enabled: false
+      language: ''
+      voice: ''
+  graph:
+    edges:
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: llm
+        targetType: end
+      id: 1783052292329-source-1783052294159-target
+      selected: false
+      source: '1783052292329'
+      sourceHandle: source
+      target: '1783052294159'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: start
+        targetType: template-transform
+      id: 1783052289654-source-1783052859593-target
+      selected: false
+      source: '1783052289654'
+      sourceHandle: source
+      target: '1783052859593'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: template-transform
+        targetType: llm
+      id: 1783052859593-source-1783052292329-target
+      selected: false
+      source: '1783052859593'
+      sourceHandle: source
+      target: '1783052292329'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    nodes:
+    - data:
+        selected: false
+        title: 用户输入
+        type: start
+        variables:
+        - default: ''
+          hint: ''
+          label: age
+          options: []
+          placeholder: ''
+          required: true
+          type: number
+          variable: age
+        - default: ''
+          hint: ''
+          label: gender
+          options: []
+          placeholder: ''
+          required: true
+          type: text-input
+          variable: gender
+        - default: ''
+          hint: ''
+          label: height
+          options: []
+          placeholder: ''
+          required: true
+          type: number
+          variable: height
+        - default: ''
+          hint: ''
+          label: weight
+          options: []
+          placeholder: ''
+          required: true
+          type: number
+          variable: weight
+        - default: ''
+          hint: ''
+          label: waist
+          options: []
+          placeholder: ''
+          required: false
+          type: number
+          variable: waist
+        - default: ''
+          hint: ''
+          label: systolic_bp
+          options: []
+          placeholder: ''
+          required: false
+          type: number
+          variable: systolic_bp
+        - default: ''
+          hint: ''
+          label: family_history
+          options: []
+          placeholder: ''
+          required: true
+          type: text-input
+          variable: family_history
+        - default: true
+          hint: ''
+          label: pregnancy
+          options: []
+          placeholder: ''
+          required: false
+          type: checkbox
+          variable: pregnancy
+        - default: ''
+          hint: ''
+          label: diabetes_history
+          options: []
+          placeholder: ''
+          required: true
+          type: text-input
+          variable: diabetes_history
+      height: 316
+      id: '1783052289654'
+      position:
+        x: -205
+        y: 201
+      positionAbsolute:
+        x: -205
+        y: 201
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+    - data:
+        context:
+          enabled: false
+          variable_selector: []
+        model:
+          completion_params:
+            temperature: 0.7
+          mode: chat
+          name: deepseek-v4-pro
+          provider: langgenius/deepseek/deepseek
+        prompt_template:
+        - id: 7ac117ab-5c9f-4890-a84d-6d15a0110125
+          role: system
+          text: "你是一个专业的糖尿病风险评估系统。你需要严格按照以下规则完成全部计算和判定，然后输出一个JSON对象。\n\n# 输入数据\n年龄：{{#1783052289654.age#}}岁\n\
+            性别：{{#1783052289654.gender#}}\n身高：{{#1783052289654.height#}}cm\n体重：{{#1783052289654.weight#}}kg\n\
+            腰围：{{#1783052289654.waist#}}cm（0表示未提供）\n收缩压：{{#1783052289654.systolic_bp#}}mmHg（0表示未提供）\n\
+            家族糖尿病史：{{#1783052289654.family_history#}}\n妊娠状态：（仅gender=female时有效）\n\
+            病史状态：{{#1783052289654.diabetes_history#}}\n\n# 步骤1：计算BMI\nBMI = 体重(kg)\
+            \ / (身高(m))²\n身高(m) = 身高(cm) / 100\n结果保留2位小数\n\n# 步骤2：估算缺失值\n## 腰围估算（腰围输入为0或缺失时使用）：\n\
+            - 基础估算：男性 = 身高(cm) × 0.47，女性 = 身高(cm) × 0.45\n- BMI修正：BMI < 18.5 时腰围 ×\
+            \ 0.92；BMI >= 28 时腰围 × 1.10\n- 结果保留1位小数\n\n## 收缩压估算（收缩压输入为0或缺失时使用）：\n\
+            - 男性：BMI < 24 = 120；BMI 24-27.9 = 128；BMI >= 28 = 138\n- 女性：BMI < 24 =\
+            \ 112；BMI 24-27.9 = 122；BMI >= 28 = 132\n\n# 步骤3：风险评分（逐项累加，初始0分，满分51分）\n\
+            逐项按以下规则打分并累加：\n\n**年龄**：<45岁=0分；45-54岁=2分；55-64岁=6分；≥65岁=8分\n**性别**：女性=0分；男性=2分\n\
+            **腰围**：男性<85cm=0分；85-94.9cm=5分；≥95cm=8分 | 女性<80cm=0分；80-89.9cm=5分；≥90cm=8分\n\
+            **收缩压**：<130=0分；130-139=2分；140-159=5分；≥160=8分\n**BMI**：<24=0分；24-27.9=3分；≥28=6分\n\
+            **家族史**：无(no)=0分；有(yes)=6分\n**妊娠**：仅gender=female时判定，无妊娠=0分；有妊娠(pregnancy为true)=5分\n\
+            \n累加得到总评分 risk_score（整数0-51）\n\n# 步骤4：风险等级判定\n- 总分 < 15 → risk_level=\"\
+            low\"，risk_level_label=\"低风险\"\n- 总分 15-24 → risk_level=\"medium\"，risk_level_label=\"\
+            中风险\"\n- 总分 >= 25 → risk_level=\"high\"，risk_level_label=\"高风险\"\n\n#\
+            \ 步骤5：风险详细描述\n生成 risk_level_detail 字段，用一段文字描述评分结果和所属风险等级，格式如：\n\"根据中国2型糖尿病防治指南评分体系，您的评分为XX分(<15分/15-24分/>=25分)，属于低风险/中风险/高风险人群。\"\
+            \n\n# 步骤6：建议生成\n根据评分规则中各因素（年龄、BMI、腰围、血压、家族史等）逐项分析风险来源，然后生成3-5条个性化建议：\n\
+            - 如果病史状态=diagnosed(已确诊)，建议聚焦并发症预防和血糖管理\n- 如果病史状态=prediabetes(糖尿病前期)，建议聚焦逆转和延缓进展\n\
+            - 如果病史状态=healthy(健康)，建议聚焦保持和预防\n- 每条建议必须基于医学证据、具体可操作，不得编造\n将建议放入 suggestions\
+            \ 字符串数组\n\n# 步骤7：糖尿病类型匹配\n根据用户数据（年龄、BMI、病史状态、家族史等）和各类型特点，给出最可能匹配的糖尿病类型：\n\
+            - diabetes_type: 英文枚举值 type1 / type2 / gestational / other\n- matched_diabetes_type:\
+            \ 中文名称 1型糖尿病 / 2型糖尿病 / 妊娠期糖尿病 / 其他特殊类型糖尿病\n\n# 输出格式（严格JSON，不要包含```json标记）\n\
+            {\n  \"risk_score\": 28,\n  \"risk_level\": \"high\",\n  \"risk_level_label\"\
+            : \"高风险\",\n  \"risk_level_detail\": \"根据中国2型糖尿病防治指南评分体系，您的评分为28分(>=25分)，属于高风险人群。\"\
+            ,\n  \"diabetes_type\": \"type2\",\n  \"matched_diabetes_type\": \"2型糖尿病\"\
+            ,\n  \"suggestions\": [\"建议1\", \"建议2\", \"建议3\"],\n  \"bmi\": 25.95\n\
+            }\n\n# 重要\n- 必须严格按步骤执行，不能跳过任何步骤\n- 评分计算必须精确，不得估算或省略\n- 输出必须是纯JSON对象，不要包含任何解释文字或Markdown标记\n"
+        reasoning_format: separated
+        selected: true
+        title: LLM
+        type: llm
+        vision:
+          enabled: false
+      height: 87
+      id: '1783052292329'
+      position:
+        x: 373
+        y: 134
+      positionAbsolute:
+        x: 373
+        y: 134
+      selected: true
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 241
+    - data:
+        outputs:
+        - value_selector:
+          - '1783052292329'
+          - text
+          value_type: string
+          variable: text
+        selected: false
+        title: 输出
+        type: end
+      height: 87
+      id: '1783052294159'
+      position:
+        x: 656
+        y: 296
+      positionAbsolute:
+        x: 656
+        y: 296
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 241
+    - data:
+        selected: false
+        template: '{{ pregnancy }}'
+        title: 模板转换
+        type: template-transform
+        variables:
+        - value_selector:
+          - '1783052289654'
+          - pregnancy
+          value_type: boolean
+          variable: pregnancy
+      height: 51
+      id: '1783052859593'
+      position:
+        x: 93
+        y: 337
+      positionAbsolute:
+        x: 93
+        y: 337
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 241
+    viewport:
+      x: 299
+      y: 57.5
+      zoom: 1
+  rag_pipeline_variables: []

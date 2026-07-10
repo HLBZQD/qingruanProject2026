@@ -1,0 +1,194 @@
+app:
+  description: 从数据库表中删除符合条件的记录。WHERE条件为必填，防止误删整表。使用前应先查询确认目标数据。仅管理员可用。
+  icon: 🤖
+  icon_background: '#FFEAD5'
+  icon_type: emoji
+  mode: workflow
+  name: delete_record
+  use_icon_as_answer_icon: false
+dependencies: []
+kind: app
+version: 0.6.0
+workflow:
+  conversation_variables: []
+  environment_variables: []
+  features:
+    file_upload:
+      allowed_file_extensions:
+      - .JPG
+      - .JPEG
+      - .PNG
+      - .GIF
+      - .WEBP
+      - .SVG
+      allowed_file_types:
+      - image
+      allowed_file_upload_methods:
+      - local_file
+      - remote_url
+      enabled: false
+      fileUploadConfig:
+        attachment_image_file_size_limit: 2
+        audio_file_size_limit: 50
+        batch_count_limit: 5
+        file_size_limit: 15
+        file_upload_limit: 20
+        image_file_batch_limit: 10
+        image_file_size_limit: 10
+        single_chunk_attachment_limit: 10
+        video_file_size_limit: 100
+        workflow_file_upload_limit: 10
+      image:
+        enabled: false
+        number_limits: 3
+        transfer_methods:
+        - local_file
+        - remote_url
+      number_limits: 3
+    opening_statement: ''
+    retriever_resource:
+      enabled: true
+    sensitive_word_avoidance:
+      enabled: false
+    speech_to_text:
+      enabled: false
+    suggested_questions: []
+    suggested_questions_after_answer:
+      enabled: false
+    text_to_speech:
+      enabled: false
+      language: ''
+      voice: ''
+  graph:
+    edges:
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: start
+        targetType: http-request
+      id: 1782912507987-source-1782912513489-target
+      selected: false
+      source: '1782912507987'
+      sourceHandle: source
+      target: '1782912513489'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: http-request
+        targetType: end
+      id: 1782912513489-source-1782963317054-target
+      source: '1782912513489'
+      sourceHandle: source
+      target: '1782963317054'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    nodes:
+    - data:
+        selected: false
+        title: 用户输入
+        type: start
+        variables:
+        - default: ''
+          hint: ''
+          label: table
+          options: []
+          placeholder: ''
+          required: true
+          type: text-input
+          variable: table
+        - default: ''
+          hint: ''
+          label: where
+          options: []
+          placeholder: ''
+          required: true
+          type: text-input
+          variable: where
+      height: 135
+      id: '1782912507987'
+      position:
+        x: 80
+        y: 282
+      positionAbsolute:
+        x: 80
+        y: 282
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+    - data:
+        authorization:
+          config: null
+          type: no-auth
+        body:
+          data:
+          - id: key-value-37
+            key: ''
+            type: text
+            value: "{\n  \"api_key\": \"app-tPGIaTY3opz7ycWL5YqI7B6s\",\n  \"user_id\"\
+              : \"{{#sys.user_id#}}\",\n  \"tool_name\": \"delete_record\",\n  \"\
+              table\": \"{{#1782912507987.table#}}\",\n  \"where\": \"{{#1782912507987.where#}}\"\
+              \n}"
+          type: json
+        headers: Content-Type:application/json
+        method: post
+        params: ''
+        retry_config:
+          max_retries: 3
+          retry_enabled: true
+          retry_interval: 100
+        selected: true
+        ssl_verify: true
+        timeout:
+          max_connect_timeout: 0
+          max_read_timeout: 0
+          max_write_timeout: 0
+        title: HTTP 请求
+        type: http-request
+        url: http://host.docker.internal:3000/api/admin/execute
+        variables: []
+      height: 138
+      id: '1782912513489'
+      position:
+        x: 382
+        y: 282
+      positionAbsolute:
+        x: 382
+        y: 282
+      selected: true
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+    - data:
+        outputs:
+        - value_selector:
+          - '1782912513489'
+          - body
+          value_type: string
+          variable: body
+        selected: false
+        title: 输出
+        type: end
+      height: 88
+      id: '1782963317054'
+      position:
+        x: 684
+        y: 282
+      positionAbsolute:
+        x: 684
+        y: 282
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+    viewport:
+      x: 168
+      y: 20
+      zoom: 1
+  rag_pipeline_variables: []

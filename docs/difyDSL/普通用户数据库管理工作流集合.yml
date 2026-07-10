@@ -1,0 +1,1210 @@
+app:
+  description: 集合了所有普通用户数据库管理工作流
+  icon: 🤖
+  icon_background: '#FFEAD5'
+  icon_type: emoji
+  mode: workflow
+  name: 普通用户数据库管理工作流集合
+  use_icon_as_answer_icon: false
+dependencies: []
+kind: app
+version: 0.6.0
+workflow:
+  conversation_variables: []
+  environment_variables: []
+  features:
+    file_upload:
+      allowed_file_extensions:
+      - .JPG
+      - .JPEG
+      - .PNG
+      - .GIF
+      - .WEBP
+      - .SVG
+      allowed_file_types:
+      - image
+      allowed_file_upload_methods:
+      - local_file
+      - remote_url
+      enabled: false
+      fileUploadConfig:
+        attachment_image_file_size_limit: 2
+        audio_file_size_limit: 50
+        batch_count_limit: 5
+        file_size_limit: 15
+        file_upload_limit: 20
+        image_file_batch_limit: 10
+        image_file_size_limit: 10
+        single_chunk_attachment_limit: 10
+        video_file_size_limit: 100
+        workflow_file_upload_limit: 10
+      image:
+        enabled: false
+        number_limits: 3
+        transfer_methods:
+        - local_file
+        - remote_url
+      number_limits: 3
+    opening_statement: ''
+    retriever_resource:
+      enabled: true
+    sensitive_word_avoidance:
+      enabled: false
+    speech_to_text:
+      enabled: false
+    suggested_questions: []
+    suggested_questions_after_answer:
+      enabled: false
+    text_to_speech:
+      enabled: false
+      language: ''
+      voice: ''
+  graph:
+    edges:
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: start
+        targetType: if-else
+      id: 1783044174696-source-1783044260621-target
+      selected: false
+      source: '1783044174696'
+      sourceHandle: source
+      target: '1783044260621'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: if-else
+        targetType: tool
+      id: 1783044260621-true-1783044930146-target
+      selected: false
+      source: '1783044260621'
+      sourceHandle: 'true'
+      target: '1783044930146'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: if-else
+        targetType: tool
+      id: 1783044260621-900ad6dc-182c-46ab-b471-f46bcfdab1cc-1783044949731-target
+      selected: false
+      source: '1783044260621'
+      sourceHandle: 900ad6dc-182c-46ab-b471-f46bcfdab1cc
+      target: '1783044949731'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: if-else
+        targetType: tool
+      id: 1783044260621-be649b04-0cf5-45ad-88f3-3830feb520d0-1783044958698-target
+      selected: false
+      source: '1783044260621'
+      sourceHandle: be649b04-0cf5-45ad-88f3-3830feb520d0
+      target: '1783044958698'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: if-else
+        targetType: tool
+      id: 1783044260621-acfb6e15-70ef-453f-9606-fee8df5d1f83-1783044970880-target
+      selected: false
+      source: '1783044260621'
+      sourceHandle: acfb6e15-70ef-453f-9606-fee8df5d1f83
+      target: '1783044970880'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: if-else
+        targetType: tool
+      id: 1783044260621-3f2f43e5-acfa-4272-8cb6-98ce50bd51ed-1783044986719-target
+      selected: false
+      source: '1783044260621'
+      sourceHandle: 3f2f43e5-acfa-4272-8cb6-98ce50bd51ed
+      target: '1783044986719'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: if-else
+        targetType: tool
+      id: 1783044260621-a851085d-848a-4099-bcfe-378cdb774866-1783044997918-target
+      selected: false
+      source: '1783044260621'
+      sourceHandle: a851085d-848a-4099-bcfe-378cdb774866
+      target: '1783044997918'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: if-else
+        targetType: tool
+      id: 1783044260621-7ffccef7-5593-4129-8451-6578cab762c1-1783045010761-target
+      selected: false
+      source: '1783044260621'
+      sourceHandle: 7ffccef7-5593-4129-8451-6578cab762c1
+      target: '1783045010761'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: tool
+        targetType: variable-aggregator
+      id: 1783044930146-source-1783045377653-target
+      selected: false
+      source: '1783044930146'
+      sourceHandle: source
+      target: '1783045377653'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: tool
+        targetType: variable-aggregator
+      id: 1783044949731-source-1783045377653-target
+      selected: false
+      source: '1783044949731'
+      sourceHandle: source
+      target: '1783045377653'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: tool
+        targetType: variable-aggregator
+      id: 1783044958698-source-1783045377653-target
+      selected: false
+      source: '1783044958698'
+      sourceHandle: source
+      target: '1783045377653'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: tool
+        targetType: variable-aggregator
+      id: 1783044970880-source-1783045377653-target
+      selected: false
+      source: '1783044970880'
+      sourceHandle: source
+      target: '1783045377653'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: tool
+        targetType: variable-aggregator
+      id: 1783044986719-source-1783045377653-target
+      selected: false
+      source: '1783044986719'
+      sourceHandle: source
+      target: '1783045377653'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: tool
+        targetType: variable-aggregator
+      id: 1783044997918-source-1783045377653-target
+      selected: false
+      source: '1783044997918'
+      sourceHandle: source
+      target: '1783045377653'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: tool
+        targetType: variable-aggregator
+      id: 1783045010761-source-1783045377653-target
+      selected: false
+      source: '1783045010761'
+      sourceHandle: source
+      target: '1783045377653'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: variable-aggregator
+        targetType: end
+      id: 1783045377653-source-1783045575429-target
+      source: '1783045377653'
+      sourceHandle: source
+      target: '1783045575429'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: if-else
+        targetType: tool
+      id: 1783044260621-cd56cab4-a422-44c6-9951-164b2f6fda1b-1783060268158-target
+      source: '1783044260621'
+      sourceHandle: cd56cab4-a422-44c6-9951-164b2f6fda1b
+      target: '1783060268158'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: tool
+        targetType: variable-aggregator
+      id: 1783060268158-source-1783045377653-target
+      source: '1783060268158'
+      sourceHandle: source
+      target: '1783045377653'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    nodes:
+    - data:
+        selected: false
+        title: 用户输入
+        type: start
+        variables:
+        - default: ''
+          hint: ''
+          label: tool_name
+          options: []
+          placeholder: ''
+          required: true
+          type: text-input
+          variable: tool_name
+        - default: ''
+          hint: ''
+          label: limit
+          options: []
+          placeholder: ''
+          required: false
+          type: number
+          variable: limit
+        - default: ''
+          hint: ''
+          label: start_date
+          options: []
+          placeholder: ''
+          required: false
+          type: text-input
+          variable: start_date
+        - default: ''
+          hint: ''
+          label: end_date
+          options: []
+          placeholder: ''
+          required: false
+          type: text-input
+          variable: end_date
+        - default: ''
+          hint: ''
+          label: punch_type
+          options: []
+          placeholder: ''
+          required: false
+          type: text-input
+          variable: punch_type
+        - default: ''
+          hint: ''
+          label: title
+          options: []
+          placeholder: ''
+          required: false
+          type: text-input
+          variable: title
+        - default: ''
+          hint: ''
+          label: content
+          options: []
+          placeholder: ''
+          required: false
+          type: text-input
+          variable: content
+        - default: ''
+          hint: ''
+          label: tags
+          options: []
+          placeholder: ''
+          required: false
+          type: text-input
+          variable: tags
+        - default: ''
+          hint: ''
+          label: fields
+          options: []
+          placeholder: ''
+          required: false
+          type: json_object
+          variable: fields
+        - default: ''
+          hint: ''
+          label: items
+          options: []
+          placeholder: ''
+          required: false
+          type: json_object
+          variable: items
+      height: 342
+      id: '1783044174696'
+      position:
+        x: 81
+        y: 281
+      positionAbsolute:
+        x: 81
+        y: 281
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+    - data:
+        cases:
+        - case_id: 'true'
+          conditions:
+          - comparison_operator: is
+            id: 584a1f45-dd5f-4f1a-8d09-2483ed3e2daa
+            value: query_user_profile
+            varType: string
+            variable_selector:
+            - '1783044174696'
+            - tool_name
+          id: 'true'
+          logical_operator: and
+        - case_id: 900ad6dc-182c-46ab-b471-f46bcfdab1cc
+          conditions:
+          - comparison_operator: is
+            id: b5864e21-8b63-495b-a5f8-0a930ab213f7
+            value: query_risk_history
+            varType: string
+            variable_selector:
+            - '1783044174696'
+            - tool_name
+          id: 900ad6dc-182c-46ab-b471-f46bcfdab1cc
+          logical_operator: and
+        - case_id: be649b04-0cf5-45ad-88f3-3830feb520d0
+          conditions:
+          - comparison_operator: is
+            id: a51a8421-e5fc-4242-8234-7da12f5736fd
+            value: query_punch_records
+            varType: string
+            variable_selector:
+            - '1783044174696'
+            - tool_name
+          id: be649b04-0cf5-45ad-88f3-3830feb520d0
+          logical_operator: and
+        - case_id: acfb6e15-70ef-453f-9606-fee8df5d1f83
+          conditions:
+          - comparison_operator: is
+            id: 50fb279c-23a3-443a-ade4-df7bf42585d9
+            value: query_life_plans
+            varType: string
+            variable_selector:
+            - '1783044174696'
+            - tool_name
+          id: acfb6e15-70ef-453f-9606-fee8df5d1f83
+          logical_operator: and
+        - case_id: 3f2f43e5-acfa-4272-8cb6-98ce50bd51ed
+          conditions:
+          - comparison_operator: is
+            id: bf8746e3-6948-4618-a7a5-d32694095289
+            value: query_health_advice
+            varType: string
+            variable_selector:
+            - '1783044174696'
+            - tool_name
+          id: 3f2f43e5-acfa-4272-8cb6-98ce50bd51ed
+          logical_operator: and
+        - case_id: a851085d-848a-4099-bcfe-378cdb774866
+          conditions:
+          - comparison_operator: is
+            id: 05a2a997-a523-419f-bbaa-20b61cab215b
+            value: write_health_advice
+            varType: string
+            variable_selector:
+            - '1783044174696'
+            - tool_name
+          id: a851085d-848a-4099-bcfe-378cdb774866
+          logical_operator: and
+        - case_id: 7ffccef7-5593-4129-8451-6578cab762c1
+          conditions:
+          - comparison_operator: is
+            id: 90092576-5c58-4f92-86c2-448ccef29044
+            value: update_user_profile
+            varType: string
+            variable_selector:
+            - '1783044174696'
+            - tool_name
+          id: 7ffccef7-5593-4129-8451-6578cab762c1
+          logical_operator: and
+        - case_id: cd56cab4-a422-44c6-9951-164b2f6fda1b
+          conditions:
+          - comparison_operator: is
+            id: 6b968ecf-6073-444b-8131-9ed81dff97ee
+            value: write_life_plans
+            varType: string
+            variable_selector:
+            - '1783044174696'
+            - tool_name
+          id: cd56cab4-a422-44c6-9951-164b2f6fda1b
+          logical_operator: and
+        selected: false
+        title: 条件分支
+        type: if-else
+      height: 651
+      id: '1783044260621'
+      position:
+        x: 441
+        y: 302
+      positionAbsolute:
+        x: 441
+        y: 302
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 241
+    - data:
+        is_team_authorization: true
+        paramSchemas: []
+        params: {}
+        plugin_id: null
+        plugin_unique_identifier: null
+        provider_icon:
+          background: '#FFEAD5'
+          content: 🤖
+        provider_id: a2a4d1e2-9469-4a38-9c09-3dbcf5d6254c
+        provider_name: query_user_profile
+        provider_type: workflow
+        selected: false
+        title: query_user_profile
+        tool_configurations: {}
+        tool_description: 查询当前用户的 users 表记录- 权限约束：仅限查询当前 user_id 的本人数据（users 表 WHERE
+          id = ?）
+        tool_label: query_user_profile
+        tool_name: query_user_profile
+        tool_node_version: '2'
+        tool_parameters: {}
+        type: tool
+      height: 51
+      id: '1783044930146'
+      position:
+        x: 781.3369072055975
+        y: 332.8870692938582
+      positionAbsolute:
+        x: 781.3369072055975
+        y: 332.8870692938582
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 241
+    - data:
+        is_team_authorization: true
+        paramSchemas:
+        - auto_generate: null
+          default: '10'
+          form: llm
+          human_description:
+            en_US: 返回条数，默认 10，可选
+            ja_JP: 返回条数，默认 10，可选
+            pt_BR: 返回条数，默认 10，可选
+            zh_Hans: 返回条数，默认 10，可选
+          label:
+            en_US: limit
+            ja_JP: limit
+            pt_BR: limit
+            zh_Hans: limit
+          llm_description: 返回条数，默认 10，可选
+          max: null
+          min: null
+          name: limit
+          options: []
+          placeholder:
+            en_US: ''
+            ja_JP: ''
+            pt_BR: ''
+            zh_Hans: ''
+          precision: null
+          required: false
+          scope: null
+          template: null
+          type: number
+        params:
+          limit: ''
+        plugin_id: null
+        plugin_unique_identifier: null
+        provider_icon:
+          background: '#FFEAD5'
+          content: 🤖
+        provider_id: 0861b0fb-d243-47ec-a108-7a707d33e924
+        provider_name: query_risk_history
+        provider_type: workflow
+        selected: false
+        title: query_risk_history
+        tool_configurations: {}
+        tool_description: 查询用户的历史糖尿病风险预测记录，含风险评分、风险等级、预测类型等信息
+        tool_label: query_risk_history
+        tool_name: query_risk_history
+        tool_node_version: '2'
+        tool_parameters:
+          limit:
+            type: variable
+            value:
+            - '1783044174696'
+            - limit
+        type: tool
+      height: 51
+      id: '1783044949731'
+      position:
+        x: 781.3369072055975
+        y: 407.8870692938582
+      positionAbsolute:
+        x: 781.3369072055975
+        y: 407.8870692938582
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 241
+    - data:
+        is_team_authorization: true
+        paramSchemas:
+        - auto_generate: null
+          default: ''
+          form: llm
+          human_description:
+            en_US: 开始日期，格式 2026-06-01，可选
+            ja_JP: 开始日期，格式 2026-06-01，可选
+            pt_BR: 开始日期，格式 2026-06-01，可选
+            zh_Hans: 开始日期，格式 2026-06-01，可选
+          label:
+            en_US: start_date
+            ja_JP: start_date
+            pt_BR: start_date
+            zh_Hans: start_date
+          llm_description: 开始日期，格式 2026-06-01，可选
+          max: null
+          min: null
+          name: start_date
+          options: []
+          placeholder:
+            en_US: ''
+            ja_JP: ''
+            pt_BR: ''
+            zh_Hans: ''
+          precision: null
+          required: false
+          scope: null
+          template: null
+          type: string
+        - auto_generate: null
+          default: ''
+          form: llm
+          human_description:
+            en_US: 结束日期，格式 2026-06-30，可选
+            ja_JP: 结束日期，格式 2026-06-30，可选
+            pt_BR: 结束日期，格式 2026-06-30，可选
+            zh_Hans: 结束日期，格式 2026-06-30，可选
+          label:
+            en_US: end_date
+            ja_JP: end_date
+            pt_BR: end_date
+            zh_Hans: end_date
+          llm_description: 结束日期，格式 2026-06-30，可选
+          max: null
+          min: null
+          name: end_date
+          options: []
+          placeholder:
+            en_US: ''
+            ja_JP: ''
+            pt_BR: ''
+            zh_Hans: ''
+          precision: null
+          required: false
+          scope: null
+          template: null
+          type: string
+        - auto_generate: null
+          default: ''
+          form: llm
+          human_description:
+            en_US: 打卡类型 diet（饮食）或 exercise（运动），可选
+            ja_JP: 打卡类型 diet（饮食）或 exercise（运动），可选
+            pt_BR: 打卡类型 diet（饮食）或 exercise（运动），可选
+            zh_Hans: 打卡类型 diet（饮食）或 exercise（运动），可选
+          label:
+            en_US: punch_type
+            ja_JP: punch_type
+            pt_BR: punch_type
+            zh_Hans: punch_type
+          llm_description: 打卡类型 diet（饮食）或 exercise（运动），可选
+          max: null
+          min: null
+          name: punch_type
+          options: []
+          placeholder:
+            en_US: ''
+            ja_JP: ''
+            pt_BR: ''
+            zh_Hans: ''
+          precision: null
+          required: false
+          scope: null
+          template: null
+          type: string
+        - auto_generate: null
+          default: '30'
+          form: llm
+          human_description:
+            en_US: 返回条数，默认 30
+            ja_JP: 返回条数，默认 30
+            pt_BR: 返回条数，默认 30
+            zh_Hans: 返回条数，默认 30
+          label:
+            en_US: limit
+            ja_JP: limit
+            pt_BR: limit
+            zh_Hans: limit
+          llm_description: 返回条数，默认 30
+          max: null
+          min: null
+          name: limit
+          options: []
+          placeholder:
+            en_US: ''
+            ja_JP: ''
+            pt_BR: ''
+            zh_Hans: ''
+          precision: null
+          required: false
+          scope: null
+          template: null
+          type: number
+        params:
+          end_date: ''
+          limit: ''
+          punch_type: ''
+          start_date: ''
+        plugin_id: null
+        plugin_unique_identifier: null
+        provider_icon:
+          background: '#FFEAD5'
+          content: 🤖
+        provider_id: d478bb3e-cdb5-44d5-9a70-f2d0a69cb079
+        provider_name: query_punch_records
+        provider_type: workflow
+        selected: false
+        title: query_punch_records
+        tool_configurations: {}
+        tool_description: '查询用户的打卡记录，支持按日期范围（start_date/end_date）和类型（diet/exercise）筛选，用于生活状态分析
+
+
+          权限约束：仅查询当前 user_id 的 punch_in 表本人数据'
+        tool_label: query_punch_records
+        tool_name: query_punch_records
+        tool_node_version: '2'
+        tool_parameters:
+          end_date:
+            type: mixed
+            value: '{{#1783044174696.end_date#}}'
+          limit:
+            type: variable
+            value:
+            - '1783044174696'
+            - limit
+          punch_type:
+            type: mixed
+            value: '{{#1783044174696.punch_type#}}'
+          start_date:
+            type: mixed
+            value: '{{#1783044174696.start_date#}}'
+        type: tool
+      height: 51
+      id: '1783044958698'
+      position:
+        x: 781.3369072055975
+        y: 480.8870692938582
+      positionAbsolute:
+        x: 781.3369072055975
+        y: 480.8870692938582
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 241
+    - data:
+        is_team_authorization: true
+        paramSchemas: []
+        params: {}
+        plugin_id: null
+        plugin_unique_identifier: null
+        provider_icon:
+          background: '#FFEAD5'
+          content: 🤖
+        provider_id: c443ec94-dd2d-49c4-bbf8-0406212edff7
+        provider_name: query_life_plans
+        provider_type: workflow
+        selected: false
+        title: query_life_plans
+        tool_configurations: {}
+        tool_description: 查询用户的当前活跃生活方案（饮食和运动），按类型和排序号分组
+        tool_label: query_life_plans
+        tool_name: query_life_plans
+        tool_node_version: '2'
+        tool_parameters: {}
+        type: tool
+      height: 51
+      id: '1783044970880'
+      position:
+        x: 782.3369072055975
+        y: 551.8870692938582
+      positionAbsolute:
+        x: 782.3369072055975
+        y: 551.8870692938582
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 241
+    - data:
+        is_team_authorization: true
+        paramSchemas:
+        - auto_generate: null
+          default: '10'
+          form: llm
+          human_description:
+            en_US: 返回条数，默认 10，可选
+            ja_JP: 返回条数，默认 10，可选
+            pt_BR: 返回条数，默认 10，可选
+            zh_Hans: 返回条数，默认 10，可选
+          label:
+            en_US: limit
+            ja_JP: limit
+            pt_BR: limit
+            zh_Hans: limit
+          llm_description: 返回条数，默认 10，可选
+          max: null
+          min: null
+          name: limit
+          options: []
+          placeholder:
+            en_US: ''
+            ja_JP: ''
+            pt_BR: ''
+            zh_Hans: ''
+          precision: null
+          required: false
+          scope: null
+          template: null
+          type: number
+        params:
+          limit: ''
+        plugin_id: null
+        plugin_unique_identifier: null
+        provider_icon:
+          background: '#FFEAD5'
+          content: 🤖
+        provider_id: 16ac0062-3420-46ff-907f-8bce6d6ff85b
+        provider_name: query_health_advice
+        provider_type: workflow
+        selected: false
+        title: query_health_advice
+        tool_configurations: {}
+        tool_description: 查询用户的历史健康建议，含标题、标签、内容和创建时间
+        tool_label: query_health_advice
+        tool_name: query_health_advice
+        tool_node_version: '2'
+        tool_parameters:
+          limit:
+            type: variable
+            value:
+            - '1783044174696'
+            - limit
+        type: tool
+      height: 51
+      id: '1783044986719'
+      position:
+        x: 781.3369072055975
+        y: 623.8870692938582
+      positionAbsolute:
+        x: 781.3369072055975
+        y: 623.8870692938582
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 241
+    - data:
+        is_team_authorization: true
+        paramSchemas:
+        - auto_generate: null
+          default: ''
+          form: llm
+          human_description:
+            en_US: 健康建议标题
+            ja_JP: 健康建议标题
+            pt_BR: 健康建议标题
+            zh_Hans: 健康建议标题
+          label:
+            en_US: title
+            ja_JP: title
+            pt_BR: title
+            zh_Hans: title
+          llm_description: 健康建议标题
+          max: null
+          min: null
+          name: title
+          options: []
+          placeholder:
+            en_US: ''
+            ja_JP: ''
+            pt_BR: ''
+            zh_Hans: ''
+          precision: null
+          required: true
+          scope: null
+          template: null
+          type: string
+        - auto_generate: null
+          default: ''
+          form: llm
+          human_description:
+            en_US: 标签，多个用逗号分隔，如"饮食,血糖管理"
+            ja_JP: 标签，多个用逗号分隔，如"饮食,血糖管理"
+            pt_BR: 标签，多个用逗号分隔，如"饮食,血糖管理"
+            zh_Hans: 标签，多个用逗号分隔，如"饮食,血糖管理"
+          label:
+            en_US: tags
+            ja_JP: tags
+            pt_BR: tags
+            zh_Hans: tags
+          llm_description: 标签，多个用逗号分隔，如"饮食,血糖管理"
+          max: null
+          min: null
+          name: tags
+          options: []
+          placeholder:
+            en_US: ''
+            ja_JP: ''
+            pt_BR: ''
+            zh_Hans: ''
+          precision: null
+          required: false
+          scope: null
+          template: null
+          type: string
+        - auto_generate: null
+          default: ''
+          form: llm
+          human_description:
+            en_US: 建议正文内容，Markdown格式
+            ja_JP: 建议正文内容，Markdown格式
+            pt_BR: 建议正文内容，Markdown格式
+            zh_Hans: 建议正文内容，Markdown格式
+          label:
+            en_US: content
+            ja_JP: content
+            pt_BR: content
+            zh_Hans: content
+          llm_description: 建议正文内容，Markdown格式
+          max: null
+          min: null
+          name: content
+          options: []
+          placeholder:
+            en_US: ''
+            ja_JP: ''
+            pt_BR: ''
+            zh_Hans: ''
+          precision: null
+          required: true
+          scope: null
+          template: null
+          type: string
+        params:
+          content: ''
+          tags: ''
+          title: ''
+        plugin_id: null
+        plugin_unique_identifier: null
+        provider_icon:
+          background: '#FFEAD5'
+          content: 🤖
+        provider_id: 0e002a70-a52f-490a-9bf6-206b10ce4ba7
+        provider_name: write_health_advice
+        provider_type: workflow
+        selected: false
+        title: write_health_advice
+        tool_configurations: {}
+        tool_description: 将健康生活建议写入数据库（life_advice表），含标题、标签数组和正文内容。写入后告知用户在"我的-健康建议"中查看
+        tool_label: write_health_advice
+        tool_name: write_health_advice
+        tool_node_version: '2'
+        tool_parameters:
+          content:
+            type: mixed
+            value: '{{#1783044174696.content#}}'
+          tags:
+            type: mixed
+            value: '{{#1783044174696.tags#}}'
+          title:
+            type: mixed
+            value: '{{#1783044174696.title#}}'
+        type: tool
+      height: 51
+      id: '1783044997918'
+      position:
+        x: 782.3369072055975
+        y: 694.8870692938582
+      positionAbsolute:
+        x: 782.3369072055975
+        y: 694.8870692938582
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 241
+    - data:
+        is_team_authorization: true
+        paramSchemas:
+        - auto_generate: null
+          default: ''
+          form: llm
+          human_description:
+            en_US: "fields（Object）展开后的子字段： 子字段\t类型\t必填\t说明 username\tstring\t否\t新用户名\
+              \ avatar\tstring\t否\t新头像路径 password_changed\tnumber\t否\t密码修改标记，0 或 1"
+            ja_JP: "fields（Object）展开后的子字段： 子字段\t类型\t必填\t说明 username\tstring\t否\t新用户名\
+              \ avatar\tstring\t否\t新头像路径 password_changed\tnumber\t否\t密码修改标记，0 或 1"
+            pt_BR: "fields（Object）展开后的子字段： 子字段\t类型\t必填\t说明 username\tstring\t否\t新用户名\
+              \ avatar\tstring\t否\t新头像路径 password_changed\tnumber\t否\t密码修改标记，0 或 1"
+            zh_Hans: "fields（Object）展开后的子字段： 子字段\t类型\t必填\t说明 username\tstring\t否\t\
+              新用户名 avatar\tstring\t否\t新头像路径 password_changed\tnumber\t否\t密码修改标记，0\
+              \ 或 1"
+          label:
+            en_US: fields
+            ja_JP: fields
+            pt_BR: fields
+            zh_Hans: fields
+          llm_description: "fields（Object）展开后的子字段： 子字段\t类型\t必填\t说明 username\tstring\t\
+            否\t新用户名 avatar\tstring\t否\t新头像路径 password_changed\tnumber\t否\t密码修改标记，0\
+            \ 或 1"
+          max: null
+          min: null
+          name: fields
+          options: []
+          placeholder:
+            en_US: ''
+            ja_JP: ''
+            pt_BR: ''
+            zh_Hans: ''
+          precision: null
+          required: true
+          scope: null
+          template: null
+          type: object
+        params:
+          fields: ''
+        plugin_id: null
+        plugin_unique_identifier: null
+        provider_icon:
+          background: '#FFEAD5'
+          content: 🤖
+        provider_id: 5d02e0ff-cb10-4fcd-9af6-c83bbceb63ed
+        provider_name: update_user_profile
+        provider_type: workflow
+        selected: false
+        title: update_user_profile
+        tool_configurations: {}
+        tool_description: 修改当前用户的个人信息。支持的字段：username（用户名）、avatar（头像路径）、password_changed（密码修改标记）。修改前应与用户确认。
+        tool_label: update_user_profile
+        tool_name: update_user_profile
+        tool_node_version: '2'
+        tool_parameters:
+          fields:
+            type: variable
+            value:
+            - '1783044174696'
+            - fields
+        type: tool
+      height: 51
+      id: '1783045010761'
+      position:
+        x: 782.3369072055975
+        y: 763.8870692938582
+      positionAbsolute:
+        x: 782.3369072055975
+        y: 763.8870692938582
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 241
+    - data:
+        advanced_settings:
+          group_enabled: false
+          groups:
+          - groupId: 39d1ef4b-d157-48ec-865e-02b9865efcbf
+            group_name: Group1
+            output_type: string
+            variables:
+            - - '1783045010761'
+              - body
+            - - '1783044997918'
+              - body
+            - - '1783044970880'
+              - body
+            - - '1783045019863'
+              - body
+            - - '1783044958698'
+              - body
+            - - '1783044949731'
+              - body
+        output_type: string
+        selected: false
+        title: 变量聚合器
+        type: variable-aggregator
+        variables:
+        - - '1783045010761'
+          - body
+        - - '1783044997918'
+          - body
+        - - '1783044970880'
+          - body
+        - - '1783044958698'
+          - body
+        - - '1783044949731'
+          - body
+        - - '1783044930146'
+          - body
+        - - '1783044986719'
+          - body
+        - - '1783060268158'
+          - body
+      height: 289
+      id: '1783045377653'
+      position:
+        x: 1230.3369072055975
+        y: 332.8870692938582
+      positionAbsolute:
+        x: 1230.3369072055975
+        y: 332.8870692938582
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 241
+    - data:
+        outputs:
+        - value_selector:
+          - '1783045377653'
+          - output
+          value_type: string
+          variable: output
+        selected: true
+        title: 输出
+        type: end
+      height: 87
+      id: '1783045575429'
+      position:
+        x: 1578.3369072055975
+        y: 332.8870692938582
+      positionAbsolute:
+        x: 1578.3369072055975
+        y: 332.8870692938582
+      selected: true
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 241
+    - data:
+        is_team_authorization: true
+        paramSchemas:
+        - auto_generate: null
+          default: ''
+          form: llm
+          human_description:
+            en_US: 方案项数组，每个元素含 plan_type, order_num, time_desc, title, content
+            ja_JP: 方案项数组，每个元素含 plan_type, order_num, time_desc, title, content
+            pt_BR: 方案项数组，每个元素含 plan_type, order_num, time_desc, title, content
+            zh_Hans: 方案项数组，每个元素含 plan_type, order_num, time_desc, title, content
+          label:
+            en_US: items
+            ja_JP: items
+            pt_BR: items
+            zh_Hans: items
+          llm_description: 方案项数组，每个元素含 plan_type, order_num, time_desc, title, content
+          max: null
+          min: null
+          name: items
+          options: []
+          placeholder:
+            en_US: ''
+            ja_JP: ''
+            pt_BR: ''
+            zh_Hans: ''
+          precision: null
+          required: true
+          scope: null
+          template: null
+          type: object
+        params:
+          items: ''
+        plugin_id: null
+        plugin_unique_identifier: null
+        provider_icon:
+          background: '#FFEAD5'
+          content: 🤖
+        provider_id: b0898700-a209-4125-b95c-bd8165e632d9
+        provider_name: write_life_plans
+        provider_type: workflow
+        selected: false
+        title: write_life_plans
+        tool_configurations: {}
+        tool_description: 写入用户（仅限当前）的生活方案
+        tool_label: write_life_plans
+        tool_name: write_life_plans
+        tool_node_version: '2'
+        tool_parameters:
+          items:
+            type: variable
+            value:
+            - '1783044174696'
+            - items
+        type: tool
+      height: 51
+      id: '1783060268158'
+      position:
+        x: 781.3369072055975
+        y: 845.3870692938582
+      positionAbsolute:
+        x: 781.3369072055975
+        y: 845.3870692938582
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 241
+    viewport:
+      x: 19.13976165194265
+      y: 0.16114876229505626
+      zoom: 0.6597539553864471
+  rag_pipeline_variables: []

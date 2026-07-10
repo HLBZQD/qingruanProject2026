@@ -1,0 +1,157 @@
+app:
+  description: ''
+  icon: 🤖
+  icon_background: '#FFEAD5'
+  icon_type: emoji
+  mode: chat
+  name: 李静怡医生
+  use_icon_as_answer_icon: false
+dependencies:
+- current_identifier: null
+  type: marketplace
+  value:
+    marketplace_plugin_unique_identifier: langgenius/deepseek:0.0.17@f7a5c1d222d17ee419b17a80d6e4923838fe93788dc724a3af73fbc6990b3a32
+    version: null
+kind: app
+model_config:
+  agent_mode:
+    enabled: false
+    max_iteration: 10
+    strategy: function_call
+    tools: []
+  annotation_reply:
+    enabled: false
+  chat_prompt_config:
+    prompt:
+    - role: system
+      text: ''
+  completion_prompt_config:
+    conversation_histories_role:
+      assistant_prefix: ''
+      user_prefix: ''
+    prompt:
+      text: ''
+  dataset_configs:
+    datasets:
+      datasets:
+      - dataset:
+          enabled: true
+          id: d8700016-da85-46cf-a662-7936e2cc0289
+    reranking_enable: true
+    reranking_mode: reranking_model
+    reranking_model:
+      reranking_model_name: qwen3-rerank
+      reranking_provider_name: langgenius/tongyi/tongyi
+    retrieval_model: multiple
+    top_k: 4
+  dataset_query_variable: ''
+  external_data_tools: []
+  file_upload:
+    allowed_file_extensions:
+    - .JPG
+    - .JPEG
+    - .PNG
+    - .GIF
+    - .WEBP
+    - .SVG
+    - .MP4
+    - .MOV
+    - .MPEG
+    - .WEBM
+    allowed_file_types: []
+    allowed_file_upload_methods:
+    - remote_url
+    - local_file
+    enabled: false
+    image:
+      detail: high
+      enabled: false
+      number_limits: 3
+      transfer_methods:
+      - remote_url
+      - local_file
+    number_limits: 3
+  model:
+    completion_params:
+      max_tokens: 384000
+      stop: []
+      temperature: 0.7
+    mode: chat
+    name: deepseek-v4-pro
+    provider: langgenius/deepseek/deepseek
+  more_like_this:
+    enabled: false
+  opening_statement: ''
+  pre_prompt: '# 角色
+
+    你是李静怡医生，糖尿病专科医师，专注糖尿病患者的个体化治疗方案制定和长期随访管理，在饮食运动指导方面经验丰富。你正在"糖尿病预治智能助手"平台上为用户提供在线健康咨询服务。
+
+
+    # 咨询范围
+
+    - 糖尿病个体化管理方案制定（根据病程、年龄、生活习惯量身调整）
+
+    - 血糖监测方案设计：监测频率、时间点（空腹/餐后/睡前/夜间）、记录方法
+
+    - CGM（持续血糖监测）数据解读与趋势分析
+
+    - 生活方式干预的个体化建议：饮食结构调整、运动处方、作息优化
+
+    - 糖尿病日常自我管理教育：足部护理、皮肤保护、感染预防
+
+    - 患者随访指标解读（糖化血红蛋白、血脂、血压达标值）
+
+    - 不同人群（老年、青年、女性妊娠期）的管理差异
+
+
+    # 对话风格
+
+    - 细致耐心: 关注细节，主动追问饮食结构、运动习惯、监测记录等具体信息
+
+    - 贴近生活: 建议结合患者日常场景（如上班族、经常外出就餐、家庭做饭），给可落地的方案
+
+    - 鼓励支持: 肯定患者已有的管理努力，帮助建立长期管理信心，避免说教
+
+    - 循序渐进: 不要求一次到位，分阶段设定可达成的小目标（如先把空腹血糖降1mmol/L）
+
+
+    # 回答规范
+
+    - 给饮食建议时具体到食物类别、份量参考和替换方案，而非笼统的"少吃多餐"
+
+    - 给运动建议时包含类型、时长、频率、注意事项（如运动前后测血糖、避免空腹运动）
+
+    - 解读监测数据时结合趋势而非单点值，指出波动规律和可能原因
+
+    - 对依从性差的患者多用提问引导，帮助其自己发现问题
+
+
+    # 重要限制
+
+    - 你是AI虚拟医师，不得声称自己是真实执业医师，不得替代线下就诊
+
+    - 不得开具处方、不得推荐具体药品品牌、不得给出具体用药剂量
+
+    - 遇到紧急情况（如反复低血糖、血糖持续>16.7mmol/L、感染加重），立即建议就医
+
+    - 不得回答与糖尿病无关的医疗问题
+
+    - 所有建议需注明"仅供参考，具体诊疗以线下医生为准"'
+  prompt_type: simple
+  retriever_resource:
+    enabled: true
+  sensitive_word_avoidance:
+    config: {}
+    enabled: false
+    type: ''
+  speech_to_text:
+    enabled: false
+  suggested_questions: []
+  suggested_questions_after_answer:
+    enabled: false
+  text_to_speech:
+    enabled: false
+    language: ''
+    voice: ''
+  user_input_form: []
+version: 0.6.0

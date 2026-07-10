@@ -1,0 +1,315 @@
+app:
+  description: ''
+  icon: 🤖
+  icon_background: '#FFEAD5'
+  icon_type: emoji
+  mode: agent-chat
+  name: admin-manager-agent
+  use_icon_as_answer_icon: false
+dependencies:
+- current_identifier: null
+  type: marketplace
+  value:
+    marketplace_plugin_unique_identifier: langgenius/deepseek:0.0.17@f7a5c1d222d17ee419b17a80d6e4923838fe93788dc724a3af73fbc6990b3a32
+    version: null
+kind: app
+model_config:
+  agent_mode:
+    enabled: true
+    max_iteration: 99
+    prompt: null
+    strategy: function_call
+    tools:
+    - enabled: true
+      isDeleted: false
+      notAuthor: false
+      provider_id: 12ce8b65-343c-41e0-adea-6a0ab4d4e984
+      provider_name: query_table
+      provider_type: workflow
+      tool_label: query_table
+      tool_name: query_table
+      tool_parameters:
+        limit: ''
+        offset: ''
+        order_by: ''
+        table: ''
+        where: ''
+      type: workflow
+    - enabled: true
+      isDeleted: false
+      notAuthor: false
+      provider_id: 28cb5af8-d8a3-4ac3-8401-253f64e70f23
+      provider_name: update_record
+      provider_type: workflow
+      tool_label: update_record
+      tool_name: update_record
+      tool_parameters:
+        fields: ''
+        table: ''
+        where: ''
+      type: workflow
+    - enabled: true
+      isDeleted: false
+      notAuthor: false
+      provider_id: time
+      provider_name: time
+      provider_type: builtin
+      tool_label: 获取时间戳
+      tool_name: localtime_to_timestamp
+      tool_parameters:
+        localtime: null
+        timezone: Asia/Shanghai
+      type: builtin
+    - enabled: true
+      isDeleted: false
+      notAuthor: false
+      provider_id: time
+      provider_name: time
+      provider_type: builtin
+      tool_label: 获取当前时间
+      tool_name: current_time
+      tool_parameters:
+        format: '%Y-%m-%d %H:%M:%S'
+        timezone: UTC
+      type: builtin
+    - enabled: true
+      isDeleted: false
+      notAuthor: false
+      provider_id: time
+      provider_name: time
+      provider_type: builtin
+      tool_label: 时间戳转换
+      tool_name: timestamp_to_localtime
+      tool_parameters:
+        timestamp: null
+        timezone: Asia/Shanghai
+      type: builtin
+    - enabled: true
+      isDeleted: false
+      notAuthor: false
+      provider_id: 8b7e86e7-9500-499f-bd34-b5e5eebf2d32
+      provider_name: insert_record
+      provider_type: workflow
+      tool_label: insert_record
+      tool_name: insert_record
+      tool_parameters:
+        fields: ''
+        table: ''
+      type: workflow
+    - enabled: true
+      isDeleted: false
+      notAuthor: false
+      provider_id: 9043dd50-c87d-4c05-955d-db1c82e747ea
+      provider_name: get_table_schema
+      provider_type: workflow
+      tool_label: get_table_schema
+      tool_name: get_table_schema
+      tool_parameters:
+        table: ''
+      type: workflow
+    - enabled: true
+      isDeleted: false
+      notAuthor: false
+      provider_id: 4dd80181-0996-42ce-85ab-80a07a887f76
+      provider_name: delete_record
+      provider_type: workflow
+      tool_label: delete_record
+      tool_name: delete_record
+      tool_parameters:
+        table: ''
+        where: ''
+      type: workflow
+    - enabled: true
+      isDeleted: false
+      notAuthor: false
+      provider_id: time
+      provider_name: time
+      provider_type: builtin
+      tool_label: 时区转换
+      tool_name: timezone_conversion
+      tool_parameters:
+        current_time: null
+        current_timezone: Asia/Shanghai
+        target_timezone: Asia/Tokyo
+      type: builtin
+    - enabled: true
+      isDeleted: false
+      notAuthor: false
+      provider_id: 166f21df-adce-4f35-99cb-4daa61c937aa
+      provider_name: execute_SQL
+      provider_type: workflow
+      tool_label: execute_SQL
+      tool_name: execute_SQL
+      tool_parameters:
+        sql: ''
+      type: workflow
+  annotation_reply:
+    enabled: false
+  chat_prompt_config:
+    prompt:
+    - role: system
+      text: ''
+  completion_prompt_config:
+    conversation_histories_role:
+      assistant_prefix: ''
+      user_prefix: ''
+    prompt:
+      text: ''
+  dataset_configs:
+    datasets:
+      datasets:
+      - dataset:
+          enabled: true
+          id: 034d40bd-5c41-4b9a-8362-45963e7a9b3d
+    reranking_enable: true
+    reranking_mode: reranking_model
+    reranking_model:
+      reranking_model_name: qwen3-rerank
+      reranking_provider_name: langgenius/tongyi/tongyi
+    retrieval_model: multiple
+    top_k: 4
+  dataset_query_variable: ''
+  external_data_tools: []
+  file_upload:
+    allowed_file_extensions:
+    - .JPG
+    - .JPEG
+    - .PNG
+    - .GIF
+    - .WEBP
+    - .SVG
+    - .MP4
+    - .MOV
+    - .MPEG
+    - .WEBM
+    allowed_file_types: []
+    allowed_file_upload_methods:
+    - remote_url
+    - local_file
+    enabled: false
+    image:
+      detail: high
+      enabled: false
+      number_limits: 3
+      transfer_methods:
+      - remote_url
+      - local_file
+    number_limits: 3
+  model:
+    completion_params:
+      stop: []
+    mode: chat
+    name: deepseek-v4-pro
+    provider: langgenius/deepseek/deepseek
+  more_like_this:
+    enabled: false
+  opening_statement: ''
+  pre_prompt: '# 角色
+
+    你是一个数据库管理助手，专门协助管理员通过自然语言操作"糖尿病预治智能助手"平台的Kingbase数据库。当前数据库为 KingbaseES（PostgreSQL
+    兼容方言）。生成 SQL 时必须使用 PostgreSQL 语法，
+
+    禁止使用 SQLite 专有函数：datetime()、json_extract()、strftime()、last_insert_rowid()、
+
+    group_concat()、LIMIT off,cnt 等。改用 CURRENT_TIMESTAMP、->>、to_char()、
+
+    RETURNING id、string_agg()、LIMIT cnt OFFSET off。
+
+
+    # 数据库结构
+
+    你拥有数据库完整结构知识，包含: users, doctor_information, articles, diabetes_types, article_collections,
+    user_risk_info, life_plans, life_advice, punch_in, admin_logs。
+
+
+    # 技能
+
+    1. 查询数据: 生成SELECT查询并执行，支持条件筛选、排序和限制条数
+
+    2. 新增数据: 确认信息完整后生成INSERT语句并执行
+
+    3. 修改数据: 先查询确认目标记录，修改后生成UPDATE语句并执行
+
+    4. 删除数据: 先查询确认待删除内容，获得二次确认后生成DELETE语句并执行
+
+    5. 查看操作日志: 查询admin_logs表并展示
+
+
+    # 管理场景覆盖
+
+    - 打卡信息管理: 查询用户打卡记录、统计完成率、按日期筛选、修正异常记录
+
+    - 健康资讯管理: 查看文章列表、按分类筛选、修改/删除文章、查看收藏数据
+
+
+    # 限制
+
+    - 优先使用专用工具（query_table / insert_record / update_record / delete_record / get_table_schema），未覆盖场景才使用
+    execute_SQL 兜底工具
+
+    - 所有数据库操作通过工具执行（专用工具或 execute_SQL 兜底）
+
+    - 删除操作须展示待删除内容并获管理员确认
+
+    - 禁止执行DROP TABLE、ALTER TABLE等DDL操作
+
+    - 操作结果以清晰格式反馈
+
+
+    # 可用工具
+
+    - get_table_schema: 查询任意表的结构（列名、类型、主键等），进行查询前先用它了解表结构
+
+    - query_table: 查询表数据，支持 WHERE 条件、ORDER BY 排序、LIMIT/OFFSET 分页
+
+    - insert_record: 向表插入新记录，fields 为字段键值对
+
+    - update_record: 更新表中记录，必须同时提供 fields 和 where
+
+    - delete_record: 删除表中记录，必须提供 where，删除前应先 query 确认目标数据
+
+
+    # 操作规范
+
+    1. 查询前先用 get_table_schema 获取表结构，确保字段名正确
+
+    2. 所有 where 条件格式为：column = value AND column = value（仅支持 AND 连接的等值条件）
+
+    3. fields 参数必须是 JSON 对象，如 {"username":"张三","role":"user"}
+
+    4. 插入用户时不要提供 id 字段，数据库会自动生成
+
+    5. 删除操作前必须先查询并展示待删除数据，获得确认后再执行
+
+    6. 禁止尝试 DROP TABLE、ALTER TABLE 等 DDL 操作
+
+    7. 查询结果较多时自动分页（limit 20）
+
+
+    # 常用示例
+
+    - 查询所有管理员：query_table table="users" where="role = ''admin''"
+
+    - 查某个用户：query_table table="users" where="id = 123"
+
+    - 新增用户：insert_record table="users" fields={"username":"新用户","role":"user"}
+
+    - 删除用户：delete_record table="users" where="id = 123"'
+  prompt_type: simple
+  retriever_resource:
+    enabled: true
+  sensitive_word_avoidance:
+    config: {}
+    enabled: false
+    type: ''
+  speech_to_text:
+    enabled: false
+  suggested_questions: []
+  suggested_questions_after_answer:
+    enabled: false
+  text_to_speech:
+    enabled: false
+    language: ''
+    voice: ''
+  user_input_form: []
+version: 0.6.0

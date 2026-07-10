@@ -1,0 +1,185 @@
+app:
+  description: 获取指定数据库表的列结构信息，包括列名、数据类型、是否主键、是否非空。在对表进行任何操作前应先调用此工具了解表结构。仅管理员可用。
+  icon: 🤖
+  icon_background: '#FFEAD5'
+  icon_type: emoji
+  mode: workflow
+  name: get_table_schema
+  use_icon_as_answer_icon: false
+dependencies: []
+kind: app
+version: 0.6.0
+workflow:
+  conversation_variables: []
+  environment_variables: []
+  features:
+    file_upload:
+      allowed_file_extensions:
+      - .JPG
+      - .JPEG
+      - .PNG
+      - .GIF
+      - .WEBP
+      - .SVG
+      allowed_file_types:
+      - image
+      allowed_file_upload_methods:
+      - local_file
+      - remote_url
+      enabled: false
+      fileUploadConfig:
+        attachment_image_file_size_limit: 2
+        audio_file_size_limit: 50
+        batch_count_limit: 5
+        file_size_limit: 15
+        file_upload_limit: 20
+        image_file_batch_limit: 10
+        image_file_size_limit: 10
+        single_chunk_attachment_limit: 10
+        video_file_size_limit: 100
+        workflow_file_upload_limit: 10
+      image:
+        enabled: false
+        number_limits: 3
+        transfer_methods:
+        - local_file
+        - remote_url
+      number_limits: 3
+    opening_statement: ''
+    retriever_resource:
+      enabled: true
+    sensitive_word_avoidance:
+      enabled: false
+    speech_to_text:
+      enabled: false
+    suggested_questions: []
+    suggested_questions_after_answer:
+      enabled: false
+    text_to_speech:
+      enabled: false
+      language: ''
+      voice: ''
+  graph:
+    edges:
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: start
+        targetType: http-request
+      id: 1782910674379-source-1782910682516-target
+      source: '1782910674379'
+      sourceHandle: source
+      target: '1782910682516'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: http-request
+        targetType: end
+      id: 1782910682516-source-1782911421204-target
+      source: '1782910682516'
+      sourceHandle: source
+      target: '1782911421204'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    nodes:
+    - data:
+        selected: false
+        title: 用户输入
+        type: start
+        variables:
+        - default: ''
+          hint: ''
+          label: table
+          options: []
+          placeholder: ''
+          required: true
+          type: text-input
+          variable: table
+      height: 109
+      id: '1782910674379'
+      position:
+        x: 80
+        y: 282
+      positionAbsolute:
+        x: 80
+        y: 282
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+    - data:
+        authorization:
+          config: null
+          type: no-auth
+        body:
+          data:
+          - id: key-value-279
+            key: ''
+            type: text
+            value: "{\n  \"api_key\": \"app-tPGIaTY3opz7ycWL5YqI7B6s\",\n  \"user_id\"\
+              : \"{{#sys.user_id#}}\",\n  \"tool_name\": \"get_table_schema\",\n \
+              \ \"table\": \"{{#1782910674379.table#}}\"\n}"
+          type: json
+        headers: Content-Type:application/json
+        method: post
+        params: ''
+        retry_config:
+          max_retries: 3
+          retry_enabled: true
+          retry_interval: 100
+        selected: true
+        ssl_verify: true
+        timeout:
+          max_connect_timeout: 0
+          max_read_timeout: 0
+          max_write_timeout: 0
+        title: HTTP 请求
+        type: http-request
+        url: http://host.docker.internal:3000/api/admin/execute
+        variables: []
+      height: 138
+      id: '1782910682516'
+      position:
+        x: 382
+        y: 281
+      positionAbsolute:
+        x: 382
+        y: 281
+      selected: true
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+    - data:
+        outputs:
+        - value_selector:
+          - '1782910682516'
+          - body
+          value_type: string
+          variable: body
+        selected: false
+        title: 输出
+        type: end
+      height: 88
+      id: '1782911421204'
+      position:
+        x: 684
+        y: 281
+      positionAbsolute:
+        x: 684
+        y: 281
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+    viewport:
+      x: 34.05869713917758
+      y: 169.15268731888952
+      zoom: 0.757858283255199
+  rag_pipeline_variables: []

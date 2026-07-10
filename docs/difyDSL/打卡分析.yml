@@ -1,0 +1,354 @@
+app:
+  description: ''
+  icon: 🤖
+  icon_background: '#FFEAD5'
+  icon_type: emoji
+  mode: workflow
+  name: 打卡分析
+  use_icon_as_answer_icon: false
+dependencies:
+- current_identifier: null
+  type: marketplace
+  value:
+    marketplace_plugin_unique_identifier: langgenius/deepseek:0.0.17@f7a5c1d222d17ee419b17a80d6e4923838fe93788dc724a3af73fbc6990b3a32
+    version: null
+kind: app
+version: 0.6.0
+workflow:
+  conversation_variables: []
+  environment_variables:
+  - description: ''
+    id: 253fd909-8170-4914-8b45-c68fd98ea207
+    name: localIp
+    selector:
+    - env
+    - localIp
+    value: 192.168.7.112
+    value_type: string
+  features:
+    file_upload:
+      allowed_file_extensions:
+      - .JPG
+      - .JPEG
+      - .PNG
+      - .GIF
+      - .WEBP
+      - .SVG
+      allowed_file_types:
+      - image
+      allowed_file_upload_methods:
+      - local_file
+      - remote_url
+      enabled: false
+      fileUploadConfig:
+        attachment_image_file_size_limit: 2
+        audio_file_size_limit: 50
+        batch_count_limit: 5
+        file_size_limit: 15
+        file_upload_limit: 20
+        image_file_batch_limit: 10
+        image_file_size_limit: 10
+        single_chunk_attachment_limit: 10
+        video_file_size_limit: 100
+        workflow_file_upload_limit: 10
+      image:
+        enabled: false
+        number_limits: 3
+        transfer_methods:
+        - local_file
+        - remote_url
+      number_limits: 3
+    opening_statement: ''
+    retriever_resource:
+      enabled: true
+    sensitive_word_avoidance:
+      enabled: false
+    speech_to_text:
+      enabled: false
+    suggested_questions: []
+    suggested_questions_after_answer:
+      enabled: false
+    text_to_speech:
+      enabled: false
+      language: ''
+      voice: ''
+  graph:
+    edges:
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: start
+        targetType: code
+      id: 1743408964685-source-1783075860135-target
+      selected: false
+      source: '1743408964685'
+      sourceHandle: source
+      target: '1783075860135'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: llm
+        targetType: code
+      id: 1783075878029-source-1783076042131-target
+      selected: false
+      source: '1783075878029'
+      sourceHandle: source
+      target: '1783076042131'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: code
+        targetType: end
+      id: 1783076042131-source-1783076212543-target
+      selected: false
+      source: '1783076042131'
+      sourceHandle: source
+      target: '1783076212543'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: code
+        targetType: llm
+      id: 1783075860135-source-1783075878029-target
+      source: '1783075860135'
+      sourceHandle: source
+      target: '1783075878029'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInLoop: false
+        sourceType: code
+        targetType: code
+      id: 1783075860135-source-1783076042131-target
+      source: '1783075860135'
+      sourceHandle: source
+      target: '1783076042131'
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    nodes:
+    - data:
+        desc: ''
+        selected: false
+        title: 开始
+        type: start
+        variables:
+        - default: ''
+          hint: ''
+          label: punch_records
+          options: []
+          placeholder: ''
+          required: true
+          type: json_object
+          variable: punch_records
+      height: 109
+      id: '1743408964685'
+      position:
+        x: 30
+        y: 244
+      positionAbsolute:
+        x: 30
+        y: 244
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+    - data:
+        code: "import json\nfrom datetime import datetime, timedelta\n\ndef main(punch_records:\
+          \ dict) -> dict:\n    records = punch_records.get(\"records\", [])\n   \
+          \ \n    diet = [r for r in records if r.get(\"punch_type\") == \"diet\"\
+          ]\n    exer = [r for r in records if r.get(\"punch_type\") == \"exercise\"\
+          ]\n    \n    total = len(records)\n    d_total = len(diet)\n    e_total\
+          \ = len(exer)\n    d_ok = sum(1 for r in diet if r.get(\"completion_status\"\
+          ) == \"completed\")\n    e_ok = sum(1 for r in exer if r.get(\"completion_status\"\
+          ) == \"completed\")\n    \n    d_rate = round(d_ok / d_total, 2) if d_total\
+          \ > 0 else 0.0\n    e_rate = round(e_ok / e_total, 2) if e_total > 0 else\
+          \ 0.0\n    \n    today = datetime.now().date()\n    trend_map = {}\n   \
+          \ for i in range(6, -1, -1):\n        d = (today - timedelta(days=i)).isoformat()\n\
+          \        trend_map[d] = {\"date\": d, \"diet_completed\": 0, \"exercise_completed\"\
+          : 0}\n    \n    for r in records:\n        t = r.get(\"punch_time\", \"\"\
+          )\n        if t and r.get(\"completion_status\") == \"completed\":\n   \
+          \         day = t[:10]\n            if day in trend_map:\n             \
+          \   if r.get(\"punch_type\") == \"diet\":\n                    trend_map[day][\"\
+          diet_completed\"] += 1\n                elif r.get(\"punch_type\") == \"\
+          exercise\":\n                    trend_map[day][\"exercise_completed\"]\
+          \ += 1\n    \n    trend = list(trend_map.values())\n    \n    return {\n\
+          \        \"stats_json\": json.dumps({\n            \"diet_completion_rate\"\
+          : d_rate,\n            \"exercise_completion_rate\": e_rate,\n         \
+          \   \"total_punches\": total,\n            \"last_7_days_trend\": trend\n\
+          \        }, ensure_ascii=False),\n        \"stats_text\": f\"饮食完成率：{d_rate*100:.0f}%（{d_ok}/{d_total}），运动完成率：{e_rate*100:.0f}%（{e_ok}/{e_total}），总打卡\
+          \ {total} 次。\"\n    }"
+        code_language: python3
+        outputs:
+          stats_json:
+            children: null
+            type: string
+          stats_text:
+            children: null
+            type: string
+        selected: false
+        title: 代码执行
+        type: code
+        variables:
+        - value_selector:
+          - '1743408964685'
+          - punch_records
+          value_type: object
+          variable: punch_records
+      height: 52
+      id: '1783075860135'
+      position:
+        x: 333.5912149286669
+        y: 247.1824298573339
+      positionAbsolute:
+        x: 333.5912149286669
+        y: 247.1824298573339
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+    - data:
+        context:
+          enabled: false
+          variable_selector: []
+        model:
+          completion_params:
+            max_tokens: 384000
+            temperature: 0.7
+          mode: chat
+          name: deepseek-v4-flash
+          provider: langgenius/deepseek/deepseek
+        prompt_template:
+        - id: f517f4e4-aa06-43fe-82a5-3e4314d0a3a2
+          role: system
+          text: '你是一个专业的健康数据分析师。根据用户的饮食和运动打卡数据，给出依从性评估和改进建议。
+
+
+            # 分析维度
+
+            1. 按类型汇总饮食/运动完成率
+
+            2. 近7天趋势变化
+
+            3. 依从性综合评语
+
+            4. 2-3条具体可执行的改进建议
+
+
+            # 注意事项
+
+            - 基于客观数据，不做主观猜测
+
+            - 打卡不足7天时标注数据量提示
+
+            - 改进建议要具体可操作，避免笼统的"多运动"
+
+            - adherence_comment 用 Markdown 格式（含**加粗**、- 列表）'
+        - id: 915fa519-0d7d-4c91-9d17-3d9b422d5c66
+          role: user
+          text: "分析以下打卡数据：\n{{#1783075860135.stats_text#}}\n\n\n必须只输出纯 JSON（不要```json包裹）：\n\
+            \n{\n  \"adherence_comment\": \"依从性评语（Markdown格式）\",\n  \"improvement_suggestions\"\
+            : [\"具体建议1\", \"具体建议2\"]\n}"
+        reasoning_format: separated
+        selected: false
+        title: LLM
+        type: llm
+        vision:
+          enabled: false
+      height: 88
+      id: '1783075878029'
+      position:
+        x: 772.4356987940243
+        y: 103.97308627730874
+      positionAbsolute:
+        x: 772.4356987940243
+        y: 103.97308627730874
+      selected: true
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+    - data:
+        code: "import json\n\ndef main(stats_json: str, llm_output: str) -> dict:\n\
+          \    try:\n        stats = json.loads(stats_json)\n    except:\n       \
+          \ stats = {}\n    \n    try:\n        llm = json.loads(llm_output)\n   \
+          \ except:\n        llm = {}\n    \n    suggestions = llm.get(\"improvement_suggestions\"\
+          , [])\n    if not isinstance(suggestions, list):\n        suggestions =\
+          \ [str(suggestions)]\n    \n    return {\n        \"text\": json.dumps({\n\
+          \            \"diet_completion_rate\": float(stats.get(\"diet_completion_rate\"\
+          , 0)),\n            \"exercise_completion_rate\": float(stats.get(\"exercise_completion_rate\"\
+          , 0)),\n            \"total_punches\": int(stats.get(\"total_punches\",\
+          \ 0)),\n            \"last_7_days_trend\": stats.get(\"last_7_days_trend\"\
+          , []),\n            \"adherence_comment\": str(llm.get(\"adherence_comment\"\
+          , \"\")),\n            \"improvement_suggestions\": suggestions\n      \
+          \  }, ensure_ascii=False)\n    }"
+        code_language: python3
+        outputs:
+          text:
+            children: null
+            type: string
+        selected: false
+        title: 代码执行 2
+        type: code
+        variables:
+        - value_selector:
+          - '1783075860135'
+          - stats_json
+          value_type: string
+          variable: stats_json
+        - value_selector:
+          - '1783075878029'
+          - text
+          value_type: string
+          variable: llm_output
+      height: 52
+      id: '1783076042131'
+      position:
+        x: 1064.97272808231
+        y: 375.1790770046415
+      positionAbsolute:
+        x: 1064.97272808231
+        y: 375.1790770046415
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+    - data:
+        outputs:
+        - value_selector:
+          - '1783076042131'
+          - text
+          value_type: string
+          variable: text
+        selected: false
+        title: 输出
+        type: end
+      height: 88
+      id: '1783076212543'
+      position:
+        x: 1366.97272808231
+        y: 375.1790770046415
+      positionAbsolute:
+        x: 1366.97272808231
+        y: 375.1790770046415
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+    viewport:
+      x: 621.9460715460752
+      y: 440.20523074883954
+      zoom: 0.25
+  rag_pipeline_variables: []

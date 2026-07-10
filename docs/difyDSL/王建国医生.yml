@@ -1,0 +1,157 @@
+app:
+  description: ''
+  icon: 🤖
+  icon_background: '#FFEAD5'
+  icon_type: emoji
+  mode: chat
+  name: 王建国医生
+  use_icon_as_answer_icon: false
+dependencies:
+- current_identifier: null
+  type: marketplace
+  value:
+    marketplace_plugin_unique_identifier: langgenius/deepseek:0.0.17@f7a5c1d222d17ee419b17a80d6e4923838fe93788dc724a3af73fbc6990b3a32
+    version: null
+kind: app
+model_config:
+  agent_mode:
+    enabled: false
+    max_iteration: 10
+    strategy: function_call
+    tools: []
+  annotation_reply:
+    enabled: false
+  chat_prompt_config:
+    prompt:
+    - role: system
+      text: ''
+  completion_prompt_config:
+    conversation_histories_role:
+      assistant_prefix: ''
+      user_prefix: ''
+    prompt:
+      text: ''
+  dataset_configs:
+    datasets:
+      datasets:
+      - dataset:
+          enabled: true
+          id: d8700016-da85-46cf-a662-7936e2cc0289
+    reranking_enable: true
+    reranking_mode: reranking_model
+    reranking_model:
+      reranking_model_name: qwen3-rerank
+      reranking_provider_name: langgenius/tongyi/tongyi
+    retrieval_model: multiple
+    top_k: 4
+  dataset_query_variable: ''
+  external_data_tools: []
+  file_upload:
+    allowed_file_extensions:
+    - .JPG
+    - .JPEG
+    - .PNG
+    - .GIF
+    - .WEBP
+    - .SVG
+    - .MP4
+    - .MOV
+    - .MPEG
+    - .WEBM
+    allowed_file_types: []
+    allowed_file_upload_methods:
+    - remote_url
+    - local_file
+    enabled: false
+    image:
+      detail: high
+      enabled: false
+      number_limits: 3
+      transfer_methods:
+      - remote_url
+      - local_file
+    number_limits: 3
+  model:
+    completion_params:
+      max_tokens: 384000
+      stop: []
+      temperature: 0.7
+    mode: chat
+    name: deepseek-v4-pro
+    provider: langgenius/deepseek/deepseek
+  more_like_this:
+    enabled: false
+  opening_statement: ''
+  pre_prompt: '# 角色
+
+    你是王建国医生，临床营养学专家，擅长糖尿病患者的医学营养治疗和个性化饮食方案设计，帮助数百位患者通过饮食管理改善血糖。你正在"糖尿病预治智能助手"平台上为用户提供在线健康咨询服务。
+
+
+    # 咨询范围
+
+    - 糖尿病医学营养治疗（MNT）原则讲解：总热量控制、三大营养素配比、餐次分配
+
+    - 个性化饮食方案设计：一日三餐+加餐的具体食谱与食材搭配
+
+    - 食物升糖指数（GI）与血糖负荷（GL）应用：食物选择与替换
+
+    - 热量计算与份量估算：教会患者用"拳头/手掌"等直观方法估量
+
+    - 体重管理与饮食配合：超重/肥胖患者的减重饮食策略
+
+    - 特殊场景饮食指导：节假日、外出就餐、出差、宴席的应对技巧
+
+    - 合并症饮食调整：高血压低盐、血脂异常低脂、肾病的蛋白摄入控制
+
+
+    # 对话风格
+
+    - 实用导向: 直接给出具体食材、份量、烹饪方式、搭配组合，可立即执行
+
+    - 操作性强: 避免笼统的"少吃多餐""清淡饮食"，落到"早餐1个鸡蛋+1杯无糖豆浆+1片全麦面包"
+
+    - 因人制宜: 先询问患者口味偏好、烹饪条件、经济情况、饮食禁忌，再设计方案
+
+    - 鼓励试错: 允许逐步调整，记录饮食后一起复盘改进
+
+
+    # 回答规范
+
+    - 给食谱时按"早餐/午餐/晚餐/加餐"分栏，每餐列2-3种可选搭配
+
+    - 提及食物时标注GI值高低（如"糙米饭GI中等、白米饭GI高，建议替换"）
+
+    - 涉及热量时给出粗略估算（如"这份午餐约500千卡"）和占全天比例
+
+    - 对地域饮食差异（北方面食、南方米饭、川菜重油）给出针对性调整
+
+
+    # 重要限制
+
+    - 你是AI虚拟医师，不得声称自己是真实执业医师，不得替代线下就诊
+
+    - 不得开具处方、不得推荐具体药品品牌、不得给出具体用药剂量
+
+    - 遇到紧急情况（如低血糖发作、酮症酸中毒症状），立即建议就医或拨打120
+
+    - 不得回答与糖尿病营养无关的医疗问题（如运动用药请引导咨询对应医生）
+
+    - 所有建议需注明"仅供参考，具体方案以线下营养科医生为准"'
+  prompt_type: simple
+  retriever_resource:
+    enabled: true
+  sensitive_word_avoidance:
+    config: {}
+    enabled: false
+    type: ''
+  speech_to_text:
+    enabled: false
+  suggested_questions: []
+  suggested_questions_after_answer:
+    enabled: false
+  text_to_speech:
+    enabled: false
+    language: ''
+    voice: ''
+  user_input_form: []
+version: 0.6.0
