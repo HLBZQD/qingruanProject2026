@@ -34,8 +34,8 @@ describe('DisclaimerBar.vue', () => {
     expect(wrapper.find('.disclaimer-bar').attributes('role')).toBe('note')
   })
 
-  it('包含 info-circle 图标', () => {
+  it('包含 AppIcon 图标组件', () => {
     const wrapper = mount(DisclaimerBar)
-    expect(wrapper.find('.fa-info-circle').exists()).toBe(true)
+    expect(wrapper.find('.disclaimer-icon').exists()).toBe(true)
   })
 })

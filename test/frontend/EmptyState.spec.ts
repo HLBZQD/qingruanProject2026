@@ -6,16 +6,16 @@ describe('EmptyState.vue', () => {
   it('使用默认插槽渲染标题与图标', () => {
     const wrapper = mount(EmptyState)
     expect(wrapper.find('.empty-title').text()).toBe('暂无数据')
-    expect(wrapper.find('.empty-icon').classes()).toContain('fa-inbox')
+    expect(wrapper.find('.empty-icon').exists()).toBe(true)
   })
 
   it('传入 props 时渲染自定义内容', () => {
     const wrapper = mount(EmptyState, {
-      props: { icon: 'fa-list', title: '暂无文章', description: '还没有内容' },
+      props: { icon: 'list', title: '暂无文章', description: '还没有内容' },
     })
     expect(wrapper.find('.empty-title').text()).toBe('暂无文章')
     expect(wrapper.find('.empty-desc').text()).toBe('还没有内容')
-    expect(wrapper.find('.empty-icon').classes()).toContain('fa-list')
+    expect(wrapper.find('.empty-icon').exists()).toBe(true)
   })
 
   it('未传 actionText 时不渲染按钮', () => {

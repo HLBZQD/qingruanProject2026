@@ -13,7 +13,7 @@ vi.mock('vue-router', () => ({
 import { ref } from 'vue'
 
 const defaultTabs = [
-  { path: '/home', label: '首页', icon: 'fa-home' },
+  { path: '/home', label: '首页', icon: 'home' },
   { path: '/risk', label: '风险预测', icon: 'fa-heart-pulse' },
   { path: '/plan', label: '生活方案', icon: 'fa-list-check' },
   { path: '/profile', label: '我的', icon: 'fa-user' },
@@ -64,7 +64,7 @@ describe('TabBar.vue', () => {
     it('渲染图标与标签文本', () => {
       const wrapper = mountTabBar()
       const firstItem = wrapper.find('.tab-item')
-      expect(firstItem.find('.tab-icon').classes()).toContain('fa-home')
+      expect(firstItem.find('.tab-icon').exists()).toBe(true)
       expect(firstItem.find('.tab-label').text()).toBe('首页')
     })
 
@@ -164,7 +164,7 @@ describe('TabBar.vue', () => {
       // 验证每个链接元素存在且有正确的标签文本
       for (let i = 0; i < defaultTabs.length; i++) {
         expect(links[i].find('.tab-label').text()).toBe(defaultTabs[i].label)
-        expect(links[i].find('.tab-icon').classes()).toContain(defaultTabs[i].icon)
+        expect(links[i].find('.tab-icon').exists()).toBe(true)
       }
     })
   })

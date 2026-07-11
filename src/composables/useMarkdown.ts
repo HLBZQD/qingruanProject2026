@@ -32,7 +32,8 @@ import { sanitizeHtml } from '@/utils/sanitize'
 // 依赖: sanitizeHtml 的 ALLOWED_ATTR 已包含 href/title/target/rel，
 // rel 属性随本渲染器注入，sanitizeHtml 白名单放行。
 const _linkRenderer = {
-  link(href: string | null, title: string | null, text: string): string {
+  // marked v12+ 传入对象参数 { href, title, text }，非独立参数
+  link({ href, title, text }: { href: string | null; title: string | null; text: string }): string {
     const h = href ?? ''
     const t = title ? ` title="${title.replace(/"/g, '&quot;')}"` : ''
     const rel = /^https?:\/\//i.test(h) ? ' rel="noopener noreferrer" target="_blank"' : ''

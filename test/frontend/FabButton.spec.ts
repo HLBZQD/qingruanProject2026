@@ -39,8 +39,8 @@ describe('FabButton.vue', () => {
     expect(wrapper.emitted('click')).toHaveLength(3)
   })
 
-  it('包含 fa-robot 图标', () => {
+  it('包含糖尿病图标组件', () => {
     const wrapper = mount(FabButton)
-    expect(wrapper.find('.fa-robot').exists()).toBe(true)
+    expect(wrapper.find('.diabetes-icon').exists()).toBe(true)
   })
 })
