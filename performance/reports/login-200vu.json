@@ -1,0 +1,232 @@
+{
+  "meta": {
+    "scenario": "login",
+    "targetVUs": 200,
+    "rampUpSec": 40,
+    "durationSec": 120,
+    "rampDownSec": 20,
+    "totalSec": 180,
+    "actualElapsedSec": 180.93,
+    "baseUrl": "http://localhost:3000",
+    "timestamp": "2026-07-03T02:28:24.290Z",
+    "tool": "Node.js Performance Test Runner (A5)"
+  },
+  "summary": {
+    "totalRequests": 4608,
+    "totalTransactions": 4608,
+    "succeeded": 3931,
+    "failed": 677,
+    "errorRate": "14.69%",
+    "avgTPS": 26.92,
+    "responseTime": {
+      "avg": 6527.43,
+      "min": 75,
+      "max": 14071,
+      "p50": 6025,
+      "p90": 13167,
+      "p95": 13562,
+      "stddev": 2976.71
+    }
+  },
+  "byEndpoint": {
+    "POST /api/auth/login": {
+      "count": 4608,
+      "errors": 677,
+      "errorRate": "14.69%",
+      "responseTime": {
+        "avg": 6527.43,
+        "min": 75,
+        "max": 14071,
+        "p50": 6025,
+        "p90": 13167,
+        "p95": 13562,
+        "stddev": 2976.71
+      }
+    }
+  },
+  "timeline": [
+    {
+      "second": 1,
+      "vus": 6,
+      "activeCount": 0,
+      "completed": 0,
+      "succeeded": 0,
+      "failed": 0,
+      "elapsed": 1009
+    },
+    {
+      "second": 2,
+      "vus": 11,
+      "activeCount": 6,
+      "completed": 21,
+      "succeeded": 21,
+      "failed": 0,
+      "elapsed": 2009
+    },
+    {
+      "second": 3,
+      "vus": 16,
+      "activeCount": 11,
+      "completed": 42,
+      "succeeded": 42,
+      "failed": 0,
+      "elapsed": 3018
+    },
+    {
+      "second": 4,
+      "vus": 21,
+      "activeCount": 16,
+      "completed": 64,
+      "succeeded": 64,
+      "failed": 0,
+      "elapsed": 4026
+    },
+    {
+      "second": 5,
+      "vus": 26,
+      "activeCount": 21,
+      "completed": 86,
+      "succeeded": 86,
+      "failed": 0,
+      "elapsed": 5026
+    },
+    {
+      "second": 6,
+      "vus": 31,
+      "activeCount": 26,
+      "completed": 108,
+      "succeeded": 108,
+      "failed": 0,
+      "elapsed": 6029
+    },
+    {
+      "second": 7,
+      "vus": 36,
+      "activeCount": 31,
+      "completed": 130,
+      "succeeded": 130,
+      "failed": 0,
+      "elapsed": 7039
+    },
+    {
+      "second": 8,
+      "vus": 41,
+      "activeCount": 36,
+      "completed": 151,
+      "succeeded": 151,
+      "failed": 0,
+      "elapsed": 8039
+    },
+    {
+      "second": 9,
+      "vus": 46,
+      "activeCount": 41,
+      "completed": 173,
+      "succeeded": 173,
+      "failed": 0,
+      "elapsed": 9052
+    },
+    {
+      "second": 10,
+      "vus": 51,
+      "activeCount": 46,
+      "completed": 195,
+      "succeeded": 195,
+      "failed": 0,
+      "elapsed": 10066
+    },
+    {
+      "_note": "... 159 samples omitted"
+    },
+    {
+      "second": 171,
+      "vus": 90,
+      "activeCount": 100,
+      "completed": 4400,
+      "succeeded": 3723,
+      "failed": 677,
+      "elapsed": 171070
+    },
+    {
+      "second": 172,
+      "vus": 80,
+      "activeCount": 90,
+      "completed": 4422,
+      "succeeded": 3745,
+      "failed": 677,
+      "elapsed": 172071
+    },
+    {
+      "second": 173,
+      "vus": 70,
+      "activeCount": 80,
+      "completed": 4444,
+      "succeeded": 3767,
+      "failed": 677,
+      "elapsed": 173073
+    },
+    {
+      "second": 174,
+      "vus": 60,
+      "activeCount": 70,
+      "completed": 4466,
+      "succeeded": 3789,
+      "failed": 677,
+      "elapsed": 174078
+    },
+    {
+      "second": 175,
+      "vus": 50,
+      "activeCount": 60,
+      "completed": 4488,
+      "succeeded": 3811,
+      "failed": 677,
+      "elapsed": 175079
+    },
+    {
+      "second": 176,
+      "vus": 40,
+      "activeCount": 50,
+      "completed": 4510,
+      "succeeded": 3833,
+      "failed": 677,
+      "elapsed": 176080
+    },
+    {
+      "second": 177,
+      "vus": 30,
+      "activeCount": 40,
+      "completed": 4531,
+      "succeeded": 3854,
+      "failed": 677,
+      "elapsed": 177082
+    },
+    {
+      "second": 178,
+      "vus": 20,
+      "activeCount": 30,
+      "completed": 4554,
+      "succeeded": 3877,
+      "failed": 677,
+      "elapsed": 178087
+    },
+    {
+      "second": 179,
+      "vus": 10,
+      "activeCount": 20,
+      "completed": 4576,
+      "succeeded": 3899,
+      "failed": 677,
+      "elapsed": 179093
+    },
+    {
+      "second": 180,
+      "vus": 0,
+      "activeCount": 10,
+      "completed": 4598,
+      "succeeded": 3921,
+      "failed": 677,
+      "elapsed": 180097
+    }
+  ]
+}

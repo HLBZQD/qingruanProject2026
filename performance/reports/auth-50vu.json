@@ -1,0 +1,260 @@
+{
+  "meta": {
+    "scenario": "auth",
+    "targetVUs": 50,
+    "rampUpSec": 10,
+    "durationSec": 120,
+    "rampDownSec": 50,
+    "totalSec": 180,
+    "actualElapsedSec": 180.33,
+    "baseUrl": "http://localhost:3000",
+    "timestamp": "2026-07-03T02:40:26.751Z",
+    "tool": "Node.js Performance Test Runner (A5)"
+  },
+  "summary": {
+    "totalRequests": 11613,
+    "totalTransactions": 3871,
+    "succeeded": 3871,
+    "failed": 0,
+    "errorRate": "0.00%",
+    "avgTPS": 21.77,
+    "responseTime": {
+      "avg": 649.02,
+      "min": 0,
+      "max": 1581,
+      "p50": 696,
+      "p90": 924,
+      "p95": 972,
+      "stddev": 261.64
+    }
+  },
+  "byEndpoint": {
+    "POST /api/auth/login": {
+      "count": 3871,
+      "errors": 0,
+      "errorRate": "0.00%",
+      "responseTime": {
+        "avg": 669.85,
+        "min": 45,
+        "max": 1581,
+        "p50": 733,
+        "p90": 924,
+        "p95": 972,
+        "stddev": 242.09
+      }
+    },
+    "GET /api/user/profile": {
+      "count": 3871,
+      "errors": 0,
+      "errorRate": "0.00%",
+      "responseTime": {
+        "avg": 621.62,
+        "min": 0,
+        "max": 1081,
+        "p50": 687,
+        "p90": 878,
+        "p95": 924,
+        "stddev": 240.34
+      }
+    },
+    "GET /api/risk/history": {
+      "count": 3871,
+      "errors": 0,
+      "errorRate": "0.00%",
+      "responseTime": {
+        "avg": 655.58,
+        "min": 0,
+        "max": 1127,
+        "p50": 701,
+        "p90": 933,
+        "p95": 1057,
+        "stddev": 296.25
+      }
+    }
+  },
+  "timeline": [
+    {
+      "second": 1,
+      "vus": 6,
+      "activeCount": 0,
+      "completed": 0,
+      "succeeded": 0,
+      "failed": 0,
+      "elapsed": 1003
+    },
+    {
+      "second": 2,
+      "vus": 11,
+      "activeCount": 6,
+      "completed": 18,
+      "succeeded": 18,
+      "failed": 0,
+      "elapsed": 2007
+    },
+    {
+      "second": 3,
+      "vus": 16,
+      "activeCount": 11,
+      "completed": 35,
+      "succeeded": 35,
+      "failed": 0,
+      "elapsed": 3018
+    },
+    {
+      "second": 4,
+      "vus": 21,
+      "activeCount": 16,
+      "completed": 56,
+      "succeeded": 56,
+      "failed": 0,
+      "elapsed": 4024
+    },
+    {
+      "second": 5,
+      "vus": 26,
+      "activeCount": 21,
+      "completed": 72,
+      "succeeded": 72,
+      "failed": 0,
+      "elapsed": 5031
+    },
+    {
+      "second": 6,
+      "vus": 31,
+      "activeCount": 26,
+      "completed": 93,
+      "succeeded": 93,
+      "failed": 0,
+      "elapsed": 6030
+    },
+    {
+      "second": 7,
+      "vus": 36,
+      "activeCount": 31,
+      "completed": 109,
+      "succeeded": 109,
+      "failed": 0,
+      "elapsed": 7040
+    },
+    {
+      "second": 8,
+      "vus": 41,
+      "activeCount": 36,
+      "completed": 135,
+      "succeeded": 135,
+      "failed": 0,
+      "elapsed": 8047
+    },
+    {
+      "second": 9,
+      "vus": 46,
+      "activeCount": 41,
+      "completed": 140,
+      "succeeded": 140,
+      "failed": 0,
+      "elapsed": 9056
+    },
+    {
+      "second": 10,
+      "vus": 50,
+      "activeCount": 46,
+      "completed": 161,
+      "succeeded": 161,
+      "failed": 0,
+      "elapsed": 10058
+    },
+    {
+      "_note": "... 159 samples omitted"
+    },
+    {
+      "second": 171,
+      "vus": 9,
+      "activeCount": 10,
+      "completed": 3673,
+      "succeeded": 3673,
+      "failed": 0,
+      "elapsed": 171088
+    },
+    {
+      "second": 172,
+      "vus": 8,
+      "activeCount": 9,
+      "completed": 3692,
+      "succeeded": 3692,
+      "failed": 0,
+      "elapsed": 172096
+    },
+    {
+      "second": 173,
+      "vus": 7,
+      "activeCount": 8,
+      "completed": 3717,
+      "succeeded": 3717,
+      "failed": 0,
+      "elapsed": 173102
+    },
+    {
+      "second": 174,
+      "vus": 6,
+      "activeCount": 7,
+      "completed": 3739,
+      "succeeded": 3739,
+      "failed": 0,
+      "elapsed": 174105
+    },
+    {
+      "second": 175,
+      "vus": 5,
+      "activeCount": 6,
+      "completed": 3758,
+      "succeeded": 3758,
+      "failed": 0,
+      "elapsed": 175104
+    },
+    {
+      "second": 176,
+      "vus": 4,
+      "activeCount": 5,
+      "completed": 3779,
+      "succeeded": 3779,
+      "failed": 0,
+      "elapsed": 176105
+    },
+    {
+      "second": 177,
+      "vus": 3,
+      "activeCount": 4,
+      "completed": 3804,
+      "succeeded": 3804,
+      "failed": 0,
+      "elapsed": 177107
+    },
+    {
+      "second": 178,
+      "vus": 2,
+      "activeCount": 3,
+      "completed": 3826,
+      "succeeded": 3826,
+      "failed": 0,
+      "elapsed": 178114
+    },
+    {
+      "second": 179,
+      "vus": 1,
+      "activeCount": 2,
+      "completed": 3847,
+      "succeeded": 3847,
+      "failed": 0,
+      "elapsed": 179125
+    },
+    {
+      "second": 180,
+      "vus": 0,
+      "activeCount": 1,
+      "completed": 3870,
+      "succeeded": 3870,
+      "failed": 0,
+      "elapsed": 180135
+    }
+  ]
+}

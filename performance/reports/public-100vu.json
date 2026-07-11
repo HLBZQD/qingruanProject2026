@@ -1,0 +1,274 @@
+{
+  "meta": {
+    "scenario": "public",
+    "targetVUs": 100,
+    "rampUpSec": 20,
+    "durationSec": 120,
+    "rampDownSec": 40,
+    "totalSec": 180,
+    "actualElapsedSec": 180.06,
+    "baseUrl": "http://localhost:3000",
+    "timestamp": "2026-07-03T02:34:25.707Z",
+    "tool": "Node.js Performance Test Runner (A5)"
+  },
+  "summary": {
+    "totalRequests": 2622697,
+    "totalTransactions": 2622697,
+    "succeeded": 2622697,
+    "failed": 0,
+    "errorRate": "0.00%",
+    "avgTPS": 14495.12,
+    "responseTime": {
+      "avg": 5.72,
+      "min": 0,
+      "max": 37,
+      "p50": 6,
+      "p90": 8,
+      "p95": 8,
+      "stddev": 2.19
+    }
+  },
+  "byEndpoint": {
+    "GET /api/articles": {
+      "count": 1165644,
+      "errors": 0,
+      "errorRate": "0.00%",
+      "responseTime": {
+        "avg": 5.73,
+        "min": 0,
+        "max": 16,
+        "p50": 6,
+        "p90": 8,
+        "p95": 8,
+        "stddev": 2.2
+      }
+    },
+    "GET /api/doctors": {
+      "count": 582822,
+      "errors": 0,
+      "errorRate": "0.00%",
+      "responseTime": {
+        "avg": 5.72,
+        "min": 0,
+        "max": 37,
+        "p50": 6,
+        "p90": 8,
+        "p95": 8,
+        "stddev": 2.2
+      }
+    },
+    "GET /api/diabetes-types": {
+      "count": 582821,
+      "errors": 0,
+      "errorRate": "0.00%",
+      "responseTime": {
+        "avg": 5.72,
+        "min": 0,
+        "max": 17,
+        "p50": 6,
+        "p90": 8,
+        "p95": 8,
+        "stddev": 2.19
+      }
+    },
+    "GET /api/health": {
+      "count": 291410,
+      "errors": 0,
+      "errorRate": "0.00%",
+      "responseTime": {
+        "avg": 5.7,
+        "min": 0,
+        "max": 17,
+        "p50": 6,
+        "p90": 8,
+        "p95": 8,
+        "stddev": 2.19
+      }
+    }
+  },
+  "timeline": [
+    {
+      "second": 1,
+      "vus": 6,
+      "activeCount": 0,
+      "completed": 0,
+      "succeeded": 0,
+      "failed": 0,
+      "elapsed": 1007
+    },
+    {
+      "second": 2,
+      "vus": 11,
+      "activeCount": 6,
+      "completed": 14865,
+      "succeeded": 14865,
+      "failed": 0,
+      "elapsed": 2006
+    },
+    {
+      "second": 3,
+      "vus": 16,
+      "activeCount": 11,
+      "completed": 30493,
+      "succeeded": 30493,
+      "failed": 0,
+      "elapsed": 3006
+    },
+    {
+      "second": 4,
+      "vus": 21,
+      "activeCount": 16,
+      "completed": 45974,
+      "succeeded": 45974,
+      "failed": 0,
+      "elapsed": 4006
+    },
+    {
+      "second": 5,
+      "vus": 26,
+      "activeCount": 21,
+      "completed": 61311,
+      "succeeded": 61311,
+      "failed": 0,
+      "elapsed": 5006
+    },
+    {
+      "second": 6,
+      "vus": 31,
+      "activeCount": 26,
+      "completed": 76524,
+      "succeeded": 76524,
+      "failed": 0,
+      "elapsed": 6006
+    },
+    {
+      "second": 7,
+      "vus": 36,
+      "activeCount": 31,
+      "completed": 92103,
+      "succeeded": 92103,
+      "failed": 0,
+      "elapsed": 7006
+    },
+    {
+      "second": 8,
+      "vus": 41,
+      "activeCount": 36,
+      "completed": 107285,
+      "succeeded": 107285,
+      "failed": 0,
+      "elapsed": 8007
+    },
+    {
+      "second": 9,
+      "vus": 46,
+      "activeCount": 41,
+      "completed": 122190,
+      "succeeded": 122190,
+      "failed": 0,
+      "elapsed": 9006
+    },
+    {
+      "second": 10,
+      "vus": 51,
+      "activeCount": 46,
+      "completed": 136955,
+      "succeeded": 136955,
+      "failed": 0,
+      "elapsed": 10006
+    },
+    {
+      "_note": "... 160 samples omitted"
+    },
+    {
+      "second": 171,
+      "vus": 23,
+      "activeCount": 25,
+      "completed": 2486527,
+      "succeeded": 2486527,
+      "failed": 0,
+      "elapsed": 171009
+    },
+    {
+      "second": 172,
+      "vus": 20,
+      "activeCount": 23,
+      "completed": 2501823,
+      "succeeded": 2501823,
+      "failed": 0,
+      "elapsed": 172009
+    },
+    {
+      "second": 173,
+      "vus": 18,
+      "activeCount": 20,
+      "completed": 2517384,
+      "succeeded": 2517384,
+      "failed": 0,
+      "elapsed": 173009
+    },
+    {
+      "second": 174,
+      "vus": 15,
+      "activeCount": 18,
+      "completed": 2532768,
+      "succeeded": 2532768,
+      "failed": 0,
+      "elapsed": 174009
+    },
+    {
+      "second": 175,
+      "vus": 13,
+      "activeCount": 15,
+      "completed": 2547925,
+      "succeeded": 2547925,
+      "failed": 0,
+      "elapsed": 175009
+    },
+    {
+      "second": 176,
+      "vus": 10,
+      "activeCount": 13,
+      "completed": 2563120,
+      "succeeded": 2563120,
+      "failed": 0,
+      "elapsed": 176009
+    },
+    {
+      "second": 177,
+      "vus": 8,
+      "activeCount": 10,
+      "completed": 2578399,
+      "succeeded": 2578399,
+      "failed": 0,
+      "elapsed": 177009
+    },
+    {
+      "second": 178,
+      "vus": 5,
+      "activeCount": 8,
+      "completed": 2593408,
+      "succeeded": 2593408,
+      "failed": 0,
+      "elapsed": 178009
+    },
+    {
+      "second": 179,
+      "vus": 3,
+      "activeCount": 5,
+      "completed": 2608555,
+      "succeeded": 2608555,
+      "failed": 0,
+      "elapsed": 179009
+    },
+    {
+      "second": 180,
+      "vus": 0,
+      "activeCount": 3,
+      "completed": 2622694,
+      "succeeded": 2622694,
+      "failed": 0,
+      "elapsed": 180008
+    }
+  ]
+}
