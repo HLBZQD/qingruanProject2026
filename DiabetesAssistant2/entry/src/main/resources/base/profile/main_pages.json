@@ -1,0 +1,17 @@
+{
+  "src": [
+    "pages/Index",
+    "pages/Login",
+    "pages/ChangePassword",
+    "pages/root/RootShell",
+    "pages/DoctorChat",
+    "pages/ArticleDetail",
+    "pages/Risk",
+    "pages/Punch",
+    "pages/HealthAdvice",
+    "pages/Admin",
+    "pages/AiChatPage",
+    "pages/DiabetesDetail",
+    "pages/Collections"
+  ]
+}
